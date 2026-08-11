@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String
+from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Integer, String
 from app.database.connection import Base
 
 
@@ -8,4 +10,6 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     firebase_uid = Column(String, unique=True, nullable=False, index=True)
     email = Column(String, unique=True, nullable=False)
-    name = Column(String, nullable=True)
+    display_name = Column(String, nullable=True)
+    profession = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
