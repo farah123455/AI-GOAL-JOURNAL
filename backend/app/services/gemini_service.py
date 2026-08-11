@@ -16,8 +16,8 @@ import json
 from google import genai
 from google.genai import types
 
-from config import GEMINI_API_KEY, GEMINI_MODEL_NAME, EXTRACTION_TEMPERATURE
-from prompts import SYSTEM_INSTRUCTION, build_extraction_prompt
+from app.core.config import GEMINI_API_KEY, GEMINI_MODEL_NAME, EXTRACTION_TEMPERATURE
+from app.prompts.journal_extraction import SYSTEM_INSTRUCTION, build_extraction_prompt
 
 
 class GeminiExtractionError(Exception):
