@@ -1,8 +1,5 @@
 """
-config.py
-
-Central configuration for the Gemini AI foundation.
-Loads the API key from a .env file (never hardcode keys in source).
+app/core/config.py
 """
 
 import os
@@ -12,9 +9,13 @@ load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-flash")
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-3.5-flash-lite")
 
 EXTRACTION_TEMPERATURE = 0.0
+
+# How many times to retry with a repair prompt if Gemini's response
+# fails JSON parsing or schema validation.
+MAX_REPAIR_ATTEMPTS = 1
 
 if not GEMINI_API_KEY:
     raise EnvironmentError(

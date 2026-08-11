@@ -1,18 +1,11 @@
 """
-prompts.py
+app/prompts/journal_extraction.py
 
-Builds the journal-analysis extraction prompt.
-
-Applies the Day 1 / Day 2 research decisions:
-- Explicit role/context framing
-- Delimiters (XML-style tag) around the raw journal text
-- Explicit JSON schema, "return only valid JSON"
-- Classify statements PAST/COMPLETED, ONGOING, or FUTURE/INTENDED before
-  extracting (the single hardest part of this pipeline per the research)
-- Explicit constraints against inferring aspirational goals from passing
-  mentions (anti-hallucination)
-- Existing goals passed in as context so the model can do goal matching
-  (is_new / matched_existing_goal_id) instead of extracting in isolation
+Prompt updated to target the simpler, consistent schema
+(goals[title,status] / completed_activities[] / blockers[]) instead of
+the richer Day 1-3 shape. Same underlying prompt-engineering principles
+as before (role framing, delimiters, explicit constraints, internal
+tense classification) — just a flatter target structure.
 """
 
 SYSTEM_INSTRUCTION = """\
@@ -24,31 +17,18 @@ the entry text.
 
 JSON_SCHEMA_INSTRUCTIONS = """\
 Return ONLY valid JSON matching exactly this schema. No markdown fences,
-no commentary, no text before or after the JSON object.
+no commentary, no text before or after the JSON object. Every field is
+required — use an empty list [] where nothing applies, never omit a key.
 
 {
-  "mood": "positive | neutral | negative",
-  "mood_confidence": 0.0,
-  "activities": [
-    {
-      "text": "string",
-      "status": "completed | ongoing | planned",
-      "related_goal_hint": "string or null"
-    }
-  ],
   "goals": [
     {
-      "text": "string",
-      "is_new": true,
-      "matched_existing_goal_id": "string or null"
+      "title": "string",
+      "status": "Active | Completed | Stalled"
     }
   ],
-  "blockers": [
-    {
-      "text": "string",
-      "category_hint": "string"
-    }
-  ]
+  "completed_activities": ["string"],
+  "blockers": ["string"]
 }
 """
 
@@ -58,37 +38,41 @@ Follow these steps:
 1. Read the journal entry inside the <journal_entry> tags below.
 2. Internally classify each relevant statement as PAST/COMPLETED,
    ONGOING, or FUTURE/INTENDED. Do not include this classification step
-   in your output — use it only to decide status fields correctly.
+   in your output — use it only to decide the right fields.
 3. Extract only what the user explicitly stated. Do NOT infer
    aspirational goals from passing mentions, and do NOT invent goals,
-   activities, or blockers the entry does not support.
-4. For each goal you extract, compare it against the user's EXISTING
-   GOALS listed below. If it matches an existing goal (same underlying
-   objective, even if worded differently), set "is_new": false and
-   "matched_existing_goal_id" to that goal's id. Otherwise set
-   "is_new": true and "matched_existing_goal_id": null.
-5. Treat blockers as their own category — anything the user describes
-   as preventing progress (e.g. "didn't have time", "kept getting
-   distracted", "waiting on approval"). Do not fold them into activities.
-6. Assign one overall "mood" for the entry with a "mood_confidence"
-   between 0 and 1. Keep this descriptive, not diagnostic — this is a
-   personal journaling feature, not a clinical assessment.
-7. Output ONLY the JSON object described above.
+   activities, or blockers the entry does not support. If the entry
+   has no clear goal, return an empty "goals" list rather than guessing.
+4. For each goal, compare it against the EXISTING GOALS listed below.
+   If it matches one (same underlying objective, even if worded
+   differently), reuse that goal's exact title text and set its status
+   based on what this entry says about it. Otherwise list it as a new
+   goal with "status": "Active" (a brand-new goal is active by
+   definition — only mark "Completed" or "Stalled" when the entry or
+   existing context supports that).
+5. "completed_activities" is a flat list of short strings describing
+   what the user actually finished — PAST/COMPLETED statements only.
+   Ongoing or planned work does NOT belong here.
+6. "blockers" is a flat list of short strings describing anything the
+   user says is preventing progress (e.g. "didn't have time", "kept
+   getting distracted", "waiting on approval").
+7. Output ONLY the JSON object described above, with all three keys
+   always present.
 """
 
 
-def build_extraction_prompt(entry_text: str, existing_goals: list[dict] | None = None) -> str:
+def build_extraction_prompt(entry_text: str, existing_goals: list[str] | None = None) -> str:
     """
     Build the full user-turn prompt for a single journal-entry extraction call.
 
-    existing_goals: list of {"id": str, "text": str} dicts representing the
-    user's current active goal list, used for goal matching (see Day 1/2
-    research on why extraction must be goal-aware, not entry-isolated).
+    existing_goals: list of existing goal title strings (flat, since the
+    Day 4 schema no longer carries goal IDs) used so the model reuses
+    the same title instead of creating a near-duplicate goal.
     """
     existing_goals = existing_goals or []
 
     if existing_goals:
-        goals_block = "\n".join(f'- id="{g["id"]}": {g["text"]}' for g in existing_goals)
+        goals_block = "\n".join(f"- {g}" for g in existing_goals)
     else:
         goals_block = "(none yet — this user has no existing goals on record)"
 
