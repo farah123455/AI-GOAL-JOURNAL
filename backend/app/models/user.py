@@ -1,9 +1,44 @@
-from pydantic import BaseModel
-from datetime import datetime
+"""
+app/models/user.py
 
-class User(BaseModel):
-    firebase_uid: str
-    email: str
-    display_name: str | None = None
-    profession: str | None = None
-    created_at: datetime = datetime.utcnow()
+SQLAlchemy ORM model for User Management and Firebase UID mapping.
+"""
+
+from datetime import datetime, timezone
+from sqlalchemy import Column, Integer, String, Text, DateTime, JSON
+from app.db.database import Base
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    firebase_uid = Column(String(255), unique=True, index=True, nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    display_name = Column(String(255), nullable=True)
+    profession = Column(String(255), nullable=True)
+    bio = Column(Text, nullable=True)
+    avatar_url = Column(String(500), nullable=True)
+    timezone = Column(String(100), default="UTC")
+    
+    # Store user preferences & settings (theme, daily_reminder_time, ai_coaching_tone, focus_areas, notifications)
+    preferences = Column(
+        JSON,
+        default=lambda: {
+            "theme": "dark",
+            "daily_reminder_time": "20:00",
+            "ai_coaching_tone": "encouraging",
+            "focus_areas": ["Productivity", "Study", "Personal Growth"],
+            "email_notifications": True,
+            "push_notifications": True
+        }
+    )
+
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+
+    def __repr__(self):
+        return f"<User(id={self.id}, firebase_uid='{self.firebase_uid}', email='{self.email}')>"
