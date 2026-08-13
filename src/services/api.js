@@ -1,9 +1,9 @@
 import { auth } from '../firebase';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
+
 /**
- * Helper to construct authorization headers with the current user's Firebase ID Token.
- * Note: Full backend Firebase token verification and endpoint protection are planned
- * for future integration (Aditya / Farah).
+ * Retrieves the current Firebase user's ID token and formats Authorization header.
  */
 export async function getAuthHeaders() {
   const currentUser = auth.currentUser;
@@ -17,13 +17,136 @@ export async function getAuthHeaders() {
 }
 
 /**
- * Placeholder client for future backend API requests.
+ * Standard fetch wrapper with automatic Firebase token injection and error handling.
  */
 export async function fetchWithAuth(url, options = {}) {
   const authHeaders = await getAuthHeaders();
   const headers = {
-    ...options.headers,
     ...authHeaders,
+    ...options.headers,
   };
-  return fetch(url, { ...options, headers });
+
+  const response = await fetch(`${API_BASE}${url}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    let errorDetail = 'API request failed';
+    try {
+      const errJson = await response.json();
+      errorDetail = errJson.detail || errJson.message || JSON.stringify(errJson);
+    } catch {
+      errorDetail = `${response.status} ${response.statusText}`;
+    }
+    throw new Error(errorDetail);
+  }
+
+  // If No Content (204)
+  if (response.status === 204) {
+    return null;
+  }
+
+  return response.json();
 }
+
+/**
+ * User Profile API
+ */
+export const userApi = {
+  getProfile: () => fetchWithAuth('/users/me'),
+  updateProfile: (data) =>
+    fetchWithAuth('/users/me', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+};
+
+/**
+ * Goal Management API
+ */
+export const goalApi = {
+  listGoals: (status) => {
+    const query = status ? `?status=${encodeURIComponent(status)}` : '';
+    return fetchWithAuth(`/goals${query}`);
+  },
+  getGoal: (id) => fetchWithAuth(`/goals/${id}`),
+  createGoal: (data) =>
+    fetchWithAuth('/goals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  updateGoal: (id, data) =>
+    fetchWithAuth(`/goals/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  deleteGoal: (id) =>
+    fetchWithAuth(`/goals/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
+/**
+ * Journal & Voice API
+ */
+export const journalApi = {
+  listJournals: () => fetchWithAuth('/journals'),
+  getJournal: (id) => fetchWithAuth(`/journals/${id}`),
+  createJournal: (data) =>
+    fetchWithAuth('/journals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  updateJournal: (id, data) =>
+    fetchWithAuth(`/journals/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  deleteJournal: (id) =>
+    fetchWithAuth(`/journals/${id}`, {
+      method: 'DELETE',
+    }),
+  transcribeAudio: async (audioBlob, filename = 'recording.webm') => {
+    const authHeaders = await getAuthHeaders();
+    const formData = new FormData();
+    formData.append('file', audioBlob, filename);
+
+    const response = await fetch(`${API_BASE}/journals/voice/transcribe`, {
+      method: 'POST',
+      headers: {
+        ...authHeaders,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errDetail = 'Transcription failed';
+      try {
+        const errJson = await response.json();
+        errDetail = errJson.detail || errJson.message || errDetail;
+      } catch {
+        errDetail = `${response.status} ${response.statusText}`;
+      }
+      throw new Error(errDetail);
+    }
+
+    return response.json();
+  },
+};
+
+/**
+ * Weekly AI Summary API
+ */
+export const summaryApi = {
+  getWeeklySummary: () => fetchWithAuth('/summaries/weekly'),
+  generateWeeklySummary: () =>
+    fetchWithAuth('/summaries/weekly', {
+      method: 'POST',
+    }),
+};

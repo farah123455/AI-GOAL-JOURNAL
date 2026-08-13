@@ -17,7 +17,6 @@ export default function Register() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-
     setError('');
 
     if (!email || !password || !confirmPassword) {
@@ -58,85 +57,98 @@ export default function Register() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-moss-50 px-4">
-
-      <Card className="w-full max-w-md">
-
-        <h1 className="text-3xl font-bold text-moss-700">
-          Register
-        </h1>
-
-        <p className="mt-2 text-sm text-ink/60">
-          Create your Goal Journal account.
-        </p>
-
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-
-          <Input
-            id="register-email"
-            label="Email"
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-
-          <Input
-            id="register-password"
-            label="Password"
-            type="password"
-            placeholder="Create a password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-
-          <Input
-            id="confirm-password"
-            label="Confirm Password"
-            type="password"
-            placeholder="Confirm your password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-
-          {error && (
-            <p
-              role="alert"
-              className="rounded-card bg-red-50 p-3 text-sm text-ember"
-            >
-              {error}
-            </p>
-          )}
-
-          <Button
-            type="submit"
-            loading={loading}
-            disabled={loading}
-            className="w-full"
-          >
-            Register
-          </Button>
-
-        </form>
-
-        <p className="mt-6 text-center text-sm text-ink/60">
-
-          Already have an account?{' '}
-
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 selection:bg-primary selection:text-white">
+      <div className="w-full max-w-md">
+        {/* Brand Return Link */}
+        <div className="mb-6 text-center">
           <Link
-            to="/login"
-            className="font-medium text-moss-700 hover:underline"
+            to="/"
+            className="inline-flex items-center gap-2 font-display text-2xl font-bold tracking-tight text-foreground hover:opacity-90 transition"
           >
-            Login
+            <span className="text-accent">✨</span>
+            <span>Goal Journal</span>
           </Link>
+        </div>
 
-        </p>
+        <Card className="w-full border-card-border bg-card p-6 sm:p-8 shadow-soft">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground font-display">
+            Create your account
+          </h1>
 
-      </Card>
+          <p className="mt-1 mb-6 text-xs text-muted-foreground">
+            Start transforming daily reflections into structured momentum.
+          </p>
 
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <Input
+              id="register-email"
+              label="Email Address"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+
+            <Input
+              id="register-password"
+              label="Password (min 6 chars)"
+              type="password"
+              placeholder="Create a secure password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+
+            <Input
+              id="confirm-password"
+              label="Confirm Password"
+              type="password"
+              placeholder="Repeat your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+
+            {error && (
+              <p
+                role="alert"
+                className="rounded-card bg-status-error-bg p-3 text-xs text-status-error border border-status-error/30"
+              >
+                {error}
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              loading={loading}
+              disabled={loading}
+              className="mt-2 w-full py-3"
+            >
+              Create Free Account
+            </Button>
+          </form>
+
+          <div className="mt-6 pt-4 border-t border-card-border text-center text-xs text-muted-foreground">
+            <span>Already have an account? </span>
+            <Link
+              to="/login"
+              className="font-semibold text-secondary-foreground hover:text-foreground underline"
+            >
+              Sign in here
+            </Link>
+          </div>
+        </Card>
+
+        <div className="mt-4 text-center">
+          <Link
+            to="/"
+            className="text-xs text-muted-foreground hover:text-foreground transition font-medium"
+          >
+            ← Back to Home
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

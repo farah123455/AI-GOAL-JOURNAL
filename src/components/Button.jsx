@@ -1,8 +1,9 @@
 const VARIANTS = {
-  primary: 'bg-moss-600 text-paper hover:bg-moss-700 disabled:bg-moss-300',
-  secondary: 'bg-transparent text-moss-700 border border-moss-300 hover:bg-moss-50',
-  ghost: 'bg-transparent text-ink hover:bg-line/60',
-  danger: 'bg-ember text-paper hover:bg-ember/90',
+  primary: 'bg-primary-grad text-white hover:brightness-110 shadow-glow-primary active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 disabled:shadow-none border border-primary-light/30',
+  secondary: 'bg-secondary text-foreground border border-card-border hover:bg-secondary-hover hover:border-secondary-foreground/30 shadow-soft active:scale-[0.98]',
+  accent: 'bg-accent text-accent-foreground hover:brightness-110 shadow-glow-accent active:scale-[0.98]',
+  ghost: 'bg-transparent text-secondary-foreground hover:bg-secondary/60 hover:text-foreground active:scale-[0.98]',
+  danger: 'bg-status-error text-white hover:brightness-110 active:scale-[0.98]',
 };
 
 export default function Button({
@@ -18,15 +19,15 @@ export default function Button({
     <button
       type={type}
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-2 rounded-card px-4 py-2.5 text-sm font-medium
-        transition-colors duration-150 disabled:cursor-not-allowed
-        focus:outline-none focus-visible:ring-2 focus-visible:ring-moss-500 focus-visible:ring-offset-2
-        ${VARIANTS[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-card px-4 py-2.5 text-sm font-semibold
+        transition-all duration-150 disabled:cursor-not-allowed
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background
+        ${VARIANTS[variant] || VARIANTS.primary} ${className}`}
       {...props}
     >
       {loading && (
         <span
-          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent shrink-0"
           aria-hidden="true"
         />
       )}

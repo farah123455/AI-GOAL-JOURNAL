@@ -1,170 +1,199 @@
 # AI Goal Journal & Accountability Coach
 
-An AI-powered personal journaling and goal-tracking platform designed to help users track daily progress, maintain accountability, and receive AI-driven insights.
+An intelligent personal journaling and goal-tracking platform tailored for students, working professionals, freelancers, and entrepreneurs. The application eliminates the manual overhead of traditional productivity tools by using local speech-to-text and AI semantic reasoning to transform daily conversational reflections into structured activities, active blockers, progress indicators, and weekly accountability coaching insights.
 
 ---
 
-## Final Project Structure
+## 1. Project Architecture
 
 ```
-AI Goal Journal/
-├── src/
-│   ├── components/
-│   │   ├── AppShell.jsx
-│   │   ├── Button.jsx
-│   │   ├── Card.jsx
-│   │   ├── Input.jsx
-│   │   ├── Navbar.jsx
-│   │   ├── ProtectedRoute.jsx
-│   │   ├── Sidebar.jsx
-│   │   └── VoiceRecorder.jsx        # Browser-native voice recorder prototype
-│   ├── context/
-│   │   └── AuthContext.jsx           # Firebase Authentication state context
-│   ├── pages/
-│   │   ├── Dashboard.jsx
-│   │   ├── Goals.jsx
-│   │   ├── Journal.jsx               # Journal page with text entry & VoiceRecorder
-│   │   ├── Login.jsx                 # Firebase Email/Password Login
-│   │   ├── Profile.jsx
-│   │   └── Register.jsx              # Firebase Email/Password Registration
-│   ├── services/
-│   │   ├── api.js                    # Helper for Firebase Bearer ID tokens
-│   │   └── authService.js            # Centralized Firebase modular auth calls
-│   ├── App.jsx                       # Main router & ProtectedRoute wrappers
-│   ├── firebase.js                   # Single Firebase initialization module
-│   ├── index.css
-│   └── main.jsx                      # App root with AuthProvider & BrowserRouter
-├── backend/                          # FastAPI Backend
-│   ├── app/
-│   │   ├── api/
-│   │   │   └── v1/
-│   │   │       └── users.py          # User API endpoints
-│   │   ├── models/
-│   │   │   └── user.py               # User Pydantic model
-│   │   ├── schemas/
-│   │   │   └── user.py              # User Pydantic schemas
-│   │   ├── services/
-│   │   │   └── user_service.py       # User service logic
-│   │   └── main.py                   # FastAPI main entry point
-│   └── requirements.txt
-├── package.json
-├── package-lock.json
-├── vite.config.js
-├── tailwind.config.js
-├── postcss.config.js
-├── index.html
-├── .env                              # Real Firebase keys (git-ignored)
-├── .env.example                      # Template without credentials
-├── .gitignore
-└── README.md
+┌─────────────────────────────────────────────────────────────┐
+│                      React SPA (Vite)                       │
+│  - Public Landing Page (/) & Smart Auth Routing             │
+│  - Modular Firebase Auth (Register, Login, Session Context) │
+│  - MediaRecorder Voice Capture with Editable Review Screen  │
+│  - Dark Theme Design System (#0A0A1A, #6D28D9, #06B6D4)     │
+│  - Reactive Dashboard, Goals Board, AI Coach, Journal Page  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ Authorization: Bearer <Firebase ID Token>
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      FastAPI Backend                        │
+│  - Firebase ID Token Verification via Google Public Certs   │
+│  - REST API Routers: /users, /journals, /goals, /summaries  │
+│  - Deterministic Business & Goal-Matching Engine            │
+└──────────────┬──────────────────────────────┬───────────────┘
+               │                              │
+               ▼                              ▼
+┌─────────────────────────────┐  ┌─────────────────────────────┐
+│       faster-whisper        │  │      Google Gemini API      │
+│  - Model: tiny (~75 MB)     │  │  - SDK: google-genai        │
+│  - Execution: CPU + INT8    │  │  - Model: gemini-3.1-flash-lite
+│  - $0.00 Speech-to-Text     │  │  - Structured JSON Output   │
+└─────────────────────────────┘  └─────────────────────────────┘
+               │                              │
+               └──────────────┬───────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 In-Memory Repository Layer                  │
+│  - User-isolated thread-safe stores (Dictionaries + Locks)  │
+│  - Abstract Interfaces (AbstractUserRepository, etc.)       │
+│  - Zero PostgreSQL / Zero Docker in this MVP phase          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Setup & Running Instructions
+## 2. Technology Stack & Design System
 
-### 1. Environment Configuration
+- **Frontend**: React 18, Vite 5, Tailwind CSS 3, React Router DOM 6.
+  - **Design System Tokens**:
+    - `Background`: `#0A0A1A`
+    - `Foreground`: `#F1F0FF`
+    - `Primary`: `#6D28D9` (with Primary Gradient `#6D28D9` $\rightarrow$ `#4C1D95`)
+    - `Secondary`: `#1E1B4B` (Secondary Foreground `#C4B5FD`)
+    - `Accent`: `#06B6D4` (Cyan accent for voice recording, AI badges, and highlights)
+    - `Muted`: `#1A1A35` (Muted Foreground `#8B8AAD`)
+  - **Typography**: `Fraunces` serif headings paired with `Inter` body copy.
+- **Backend**: FastAPI, Python 3.10+, Uvicorn.
+- **Authentication**: Firebase Authentication (Modular client SDK + Backend token verification via Google public X509 certificates).
+- **Speech-to-Text**: `faster-whisper` (Model: `tiny`, Device: `cpu`, Compute: `int8`).
+- **AI Engine**: Google Gemini API (`gemini-3.1-flash-lite` via `google-genai` Python SDK).
+- **Persistence (Current Phase)**: Thread-safe in-memory repository layer with strict per-user data isolation.
+- **Persistence (Future Phase)**: PostgreSQL with SQLAlchemy and Alembic migrations (intentionally deferred).
 
-Create a `.env` file in the root directory (based on `.env.example`):
+---
+
+## 3. Important Architectural Disclaimers
+
+> [!IMPORTANT]
+> **In-Memory Storage**: PostgreSQL persistence is intentionally deferred in the current phase. The current backend uses an in-memory repository and data is lost when the backend server restarts.
+>
+> **Local Speech-to-Text Model**: Whisper transcription uses a locally hosted `faster-whisper` **Tiny** model running on CPU with INT8 quantization (~75 MB model weights, ~320 MB runtime memory footprint) and does **not** require a Whisper API key.
+>
+> **4 GB RAM PC Constraint**: The application is strictly optimized for low-resource environments. No CUDA/GPU dependencies are used.
+
+---
+
+## 4. Prerequisites
+
+- **Node.js**: `v18.0.0` or higher
+- **Python**: `3.10+`
+- **npm**: `v9.0.0` or higher
+
+---
+
+## 5. Setup & Installation Instructions
+
+### Step 1: Clone Repository & Configure Environment
+
+Copy `.env.example` to `.env` in the project root:
+
+```bash
+cp .env.example .env
+```
+
+Configure your Firebase credentials and Google Gemini API key:
 
 ```env
-VITE_FIREBASE_API_KEY=your_api_key
+# Frontend Configuration
+VITE_FIREBASE_API_KEY=your_firebase_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project_id.firebasestorage.app
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
+VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1
+
+# Backend Configuration
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-3.1-flash-lite
+
+# Whisper Configuration (Local CPU INT8 for 4 GB RAM PC)
+WHISPER_MODEL=tiny
+WHISPER_DEVICE=cpu
+WHISPER_COMPUTE_TYPE=int8
+FIREBASE_PROJECT_ID=your_project_id
 ```
 
-*Note: Never commit `.env` to version control.*
+### Step 2: Install Speech-to-Text & Python Dependencies
 
-### 2. Running the Frontend
-
-Install dependencies and start the Vite development server:
+To install `faster-whisper` (Tiny model engine) along with FastAPI and all backend packages, run:
 
 ```bash
-# In project root
+python -m pip install -r backend/requirements.txt
+```
+
+> **Installed Whisper Model**: `faster-whisper` Tiny (`model="tiny"`, `device="cpu"`, `compute_type="int8"`). Automatically cached to `~/.cache/huggingface/hub/` on first inference.
+
+### Step 3: Install Frontend Dependencies
+
+```bash
 npm install
+```
+
+---
+
+## 6. Running Locally
+
+### Starting Backend (FastAPI + Uvicorn)
+
+```bash
+python -m uvicorn app.main:app --app-dir backend --reload --port 8000
+```
+- API Docs: `http://127.0.0.1:8000/docs`
+- Health Check: `http://127.0.0.1:8000/api/v1/health`
+
+### Starting Frontend (React + Vite)
+
+```bash
 npm run dev
 ```
+- Web Application: `http://localhost:5173`
 
-The frontend will run at `http://localhost:5173`.
+---
 
-### 3. Running the Backend
+## 7. API Reference (`/api/v1/`)
 
-Install Python dependencies and start the FastAPI server:
+All endpoints (except `/health`) require `Authorization: Bearer <Firebase ID Token>`.
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/health` | Service health, model status, and runtime info. |
+| `GET` | `/api/v1/users/me` | Fetch authenticated user profile and live metrics. |
+| `PUT` | `/api/v1/users/me` | Update user display name and profession. |
+| `GET` | `/api/v1/goals` | List goals with optional `?status=` filter (Active, Completed, Stalled). |
+| `POST` | `/api/v1/goals` | Create a new goal milestone. |
+| `GET` | `/api/v1/goals/{id}` | Retrieve specific goal details. |
+| `PUT` | `/api/v1/goals/{id}` | Update goal attributes or status. |
+| `DELETE` | `/api/v1/goals/{id}` | Delete goal. |
+| `GET` | `/api/v1/journals` | List user journal entries (newest first). |
+| `POST` | `/api/v1/journals` | Create journal entry + run Gemini structured analysis. |
+| `GET` | `/api/v1/journals/{id}` | Retrieve single journal entry with AI breakdown. |
+| `PUT` | `/api/v1/journals/{id}` | Update journal content. |
+| `DELETE` | `/api/v1/journals/{id}` | Delete journal entry. |
+| `POST` | `/api/v1/journals/voice/transcribe`| Upload audio file $\rightarrow$ local faster-whisper Tiny transcript. |
+| `GET` | `/api/v1/summaries/weekly` | Get latest weekly AI coaching summary. |
+| `POST` | `/api/v1/summaries/weekly` | Generate fresh weekly AI coaching summary. |
+
+---
+
+## 8. Testing & Verification
+
+### Automated Unit Tests (0 API calls, 0 Whisper loads)
 
 ```bash
-# In backend directory
-cd backend
-pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
+python -m pytest -v
 ```
 
-The backend API will run at `http://127.0.0.1:8000` (or `http://127.0.0.1:8001` if port 8000 is occupied).
+### Integration Verification (Whisper Tiny + Gemini 3.1 Flash-Lite)
 
----
-
-## Architecture & Implementation Overview
-
-### Authentication Architecture (Firebase)
-
-- **Initialization**: Single Firebase instance in `src/firebase.js` using `import.meta.env.VITE_FIREBASE_*`.
-- **Auth Service**: `src/services/authService.js` wraps modular Firebase SDK functions (`createUserWithEmailAndPassword`, `signInWithEmailAndPassword`, `signOut`).
-- **Auth Context**: `src/context/AuthContext.jsx` subscribes to real-time session updates via `onAuthStateChanged`. Mock authentication and `localStorage` session state have been completely removed.
-- **Route Protection**: `src/components/ProtectedRoute.jsx` checks `checkingAuth` state during initial session lookup before enforcing authenticated access to `/dashboard`, `/journal`, `/goals`, and `/profile`.
-
-### Voice Recording Prototype
-
-- **Component**: `src/components/VoiceRecorder.jsx` built on native browser `MediaRecorder` API and `navigator.mediaDevices.getUserMedia()`.
-- **Features**:
-  - Microphone permission handling and denial detection.
-  - Recording start/stop with live duration timer.
-  - Audio chunk collection into an `audio/webm` Blob.
-  - Temporary Object URL playback via native `<audio controls />`.
-  - Discard/reset with automatic memory URL and stream track cleanup (`track.stop()`).
-  - Fallback for legacy browsers without MediaRecorder support.
-- **Integration**: Embedded into `src/pages/Journal.jsx` as a "Voice Entry" section alongside the text journal editor.
-
----
-
-## Speech-to-Text Status: Research / Decision Pending
-
-The current implementation stops at browser-native voice recording, producing an audio Blob with temporary local playback preview.
-
-Candidate options for future team evaluation:
-- Whisper-based solution (OpenAI API / Local Whisper model)
-- Google Cloud Speech-to-Text API
-- Browser Web Speech API (`SpeechRecognition` API)
-- Other stack-compatible options
-
-### Intended Future Pipeline Flow
-```
-VoiceRecorder Component
-         ↓
-Audio Blob (WebM / WAV)
-         ↓
-Future backend upload endpoint
-         ↓
-Selected Speech-to-Text Engine (TBD)
-         ↓
-Transcribed Journal Text
-         ↓
-Gemini AI Analysis Service
+```bash
+python backend/tests/test_integration.py
 ```
 
----
+### Frontend Production Build
 
-## Team Module Boundaries
-
-### Implemented Now (Swayam - Day 3/4)
-- Firebase Authentication setup and UI integration (`Login`, `Register`, `Navbar` logout, `ProtectedRoute`).
-- Auth service and context overhaul (`authService.js`, `AuthContext.jsx`).
-- Browser-native Voice Recording prototype (`VoiceRecorder.jsx`).
-- Speech-to-text research documentation & project workspace consolidation.
-
-### Future Integration / Team Member Responsibilities
-- **Aditya**: User model/schemas, User Profile API endpoints, Firebase UID ➔ PostgreSQL mapping.
-- **Farah**: PostgreSQL database setup, SQLAlchemy ORM models, Journal CRUD backend services.
-- **Panshobh**: Frontend layout foundation, design system styling, page components.
-- **Sheryl**: Gemini API integration, AI journal entry analysis, goal tracking AI.
+```bash
+npm run build
+```
