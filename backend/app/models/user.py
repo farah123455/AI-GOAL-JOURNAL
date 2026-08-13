@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy.orm import relationship
+
 from app.database.connection import Base
 
 
@@ -13,3 +15,5 @@ class User(Base):
     display_name = Column(String, nullable=True)
     profession = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    journals = relationship("Journal", back_populates="user")
