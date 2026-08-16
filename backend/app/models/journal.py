@@ -13,11 +13,25 @@ class Journal(Base):
 
     title = Column(String, nullable=True)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
     updated_at = Column(
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
 
-    user = relationship("User", back_populates="journals")
+    user = relationship(
+        "User",
+        back_populates="journals"
+    )
+
+    ai_summaries = relationship(
+        "AISummary",
+        back_populates="journal",
+        cascade="all, delete-orphan"
+    )

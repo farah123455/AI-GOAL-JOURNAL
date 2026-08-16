@@ -1,4 +1,6 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
+from datetime import datetime
+
 
 class UserCreate(BaseModel):
     firebase_uid: str
@@ -6,5 +8,9 @@ class UserCreate(BaseModel):
     display_name: str | None = None
     profession: str | None = None
 
+
 class UserResponse(UserCreate):
-    pass
+    id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

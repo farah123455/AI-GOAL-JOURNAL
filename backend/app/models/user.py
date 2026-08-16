@@ -17,3 +17,4 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     journals = relationship("Journal", back_populates="user")
+    goals = relationship("Goal", back_populates="user")
