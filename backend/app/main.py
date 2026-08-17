@@ -1,46 +1,51 @@
-"""
-app/main.py
-
-AI Goal Journal & Accountability Coach - FastAPI Main Application Entry Point.
-"""
-
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+
+from app.database.connection import engine, Base
+
+# Import models so SQLAlchemy knows about all relationships
+from app.models.user import User
+from app.models.journal import Journal
+from app.models.goal import Goal
+from app.models.progress import Progress
+from app.models.ai_summary import AISummary
+
+# Import API routers
 from app.api.v1.users import router as users_router
-from app.db.database import init_db
+from app.api.v1.goals import router as goals_router
+from app.api.v1.journals import router as journals_router
+from app.api.v1.progress import router as progress_router
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Lifespan context manager to initialize database tables on startup.
-    """
-    init_db()
-    yield
+# Initialize database tables
+Base.metadata.create_all(bind=engine)
 
-app = FastAPI(
-    title="AI Goal Journal API",
-    description="Backend API for AI Goal Journal & Accountability Coach",
-    version="1.0.0",
-    lifespan=lifespan
-)
+app = FastAPI(title="AI Goal Journal API")
 
-# Enable CORS for local development & frontend integration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Adjust for production origin URLs if needed
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 @app.get("/")
 def root():
     return {
-        "message": "AI Goal Journal Backend Running",
-        "status": "active",
-        "documentation": "/docs"
+        "message": "AI Goal Journal Backend Running"
     }
 
-# Include v1 Routers
-app.include_router(users_router, prefix="/api/v1")
+
+# API v1 routes
+app.include_router(
+    users_router,
+    prefix="/api/v1"
+)
+
+app.include_router(
+    goals_router,
+    prefix="/api/v1"
+)
+
+app.include_router(
+    journals_router,
+    prefix="/api/v1"
+)
+
+app.include_router(
+    progress_router,
+    prefix="/api/v1"
+)

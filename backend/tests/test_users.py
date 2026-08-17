@@ -7,14 +7,17 @@ Automated test suite for User Management API, Firebase UID mapping, Profile, and
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.db.database import init_db
+from app.database.connection import engine, Base
+
 
 @pytest.fixture(autouse=True)
 def setup_database():
     """
     Ensure database tables are initialized before running tests.
     """
-    init_db()
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
 
 def test_users_health():
     with TestClient(app) as client:
@@ -23,6 +26,7 @@ def test_users_health():
         data = response.json()
         assert data["status"] == "online"
         assert data["service"] == "users_router"
+
 
 def test_sync_user():
     payload = {
@@ -50,14 +54,22 @@ def test_sync_user():
         assert data["display_name"] == "Aditya Verlekar"
         assert data["preferences"]["theme"] == "dark"
 
+
 def test_get_current_user_profile():
     headers = {"X-Firebase-UID": "test_fb_uid_999"}
     with TestClient(app) as client:
+        # Sync user first
+        client.post("/api/v1/users/sync", json={
+            "firebase_uid": "test_fb_uid_999",
+            "email": "aditya.test@example.com",
+            "display_name": "Aditya Verlekar"
+        })
         response = client.get("/api/v1/users/me", headers=headers)
         assert response.status_code == 200
         data = response.json()
         assert data["firebase_uid"] == "test_fb_uid_999"
         assert data["display_name"] == "Aditya Verlekar"
+
 
 def test_update_user_profile():
     headers = {"X-Firebase-UID": "test_fb_uid_999"}
@@ -67,12 +79,19 @@ def test_update_user_profile():
         "bio": "Empowering productivity with AI."
     }
     with TestClient(app) as client:
+        # Sync user first
+        client.post("/api/v1/users/sync", json={
+            "firebase_uid": "test_fb_uid_999",
+            "email": "aditya.test@example.com",
+            "display_name": "Aditya Verlekar"
+        })
         response = client.put("/api/v1/users/me", json=update_payload, headers=headers)
         assert response.status_code == 200
         data = response.json()
         assert data["display_name"] == "Aditya V. (Updated)"
         assert data["profession"] == "Lead Backend Engineer"
         assert data["bio"] == "Empowering productivity with AI."
+
 
 def test_update_user_preferences():
     headers = {"X-Firebase-UID": "test_fb_uid_999"}
@@ -87,6 +106,12 @@ def test_update_user_preferences():
         }
     }
     with TestClient(app) as client:
+        # Sync user first
+        client.post("/api/v1/users/sync", json={
+            "firebase_uid": "test_fb_uid_999",
+            "email": "aditya.test@example.com",
+            "display_name": "Aditya Verlekar"
+        })
         response = client.put("/api/v1/users/me/preferences", json=pref_payload, headers=headers)
         assert response.status_code == 200
         data = response.json()
