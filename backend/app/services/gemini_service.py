@@ -72,10 +72,16 @@ VALIDATION ERROR:
 
 class GeminiService:
     def __init__(self, model_name: str = GEMINI_MODEL_NAME):
-        self.client = genai.Client(api_key=GEMINI_API_KEY)
+        if GEMINI_API_KEY:
+            self.client = genai.Client(api_key=GEMINI_API_KEY)
+        else:
+            self.client = None
         self.model_name = model_name
 
     def _call_gemini(self, prompt: str) -> str:
+        if not self.client:
+            raise GeminiExtractionError("GEMINI_API_KEY is not set. Please configure GEMINI_API_KEY in backend/.env file.")
+
         response = self.client.models.generate_content(
             model=self.model_name,
             contents=prompt,

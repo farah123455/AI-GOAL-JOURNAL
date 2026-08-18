@@ -77,8 +77,43 @@ The Gemini AI service is responsible for:
 
 ### Cross-Cutting Concerns
 
-* **Security:** Firebase ID Token verification, HTTPS communication, and user-level authorization.
-* **Validation:** Pydantic validation and structured exception handling.
+* **Security:** Firebase ID Token / `X-Firebase-UID` verification, HTTPS communication, and user-level authorization scoping across all data entities.
+* **Validation:** Pydantic V2 validation and structured exception handling.
 * **Logging:** Request logs, error logs, and debugging support.
 * **Configuration:** Environment-variable-based configuration and `.env` management.
-* **Scalability:** Modular architecture that allows new AI services, APIs, and frontend features to be added with minimal coupling.
+* **Scalability:** Modular layered architecture that decouples API routers, service layers, SQLAlchemy models, and Pydantic schemas.
+
+---
+
+## API Endpoints Reference
+
+All protected endpoints require either `Authorization: Bearer <token_or_uid>` or `X-Firebase-UID: <uid>` header.
+
+### User API (`/api/v1/users`)
+- `GET /api/v1/users/health` — Health check endpoint (Public)
+- `POST /api/v1/users/sync` — Sync Firebase user identity to PostgreSQL DB
+- `GET /api/v1/users/me` — Retrieve current authenticated user profile
+- `PUT /api/v1/users/me` — Update user profile information
+- `PUT /api/v1/users/me/preferences` — Update user settings & preferences
+
+### Journal API (`/api/v1/journals`)
+- `POST /api/v1/journals/` — Create new journal entry (auto-scoped to current user)
+- `GET /api/v1/journals/` — List all journal entries owned by current user
+- `GET /api/v1/journals/{journal_id}` — Get single journal entry owned by current user
+- `PUT /api/v1/journals/{journal_id}` — Update journal entry owned by current user
+- `DELETE /api/v1/journals/{journal_id}` — Delete journal entry owned by current user
+
+### Goal API (`/api/v1/goals`)
+- `POST /api/v1/goals/` — Create new goal for current user
+- `GET /api/v1/goals/` — List all goals owned by current user
+- `GET /api/v1/goals/{goal_id}` — Get single goal owned by current user
+- `PUT /api/v1/goals/{goal_id}` — Update goal owned by current user
+- `DELETE /api/v1/goals/{goal_id}` — Delete goal owned by current user
+
+### Progress API (`/api/v1/progress`)
+- `POST /api/v1/progress/` — Record progress entry for user's goal
+- `GET /api/v1/progress/` — List all progress entries for current user (optional `?goal_id=<id>`)
+- `GET /api/v1/progress/{progress_id}` — Get single progress record owned by current user
+- `PUT /api/v1/progress/{progress_id}` — Update progress record owned by current user
+- `DELETE /api/v1/progress/{progress_id}` — Delete progress record owned by current user
+
