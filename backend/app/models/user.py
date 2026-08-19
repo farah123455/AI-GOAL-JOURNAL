@@ -1,7 +1,7 @@
 """
 app/models/user.py
 
-SQLAlchemy ORM model for User Management and Firebase UID mapping.
+SQLAlchemy ORM model for User Management, Firebase UID mapping, and hashed passwords.
 """
 
 from datetime import datetime, timezone
@@ -9,18 +9,20 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, JSON
 from sqlalchemy.orm import relationship
 from app.database.connection import Base
 
+
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     firebase_uid = Column(String(255), unique=True, index=True, nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=True)  # Encrypted password column (bcrypt)
     display_name = Column(String(255), nullable=True)
     profession = Column(String(255), nullable=True)
     bio = Column(Text, nullable=True)
     avatar_url = Column(String(500), nullable=True)
     timezone = Column(String(100), default="UTC")
-    
+
     # Store user preferences & settings (theme, daily_reminder_time, ai_coaching_tone, focus_areas, notifications)
     preferences = Column(
         JSON,

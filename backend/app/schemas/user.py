@@ -8,6 +8,7 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
+
 class UserPreferences(BaseModel):
     theme: str = Field(default="dark", description="UI Theme preference ('dark', 'light', 'system')")
     daily_reminder_time: str = Field(default="20:00", description="Preferred daily journal reminder time (HH:MM)")
@@ -16,15 +17,18 @@ class UserPreferences(BaseModel):
     email_notifications: bool = Field(default=True, description="Enable email reminders")
     push_notifications: bool = Field(default=True, description="Enable push reminders")
 
+
 class UserCreate(BaseModel):
     firebase_uid: str
     email: EmailStr
+    password: Optional[str] = Field(None, description="Optional password for bcrypt hashing")
     display_name: Optional[str] = None
     profession: Optional[str] = None
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
     timezone: Optional[str] = "UTC"
     preferences: Optional[UserPreferences] = None
+
 
 class UserUpdate(BaseModel):
     display_name: Optional[str] = None
@@ -33,8 +37,10 @@ class UserUpdate(BaseModel):
     avatar_url: Optional[str] = None
     timezone: Optional[str] = None
 
+
 class UserPreferencesUpdate(BaseModel):
     preferences: UserPreferences
+
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
