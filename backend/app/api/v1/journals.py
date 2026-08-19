@@ -1,4 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+"""
+app/api/v1/journals.py
+
+REST API endpoints for Journal management (Create, Read, Update, Delete).
+Scoped to the authenticated user.
+"""
+
+from typing import List
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -9,6 +17,7 @@ from app.schemas.journal import (
     JournalUpdate,
     JournalResponse
 )
+from app.schemas.common import MessageResponse, ErrorResponse
 from app.services.journal_service import (
     create_journal,
     get_user_journals,
@@ -20,86 +29,81 @@ from app.services.journal_service import (
 router = APIRouter(prefix="/journals", tags=["Journals"])
 
 
-# CREATE JOURNAL
-@router.post("/", response_model=JournalResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=JournalResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Journal Entry",
+    description="Creates a new daily voice or text journal entry for the authenticated user."
+)
 def create_new_journal(
     journal: JournalCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """Creates a new journal entry."""
     return create_journal(current_user.id, journal, db)
 
 
-# GET ALL JOURNALS FOR AUTHENTICATED USER
-@router.get("/", response_model=list[JournalResponse])
+@router.get(
+    "/",
+    response_model=List[JournalResponse],
+    summary="List User Journal Entries",
+    description="Retrieves all journal entries belonging to the authenticated user, ordered by creation date descending."
+)
 def read_journals(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """Lists user's journal entries."""
     return get_user_journals(current_user.id, db)
 
 
-# GET ONE JOURNAL
-@router.get("/{journal_id}", response_model=JournalResponse)
+@router.get(
+    "/{journal_id}",
+    response_model=JournalResponse,
+    responses={404: {"model": ErrorResponse, "description": "Journal entry not found"}},
+    summary="Get Single Journal Entry",
+    description="Retrieves a specific journal entry by ID."
+)
 def read_journal(
     journal_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    journal = get_journal_by_id(journal_id, current_user.id, db)
-
-    if not journal:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Journal not found"
-        )
-
-    return journal
+    """Retrieves a single journal entry by ID."""
+    return get_journal_by_id(journal_id, current_user.id, db)
 
 
-# UPDATE JOURNAL
-@router.put("/{journal_id}", response_model=JournalResponse)
+@router.put(
+    "/{journal_id}",
+    response_model=JournalResponse,
+    responses={404: {"model": ErrorResponse, "description": "Journal entry not found"}},
+    summary="Update Journal Entry",
+    description="Updates the title or content of an existing journal entry."
+)
 def update_existing_journal(
     journal_id: int,
     journal_data: JournalUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    updated_journal = update_journal(
-        journal_id,
-        current_user.id,
-        journal_data,
-        db
-    )
-
-    if not updated_journal:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Journal not found"
-        )
-
-    return updated_journal
+    """Updates a journal entry."""
+    return update_journal(journal_id, current_user.id, journal_data, db)
 
 
-# DELETE JOURNAL
-@router.delete("/{journal_id}")
+@router.delete(
+    "/{journal_id}",
+    response_model=MessageResponse,
+    responses={404: {"model": ErrorResponse, "description": "Journal entry not found"}},
+    summary="Delete Journal Entry",
+    description="Deletes a journal entry owned by the user."
+)
 def delete_existing_journal(
     journal_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    deleted = delete_journal(
-        journal_id,
-        current_user.id,
-        db
-    )
-
-    if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Journal not found"
-        )
-
-    return {
-        "message": "Journal deleted successfully"
-    }
+    """Deletes a journal entry by ID."""
+    delete_journal(journal_id, current_user.id, db)
+    return MessageResponse(message="Journal deleted successfully")

@@ -44,14 +44,22 @@ from app.prompts.journal_extraction import SYSTEM_INSTRUCTION, build_extraction_
 from app.schemas.extraction import ExtractionResult
 
 
-class GeminiExtractionError(Exception):
+from app.core.exceptions import AppException
+
+
+class GeminiExtractionError(AppException):
     """
     Raised when Gemini's response cannot be turned into a valid
     ExtractionResult, even after repair attempts.
     """
 
     def __init__(self, message: str, raw_response: str | None = None):
-        super().__init__(message)
+        super().__init__(
+            message=message,
+            status_code=502,
+            error_code="GEMINI_EXTRACTION_ERROR",
+            details={"raw_response": raw_response} if raw_response else None
+        )
         self.raw_response = raw_response
 
 

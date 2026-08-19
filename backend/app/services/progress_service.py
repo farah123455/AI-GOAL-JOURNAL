@@ -11,17 +11,21 @@ from sqlalchemy.orm import Session
 from app.models.progress import Progress
 from app.models.goal import Goal
 from app.schemas.progress import ProgressCreate, ProgressUpdate
+from app.core.exceptions import ResourceNotFoundException
 
 
-def create_progress(user_id: int, progress_data: ProgressCreate, db: Session) -> Optional[Progress]:
-    # Verify that the target goal exists and belongs to the authenticated user
+def create_progress(user_id: int, progress_data: ProgressCreate, db: Session) -> Progress:
+    """
+    Creates a new progress record after verifying that the target goal exists
+    and belongs to the authenticated user.
+    """
     goal = db.query(Goal).filter(
         Goal.id == progress_data.goal_id,
         Goal.user_id == user_id
     ).first()
 
     if not goal:
-        return None
+        raise ResourceNotFoundException("Goal not found or does not belong to the current user")
 
     new_progress = Progress(
         goal_id=progress_data.goal_id,
@@ -35,6 +39,7 @@ def create_progress(user_id: int, progress_data: ProgressCreate, db: Session) ->
 
 
 def get_user_progress(user_id: int, db: Session, goal_id: Optional[int] = None) -> List[Progress]:
+    """Retrieves all progress records owned by the authenticated user, optionally filtered by goal_id."""
     query = (
         db.query(Progress)
         .join(Goal, Progress.goal_id == Goal.id)
@@ -47,8 +52,9 @@ def get_user_progress(user_id: int, db: Session, goal_id: Optional[int] = None) 
     return query.order_by(Progress.created_at.desc()).all()
 
 
-def get_progress_by_id(progress_id: int, user_id: int, db: Session) -> Optional[Progress]:
-    return (
+def get_progress_by_id(progress_id: int, user_id: int, db: Session) -> Progress:
+    """Retrieves a single progress record by ID for the user, or raises ResourceNotFoundException."""
+    progress = (
         db.query(Progress)
         .join(Goal, Progress.goal_id == Goal.id)
         .filter(
@@ -57,6 +63,9 @@ def get_progress_by_id(progress_id: int, user_id: int, db: Session) -> Optional[
         )
         .first()
     )
+    if not progress:
+        raise ResourceNotFoundException(f"Progress record with id {progress_id} not found")
+    return progress
 
 
 def update_progress(
@@ -64,10 +73,9 @@ def update_progress(
     user_id: int,
     progress_data: ProgressUpdate,
     db: Session
-) -> Optional[Progress]:
+) -> Progress:
+    """Updates an existing progress record owned by the user."""
     progress = get_progress_by_id(progress_id, user_id, db)
-    if not progress:
-        return None
 
     if progress_data.progress_value is not None:
         progress.progress_value = progress_data.progress_value
@@ -80,10 +88,8 @@ def update_progress(
 
 
 def delete_progress(progress_id: int, user_id: int, db: Session) -> bool:
+    """Deletes a progress record owned by the user."""
     progress = get_progress_by_id(progress_id, user_id, db)
-    if not progress:
-        return False
-
     db.delete(progress)
     db.commit()
     return True
