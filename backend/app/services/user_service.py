@@ -1,7 +1,8 @@
 from typing import Optional
 from app.models.domain import User
 from app.schemas.user import UserProfileResponse, UserStats, UserProfileUpdate
-from app.repositories.in_memory import user_repo, goal_repo, journal_repo
+from app.repositories.postgres import user_repo, journal_repo, goal_repo
+
 
 class UserService:
     def get_or_create_profile(self, uid: str, email: str, name: Optional[str] = None) -> UserProfileResponse:

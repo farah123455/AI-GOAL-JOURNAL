@@ -3,7 +3,7 @@ import logging
 from typing import Optional, Any
 from app.models.domain import JournalEntry
 from app.schemas.journal import JournalCreate, JournalUpdate
-from app.repositories.in_memory import journal_repo
+from app.repositories.postgres import journal_repo
 from app.services.goal_service import goal_service
 from app.services.gemini_service import gemini_service
 
