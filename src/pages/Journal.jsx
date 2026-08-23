@@ -183,7 +183,14 @@ export default function Journal() {
           <div className="flex items-center justify-between mb-4 border-b border-card-border pb-3">
             <div className="flex items-center gap-2">
               <span className="text-xl text-accent">✨</span>
+               <div>
               <h3 className="font-bold text-foreground font-display">AI Semantic Analysis (Gemini Flash-Lite)</h3>
+              <b>
+              {latestAnalysis.title && (
+                <p className="text-sm font-bold text-foreground">{latestAnalysis.title}</p>
+                )}
+              </b>
+              </div>
             </div>
             {latestAnalysis.mood && (
               <span className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-3 py-1 text-xs font-bold text-accent border border-accent/40 capitalize">
@@ -331,7 +338,11 @@ export default function Journal() {
                       🗑️
                     </button>
                   </div>
-
+                  <b>
+                  {entry.title && (
+                  <p className="text-sm font-semibold text-foreground mt-1">{entry.title}</p>
+                  )}
+                  </b>
                   <p className="whitespace-pre-wrap text-xs sm:text-sm leading-relaxed text-foreground/90 my-2">
                     {entry.content}
                   </p>

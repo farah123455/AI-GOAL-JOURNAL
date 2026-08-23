@@ -46,19 +46,20 @@ class GeminiService:
         prompt = f"""You are an expert AI Goal Journal & Accountability Coach analyzing a user's daily journal entry.
 Extract structured insights following these strict rules:
 
-1. MOOD: Assess overall emotional state ('positive', 'neutral', 'reflective', 'overwhelmed', 'motivated') with confidence 0.0 to 1.0.
-2. ACTIVITIES: Extract all specific actions or tasks mentioned.
+1. TITLE: Generate a short, descriptive title (3-6 words) capturing the main theme or focus of this entry (e.g. "PostgreSQL Goal Integration", "Struggling with Motivation").
+2. MOOD: Assess overall emotional state ('positive', 'neutral', 'reflective', 'overwhelmed', 'motivated') with confidence 0.0 to 1.0.
+3. ACTIVITIES: Extract all specific actions or tasks mentioned.
    CRITICAL DISTINCTION:
    - 'completed': Tasks the user finished/completed ("I finished chapter 3", "Submitted the PR").
    - 'ongoing': Tasks currently being worked on ("Working on the presentation", "Halfway done").
    - 'planned': Future intentions or goals for upcoming days ("I plan to study tomorrow", "Will fix the bug next week").
    Do NOT mark future intentions as completed!
    If an activity relates to one of the user's existing goals, note the goal title or ID in 'related_goal_hint'.
-3. GOALS: Identify any new goals the user set, or references to existing goals.
-4. BLOCKERS: Identify specific obstacles, frustrations, or distractions.
+4. GOALS: Identify any new goals the user set, or references to existing goals.
+5. BLOCKERS: Identify specific obstacles, frustrations, or distractions.
    Categorize each blocker as: 'time', 'distraction', 'technical', 'motivation', 'unclear_task', 'external', or 'other'.
-5. INSIGHTS: Provide 1-2 brief, encouraging, coaching observations.
-6. QUICK_SUMMARY: Provide a 1-sentence summary.
+6. INSIGHTS: Provide 1-2 brief, encouraging, coaching observations.
+7. QUICK_SUMMARY: Provide a 1-sentence summary.
 
 {goals_context}
 User Journal Entry:
@@ -66,6 +67,7 @@ User Journal Entry:
 
 Return ONLY a valid JSON object strictly matching this schema:
 {{
+  "title": "Short descriptive title (3-6 words)",
   "mood": "positive | neutral | reflective | overwhelmed | motivated",
   "mood_confidence": 0.85,
   "activities": [
@@ -108,6 +110,7 @@ Return ONLY a valid JSON object strictly matching this schema:
             logger.error("Gemini analysis error: %s", e)
             # Fallback structured response so user data is never lost
             return {
+                "title": content[:40] + ("..." if len(content) > 40 else ""),
                 "mood": "neutral",
                 "mood_confidence": 0.5,
                 "activities": [

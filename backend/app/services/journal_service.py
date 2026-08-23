@@ -61,6 +61,7 @@ class JournalService:
             user_id=user_id,
             content=content,
             source=data.source or "text",
+            title=ai_raw.get("title"),
             ai_analysis=ai_raw,
         )
 

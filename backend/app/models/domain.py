@@ -30,6 +30,7 @@ class JournalEntry:
     user_id: str
     content: str
     source: str = "text"  # text | voice
+    title: Optional[str] = None
     ai_analysis: Optional[dict[str, Any]] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
