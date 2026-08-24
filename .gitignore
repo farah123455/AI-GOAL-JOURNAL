@@ -21,13 +21,17 @@ venv/
 ENV/
 env/
 
-# Logs & Temporary Scratch Files
+# Logs, Audio Transcripts & Temporary Scratch Files
 *.log
 *.tmp
 *.webm
 *.wav
 doc_text.txt
 scratch/
+
+# Agent System Logs & Uploads
+.system_generated/
+.user_uploaded/
 
 # OS & IDE Artifacts
 .DS_Store

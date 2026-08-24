@@ -164,6 +164,7 @@ export function DataProvider({ children }) {
     <DataContext.Provider
       value={{
         profile,
+        userProfile: profile,
         goals,
         journals,
         summary,
@@ -184,6 +185,7 @@ export function DataProvider({ children }) {
         updateJournalInCache,
         deleteJournalFromCache,
         updateProfileInCache,
+        updateProfileLocal: updateProfileInCache,
         setSummaryInCache,
         clearCache,
       }}

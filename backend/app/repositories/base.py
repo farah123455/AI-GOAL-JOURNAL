@@ -12,7 +12,7 @@ class AbstractUserRepository(ABC):
         pass
 
     @abstractmethod
-    def update_profile(self, uid: str, display_name: Optional[str] = None, profession: Optional[str] = None) -> Optional[User]:
+    def update_profile(self, uid: str, display_name: Optional[str] = None, profession: Optional[str] = None, preferences: Optional[dict[str, Any]] = None) -> Optional[User]:
         pass
 
 class AbstractGoalRepository(ABC):

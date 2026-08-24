@@ -9,6 +9,7 @@ class User:
     email: str
     display_name: Optional[str] = None
     profession: Optional[str] = None
+    preferences: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 

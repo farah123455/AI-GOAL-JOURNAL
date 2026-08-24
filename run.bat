@@ -1,11 +1,11 @@
 @echo off
-title AI Goal Journal & Accountability Coach
+title AI Goal Journal ^& Accountability Coach
 echo ======================================================================
-echo           AI Goal Journal & Accountability Coach Launcher
+echo           AI Goal Journal ^& Accountability Coach Launcher
 echo ======================================================================
 echo.
 
-echo [1/3] Checking Docker & PostgreSQL Container...
+echo [1/3] Checking Docker ^& PostgreSQL Container...
 docker compose up -d postgres 2>nul
 if %errorlevel% neq 0 (
     echo [INFO] Docker not running or not found. Continuing with Local MVP In-Memory Persistence.
@@ -29,6 +29,5 @@ start http://localhost:5173
 
 echo.
 echo ======================================================================
-echo Application is running! Keep the command windows open while using.
+echo Application has been launched!
 echo ======================================================================
-pause

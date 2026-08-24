@@ -12,8 +12,10 @@ An intelligent personal journaling and goal-tracking platform tailored for stude
 │  - Public Landing Page (/) & Smart Auth Routing             │
 │  - Modular Firebase Auth (Register, Login, Session Context) │
 │  - MediaRecorder Voice Capture with Editable Review Screen  │
-│  - Calm Moss Design System (Fraunces + Inter Typography)    │
-│  - Reactive Dashboard, Goals Board, AI Coach, Journal Page  │
+│  - Burgundy / Wine Design System                            │
+│  - Lucide Vector Icons & Circular Progress Components       │
+│  - Pages: Dashboard, Progress, Goals, Journal, AI Coach,    │
+│    Insights, Profile, Settings                              │
 └──────────────────────────────┬──────────────────────────────┘
                                │ Authorization: Bearer <Firebase ID Token>
                                ▼
@@ -22,7 +24,8 @@ An intelligent personal journaling and goal-tracking platform tailored for stude
 │  - Firebase ID Token Verification via Google Public Certs   │
 │  - REST API Routers: /users, /journals, /goals, /summaries  │
 │  - Deterministic Business & Goal-Matching Engine            │
-│  - Progress Tracking & AI Progress Detection Engine         │
+│  - Goal Progress Tracking & AI Progress Detection Engine    │
+│  - User Preferences Persistence API                         │
 └──────────────┬──────────────────────────────┬───────────────┘
                │                              │
                ▼                              ▼
@@ -47,7 +50,7 @@ An intelligent personal journaling and goal-tracking platform tailored for stude
 
 ## 2. Technology Stack
 
-- **Frontend**: React 18, Vite 5, Tailwind CSS 3 (Calm Moss design system), React Router DOM 6.
+- **Frontend**: React 18, Vite 5, Tailwind CSS 3 (Burgundy theme: `#12090B`, `#190D0F`, `#211114`, `#561C24`, `#6D2932`, `#E8D8C4`, `#C7B7A3`), Lucide React 0.395, React Router DOM 6.
 - **Backend**: FastAPI, Python 3.10+, Uvicorn.
 - **Authentication**: Firebase Authentication (Modular client SDK + Backend token verification via Google public X509 certificates).
 - **Speech-to-Text**: `faster-whisper` (Model: `tiny`, Device: `cpu`, Compute: `int8`).
@@ -91,7 +94,7 @@ Journals + Progress + Activity + Blockers ────► Personal Productivity 
 
 ### 🚀 1-Click Launcher (Windows)
 
-Simply double-click the [`run_project.bat`](file:///d:/MyFiles/AI-GOAL-JOURNAL/run_project.bat) file in the root directory. It will:
+Simply double-click the [`run.bat`](file:///d:/MyFiles/AI-GOAL-JOURNAL/run.bat) file in the root directory. It will:
 1. Start the Docker PostgreSQL container on port 5432 (if Docker is available).
 2. Start the FastAPI backend server on `http://localhost:8000`.
 3. Start the React Vite dev server on `http://localhost:5173`.
@@ -172,6 +175,7 @@ All endpoints (except `/health`) require `Authorization: Bearer <Firebase ID Tok
 | `GET` | `/api/v1/health` | Service health, model status, and runtime info. |
 | `GET` | `/api/v1/users/me` | Fetch authenticated user profile and live metrics. |
 | `PUT` | `/api/v1/users/me` | Update user display name and profession. |
+| `PUT` | `/api/v1/users/me/preferences` | Update user preferences (notifications, aiInsights, etc.). |
 | `GET` | `/api/v1/goals` | List goals with optional `?status=` filter (Active, Completed, Stalled). |
 | `POST` | `/api/v1/goals` | Create a new goal milestone. |
 | `GET` | `/api/v1/goals/{id}` | Retrieve specific goal details. |

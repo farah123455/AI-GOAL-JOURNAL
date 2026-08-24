@@ -36,7 +36,7 @@ class InMemoryUserRepository(AbstractUserRepository):
             return self._users.get(uid)
 
     def update_profile(
-        self, uid: str, display_name: Optional[str] = None, profession: Optional[str] = None
+        self, uid: str, display_name: Optional[str] = None, profession: Optional[str] = None, preferences: Optional[dict[str, Any]] = None
     ) -> Optional[User]:
         with self._lock:
             user = self._users.get(uid)
@@ -46,6 +46,8 @@ class InMemoryUserRepository(AbstractUserRepository):
                 user.display_name = display_name
             if profession is not None:
                 user.profession = profession
+            if preferences is not None:
+                user.preferences = {**user.preferences, **preferences}
             user.updated_at = datetime.utcnow()
             return user
 
