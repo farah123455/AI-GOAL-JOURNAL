@@ -3,35 +3,31 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import VoiceRecorder from '../components/VoiceRecorder';
 import { journalApi } from '../services/api';
+import { useData } from '../context/DataContext';
 
 export default function Journal() {
+  const {
+    journals,
+    hasLoadedJournals,
+    fetchJournals,
+    addJournal,
+    deleteJournalFromCache,
+  } = useData();
+
   const [activeTab, setActiveTab] = useState('text'); // 'text' | 'voice'
   const [entryText, setEntryText] = useState('');
-  const [journals, setJournals] = useState([]);
-  const [loadingList, setLoadingList] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [latestAnalysis, setLatestAnalysis] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedJournal, setSelectedJournal] = useState(null);
 
+  const loadingList = !hasLoadedJournals;
+
   // Fetch journals on mount
   useEffect(() => {
-    loadJournals();
-  }, []);
-
-  async function loadJournals() {
-    try {
-      setLoadingList(true);
-      const data = await journalApi.listJournals();
-      setJournals(data || []);
-    } catch (err) {
-      console.error('Failed to load journals:', err);
-      setError('Could not load journal history.');
-    } finally {
-      setLoadingList(false);
-    }
-  }
+    fetchJournals({ quiet: hasLoadedJournals });
+  }, [fetchJournals, hasLoadedJournals]);
 
   async function handleSave(contentToSave, source = 'text') {
     setError('');
@@ -52,7 +48,7 @@ export default function Journal() {
       });
 
       // Update state
-      setJournals((prev) => [result, ...prev]);
+      addJournal(result);
       setLatestAnalysis(result.ai_analysis);
       setEntryText('');
     } catch (err) {
@@ -69,7 +65,7 @@ export default function Journal() {
     }
     try {
       await journalApi.deleteJournal(id);
-      setJournals((prev) => prev.filter((j) => j.id !== id));
+      deleteJournalFromCache(id);
       if (selectedJournal?.id === id) {
         setSelectedJournal(null);
       }

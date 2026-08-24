@@ -1,12 +1,13 @@
 import threading
 from datetime import datetime
 from typing import Optional, Any
-from app.models.domain import User, Goal, JournalEntry, WeeklySummary
+from app.models.domain import User, Goal, JournalEntry, WeeklySummary, Progress
 from app.repositories.base import (
     AbstractUserRepository,
     AbstractGoalRepository,
     AbstractJournalRepository,
     AbstractSummaryRepository,
+    AbstractProgressRepository,
 )
 
 class InMemoryUserRepository(AbstractUserRepository):
@@ -97,6 +98,32 @@ class InMemoryGoalRepository(AbstractGoalRepository):
             return False
 
 
+class InMemoryProgressRepository(AbstractProgressRepository):
+    def __init__(self):
+        self._lock = threading.Lock()
+        # Keyed by goal_id -> list of Progress
+        self._goal_progress: dict[str, list[Progress]] = {}
+
+    def create(self, progress: Progress) -> Progress:
+        with self._lock:
+            if progress.goal_id not in self._goal_progress:
+                self._goal_progress[progress.goal_id] = []
+            self._goal_progress[progress.goal_id].append(progress)
+            return progress
+
+    def get_latest_by_goal(self, goal_id: str) -> Optional[Progress]:
+        with self._lock:
+            history = self._goal_progress.get(goal_id, [])
+            if not history:
+                return None
+            return max(history, key=lambda p: p.created_at)
+
+    def get_all_by_goal(self, goal_id: str) -> list[Progress]:
+        with self._lock:
+            history = self._goal_progress.get(goal_id, [])
+            return sorted(history, key=lambda p: p.created_at, reverse=True)
+
+
 class InMemoryJournalRepository(AbstractJournalRepository):
     def __init__(self):
         self._lock = threading.Lock()
@@ -161,3 +188,4 @@ user_repo = InMemoryUserRepository()
 goal_repo = InMemoryGoalRepository()
 journal_repo = InMemoryJournalRepository()
 summary_repo = InMemorySummaryRepository()
+progress_repo = InMemoryProgressRepository()

@@ -4,35 +4,30 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import { userApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 
 export default function Profile() {
   const { user } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [displayName, setDisplayName] = useState('');
-  const [profession, setProfession] = useState('');
-  const [loading, setLoading] = useState(true);
+  const { profile, hasLoadedProfile, fetchProfile, updateProfileInCache } = useData();
+
+  const [displayName, setDisplayName] = useState(profile?.display_name || '');
+  const [profession, setProfession] = useState(profile?.profession || '');
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  const loading = !hasLoadedProfile;
 
-  async function loadProfile() {
-    try {
-      setLoading(true);
-      const data = await userApi.getProfile();
-      setProfile(data);
-      setDisplayName(data.display_name || '');
-      setProfession(data.profession || '');
-    } catch (err) {
-      console.error('Failed to load profile:', err);
-      setErrorMessage('Could not load profile information.');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    fetchProfile({ quiet: hasLoadedProfile });
+  }, [fetchProfile, hasLoadedProfile]);
+
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.display_name || '');
+      setProfession(profile.profession || '');
     }
-  }
+  }, [profile]);
 
   async function handleSave(e) {
     e.preventDefault();
@@ -45,7 +40,7 @@ export default function Profile() {
         display_name: displayName,
         profession: profession,
       });
-      setProfile(updated);
+      updateProfileInCache(updated);
       setStatusMessage('Profile updated successfully.');
     } catch (err) {
       console.error('Save profile error:', err);

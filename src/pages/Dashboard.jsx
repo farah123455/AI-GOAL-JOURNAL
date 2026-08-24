@@ -2,45 +2,32 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import { userApi, goalApi, journalApi, summaryApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const {
+    profile,
+    goals,
+    journals,
+    summary,
+    hasLoadedProfile,
+    hasLoadedGoals,
+    hasLoadedJournals,
+    hasLoadedSummary,
+    fetchAllData,
+  } = useData();
 
-  const [profile, setProfile] = useState(null);
-  const [goals, setGoals] = useState([]);
-  const [journals, setJournals] = useState([]);
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const hasAnyData = hasLoadedProfile || hasLoadedGoals || hasLoadedJournals || hasLoadedSummary;
+  const loading = !hasAnyData;
+
   useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  async function loadDashboardData() {
-    try {
-      setLoading(true);
-      const [profileData, goalsData, journalsData, summaryData] = await Promise.allSettled([
-        userApi.getProfile(),
-        goalApi.listGoals(),
-        journalApi.listJournals(),
-        summaryApi.getWeeklySummary(),
-      ]);
-
-      if (profileData.status === 'fulfilled') setProfile(profileData.value);
-      if (goalsData.status === 'fulfilled') setGoals(goalsData.value || []);
-      if (journalsData.status === 'fulfilled') setJournals(journalsData.value || []);
-      if (summaryData.status === 'fulfilled') setSummary(summaryData.value);
-    } catch (err) {
-      console.error('Dashboard data load error:', err);
-      setError('Could not load dashboard data.');
-    } finally {
-      setLoading(false);
-    }
-  }
+    fetchAllData({ quiet: hasAnyData });
+  }, [fetchAllData, hasAnyData]);
 
   const latestJournal = journals[0];
   const latestAnalysis = latestJournal?.ai_analysis;

@@ -3,11 +3,19 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import { goalApi } from '../services/api';
+import { useData } from '../context/DataContext';
 
 export default function Goals() {
-  const [goals, setGoals] = useState([]);
+  const {
+    goals: cachedGoals,
+    hasLoadedGoals,
+    fetchGoals,
+    addGoal,
+    updateGoalInCache,
+    deleteGoalFromCache,
+  } = useData();
+
   const [statusFilter, setStatusFilter] = useState(''); // '' for All, 'Active', 'Completed', 'Stalled'
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
@@ -20,22 +28,16 @@ export default function Goals() {
   const [targetDate, setTargetDate] = useState('');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    loadGoals();
-  }, [statusFilter]);
+  const loading = !hasLoadedGoals;
 
-  async function loadGoals() {
-    try {
-      setLoading(true);
-      const data = await goalApi.listGoals(statusFilter);
-      setGoals(data || []);
-    } catch (err) {
-      console.error('Failed to load goals:', err);
-      setError('Could not load goals. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    fetchGoals(statusFilter, { quiet: hasLoadedGoals });
+  }, [statusFilter, fetchGoals, hasLoadedGoals]);
+
+  // Client-side filter or use cached goals
+  const goals = statusFilter
+    ? cachedGoals.filter((g) => g.status.toLowerCase() === statusFilter.toLowerCase())
+    : cachedGoals;
 
   function resetForm() {
     setTitle('');
@@ -77,7 +79,7 @@ export default function Goals() {
           status,
           target_date: targetDate || null,
         });
-        setGoals((prev) => prev.map((g) => (g.id === updated.id ? updated : g)));
+        updateGoalInCache(updated);
       } else {
         const created = await goalApi.createGoal({
           title,
@@ -86,7 +88,7 @@ export default function Goals() {
           status,
           target_date: targetDate || null,
         });
-        setGoals((prev) => [created, ...prev]);
+        addGoal(created);
       }
       resetForm();
     } catch (err) {
@@ -100,7 +102,7 @@ export default function Goals() {
   async function handleQuickStatusChange(goalId, newStatus) {
     try {
       const updated = await goalApi.updateGoal(goalId, { status: newStatus });
-      setGoals((prev) => prev.map((g) => (g.id === goalId ? updated : g)));
+      updateGoalInCache(updated);
     } catch (err) {
       console.error('Failed to update status:', err);
       alert('Failed to update goal status.');
@@ -113,7 +115,7 @@ export default function Goals() {
     }
     try {
       await goalApi.deleteGoal(goalId);
-      setGoals((prev) => prev.filter((g) => g.id !== goalId));
+      deleteGoalFromCache(goalId);
     } catch (err) {
       console.error('Failed to delete goal:', err);
       alert('Could not delete goal.');
@@ -330,6 +332,27 @@ export default function Goals() {
                     {goal.description}
                   </p>
                 )}
+
+                {/* Progress Bar & Status */}
+                <div className="mt-3.5 rounded-card bg-muted/50 p-2.5 border border-card-border">
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="font-semibold text-secondary-foreground flex items-center gap-1">
+                      <span>📈</span> Progress
+                    </span>
+                    <span className="font-mono text-accent font-bold text-xs">{goal.progress_value || 0}%</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted border border-card-border">
+                    <div
+                      className="h-full bg-accent transition-all duration-300"
+                      style={{ width: `${Math.min(100, Math.max(0, goal.progress_value || 0))}%` }}
+                    />
+                  </div>
+                  {goal.latest_progress_note && (
+                    <p className="mt-1.5 text-[11px] italic text-muted-foreground truncate">
+                      Latest: {goal.latest_progress_note}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="mt-4 pt-3 border-t border-card-border flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">

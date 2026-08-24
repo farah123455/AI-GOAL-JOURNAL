@@ -60,6 +60,7 @@ Extract structured insights following these strict rules:
    Categorize each blocker as: 'time', 'distraction', 'technical', 'motivation', 'unclear_task', 'external', or 'other'.
 6. INSIGHTS: Provide 1-2 brief, encouraging, coaching observations.
 7. QUICK_SUMMARY: Provide a 1-sentence summary.
+8. PROGRESS_UPDATES: If the user reports concrete progress towards an existing goal (e.g. "finished 2 modules out of 5", "completed draft 1"), estimate a progress increment (0-100) and note.
 
 {goals_context}
 User Journal Entry:
@@ -88,6 +89,13 @@ Return ONLY a valid JSON object strictly matching this schema:
     {{
       "text": "Specific blocker description",
       "category": "time | distraction | technical | motivation | unclear_task | external | other"
+    }}
+  ],
+  "progress_updates": [
+    {{
+      "related_goal_hint": "Goal title or ID if matched, else null",
+      "progress_increment": 25,
+      "note": "Short explanation of progress made"
     }}
   ],
   "insights": [

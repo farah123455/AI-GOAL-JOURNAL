@@ -2,36 +2,25 @@ import { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { summaryApi } from '../services/api';
+import { useData } from '../context/DataContext';
 
 export default function AiCoach() {
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { summary, hasLoadedSummary, fetchSummary, setSummaryInCache } = useData();
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    loadSummary();
-  }, []);
+  const loading = !hasLoadedSummary;
 
-  async function loadSummary() {
-    try {
-      setLoading(true);
-      const data = await summaryApi.getWeeklySummary();
-      setSummary(data);
-    } catch (err) {
-      console.error('Failed to load weekly summary:', err);
-      setError('Could not load weekly summary.');
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    fetchSummary({ quiet: hasLoadedSummary });
+  }, [fetchSummary, hasLoadedSummary]);
 
   async function handleGenerateFresh() {
     try {
       setGenerating(true);
       setError('');
       const data = await summaryApi.generateWeeklySummary();
-      setSummary(data);
+      setSummaryInCache(data);
     } catch (err) {
       console.error('Failed to generate summary:', err);
       setError(err.message || 'Could not generate weekly summary.');
