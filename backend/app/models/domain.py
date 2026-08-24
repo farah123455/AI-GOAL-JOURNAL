@@ -23,6 +23,13 @@ class Goal:
     target_date: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
+@dataclass
+class Progress:
+    id: str
+    goal_id: str
+    progress_value: int
+    note: Optional[str] = None
+    created_at: datetime = field(default_factory=datetime.utcnow)
 
 @dataclass
 class JournalEntry:

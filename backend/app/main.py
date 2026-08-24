@@ -5,7 +5,7 @@ from app.api.v1.users import router as users_router
 from app.api.v1.goals import router as goals_router
 from app.api.v1.journals import router as journals_router
 from app.api.v1.summaries import router as summaries_router
-
+from app.api.v1.progress import router as progress_router
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Backend API for AI Goal Journal & Accountability Coach",
@@ -37,7 +37,7 @@ def health_check():
         "whisper_model": settings.WHISPER_MODEL,
         "whisper_device": settings.WHISPER_DEVICE,
         "gemini_model": settings.GEMINI_MODEL,
-        "persistence": "in-memory",
+        "persistence": "PostgreSQL",
     }
 
 # Mount v1 routers
@@ -45,3 +45,4 @@ app.include_router(users_router, prefix=settings.API_V1_PREFIX)
 app.include_router(goals_router, prefix=settings.API_V1_PREFIX)
 app.include_router(journals_router, prefix=settings.API_V1_PREFIX)
 app.include_router(summaries_router, prefix=settings.API_V1_PREFIX)
+app.include_router(progress_router, prefix=settings.API_V1_PREFIX)

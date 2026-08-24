@@ -2,12 +2,13 @@ from datetime import datetime
 from typing import Optional
 
 from app.database.connection import SessionLocal
-from app.database.orm_models import UserORM, JournalORM, GoalORM
-from app.models.domain import User, JournalEntry, Goal
+from app.database.orm_models import UserORM, JournalORM, GoalORM,ProgressORM
+from app.models.domain import User, JournalEntry, Goal,Progress
 from app.repositories.base import (
     AbstractUserRepository,
     AbstractJournalRepository,
     AbstractGoalRepository,
+    AbstractProgressRepository,
 )
 
 class PostgresUserRepository(AbstractUserRepository):
@@ -649,7 +650,203 @@ class PostgresGoalRepository(AbstractGoalRepository):
         finally:
             db.close()            
 
+class PostgresProgressRepository(AbstractProgressRepository):
 
+    def _get_internal_user_id(
+        self,
+        db,
+        firebase_uid: str
+    ) -> Optional[int]:
+
+        user = (
+            db.query(UserORM)
+            .filter(UserORM.firebase_uid == firebase_uid)
+            .first()
+        )
+
+        return user.id if user else None
+
+    def _to_domain(self, row: ProgressORM) -> Progress:
+        return Progress(
+            id=str(row.id),
+            goal_id=str(row.goal_id),
+            progress_value=row.progress_value,
+            note=row.note,
+            created_at=row.created_at,
+        )
+
+    def _get_owned_goal(
+        self,
+        db,
+        firebase_uid: str,
+        goal_id: str
+    ) -> Optional[GoalORM]:
+
+        internal_user_id = self._get_internal_user_id(
+            db,
+            firebase_uid
+        )
+
+        if internal_user_id is None:
+            return None
+
+        try:
+            db_goal_id = int(goal_id)
+        except ValueError:
+            return None
+
+        return (
+            db.query(GoalORM)
+            .filter(
+                GoalORM.id == db_goal_id,
+                GoalORM.user_id == internal_user_id
+            )
+            .first()
+        )
+
+    def create(self, progress: Progress) -> Progress:
+        db = SessionLocal()
+
+        try:
+            # progress.goal_id must already refer to a persisted goal
+            try:
+                db_goal_id = int(progress.goal_id)
+            except ValueError:
+                raise ValueError("Invalid goal_id")
+
+            db_progress = ProgressORM(
+                goal_id=db_goal_id,
+                progress_value=progress.progress_value,
+                note=progress.note,
+                created_at=progress.created_at,
+            )
+
+            db.add(db_progress)
+            db.commit()
+            db.refresh(db_progress)
+
+            return self._to_domain(db_progress)
+
+        except Exception:
+            db.rollback()
+            raise
+
+        finally:
+            db.close()
+
+    def get_by_id(
+        self,
+        user_id: str,
+        progress_id: str
+    ) -> Optional[Progress]:
+
+        db = SessionLocal()
+
+        try:
+            try:
+                db_progress_id = int(progress_id)
+            except ValueError:
+                return None
+
+            row = (
+                db.query(ProgressORM)
+                .join(
+                    GoalORM,
+                    ProgressORM.goal_id == GoalORM.id
+                )
+                .join(
+                    UserORM,
+                    GoalORM.user_id == UserORM.id
+                )
+                .filter(
+                    ProgressORM.id == db_progress_id,
+                    UserORM.firebase_uid == user_id
+                )
+                .first()
+            )
+
+            if not row:
+                return None
+
+            return self._to_domain(row)
+
+        finally:
+            db.close()
+
+    def get_by_goal(
+        self,
+        user_id: str,
+        goal_id: str
+    ) -> list[Progress]:
+
+        db = SessionLocal()
+
+        try:
+            owned_goal = self._get_owned_goal(
+                db,
+                user_id,
+                goal_id
+            )
+
+            if not owned_goal:
+                return []
+
+            rows = (
+                db.query(ProgressORM)
+                .filter(
+                    ProgressORM.goal_id == owned_goal.id
+                )
+                .order_by(
+                    ProgressORM.created_at.desc()
+                )
+                .all()
+            )
+
+            return [
+                self._to_domain(row)
+                for row in rows
+            ]
+
+        finally:
+            db.close()
+
+    def get_latest_by_goal(
+        self,
+        user_id: str,
+        goal_id: str
+    ) -> Optional[Progress]:
+
+        db = SessionLocal()
+
+        try:
+            owned_goal = self._get_owned_goal(
+                db,
+                user_id,
+                goal_id
+            )
+
+            if not owned_goal:
+                return None
+
+            row = (
+                db.query(ProgressORM)
+                .filter(
+                    ProgressORM.goal_id == owned_goal.id
+                )
+                .order_by(
+                    ProgressORM.created_at.desc()
+                )
+                .first()
+            )
+
+            if not row:
+                return None
+
+            return self._to_domain(row)
+
+        finally:
+            db.close()
 user_repo = PostgresUserRepository()
 journal_repo = PostgresJournalRepository()
 goal_repo = PostgresGoalRepository()
+progress_repo = PostgresProgressRepository()

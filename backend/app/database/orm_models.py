@@ -127,3 +127,29 @@ class GoalORM(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )    
+
+class ProgressORM(Base):
+    __tablename__ = "progress"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    goal_id = Column(
+        Integer,
+        ForeignKey("goals.id"),
+        nullable=False
+    )
+
+    progress_value = Column(
+        Integer,
+        nullable=False
+    )
+
+    note = Column(
+        Text,
+        nullable=True
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )    

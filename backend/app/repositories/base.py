@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Any
-from app.models.domain import User, Goal, JournalEntry, WeeklySummary
+from app.models.domain import User, Goal,Progress, JournalEntry, WeeklySummary
 
 class AbstractUserRepository(ABC):
     @abstractmethod
@@ -36,6 +36,35 @@ class AbstractGoalRepository(ABC):
     def delete(self, user_id: str, goal_id: str) -> bool:
         pass
 
+class AbstractProgressRepository(ABC):
+
+    @abstractmethod
+    def create(self, progress: Progress) -> Progress:
+        pass
+
+    @abstractmethod
+    def get_by_id(
+        self,
+        user_id: str,
+        progress_id: str
+    ) -> Optional[Progress]:
+        pass
+
+    @abstractmethod
+    def get_by_goal(
+        self,
+        user_id: str,
+        goal_id: str
+    ) -> list[Progress]:
+        pass
+
+    @abstractmethod
+    def get_latest_by_goal(
+        self,
+        user_id: str,
+        goal_id: str
+    ) -> Optional[Progress]:
+        pass
 class AbstractJournalRepository(ABC):
     @abstractmethod
     def create(self, journal: JournalEntry) -> JournalEntry:
