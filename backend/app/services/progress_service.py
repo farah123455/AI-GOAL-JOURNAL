@@ -3,6 +3,7 @@ import logging
 from typing import Optional
 
 from app.models.domain import Progress
+from app.schemas.progress import ProgressCreate
 from app.repositories.postgres import progress_repo, goal_repo
 
 
@@ -19,23 +20,16 @@ class ProgressService:
         note: Optional[str] = None,
     ) -> Progress:
         """
-        Create a new historical progress record for a goal.
-
-        The goal must belong to the authenticated Firebase user.
+        Create a historical progress record for a goal.
+        The goal must belong to the authenticated user.
         """
 
-        # Verify that the goal belongs to the authenticated user.
         goal = goal_repo.get_by_id(
             user_id=user_id,
             goal_id=goal_id,
         )
 
         if not goal:
-            logger.warning(
-                "Attempted to record progress for nonexistent "
-                "or unauthorized goal %s",
-                goal_id,
-            )
             raise LookupError("Goal not found")
 
         progress = Progress(
@@ -56,16 +50,43 @@ class ProgressService:
 
         return saved
 
+    def record_progress(
+        self,
+        user_id: str,
+        goal_id: str,
+        data: ProgressCreate,
+    ) -> Optional[Progress]:
+        """
+        Compatibility method used by the Goal API and AI journal pipeline.
+        Saves AI/manual progress to PostgreSQL.
+        """
+
+        goal = goal_repo.get_by_id(
+            user_id=user_id,
+            goal_id=goal_id,
+        )
+
+        if not goal:
+            logger.warning(
+                "Attempted to record progress for nonexistent "
+                "or unauthorized goal %s",
+                goal_id,
+            )
+            return None
+
+        return self.create_progress(
+            user_id=user_id,
+            goal_id=goal_id,
+            progress_value=data.progress_value,
+            note=data.note,
+        )
+
     def get_progress_history(
         self,
         user_id: str,
         goal_id: str,
     ) -> list[Progress]:
-        """
-        Return all historical progress records for a user's goal.
-        """
 
-        # Verify ownership before returning progress.
         goal = goal_repo.get_by_id(
             user_id=user_id,
             goal_id=goal_id,
@@ -84,11 +105,7 @@ class ProgressService:
         user_id: str,
         goal_id: str,
     ) -> Optional[Progress]:
-        """
-        Return the latest progress record for a user's goal.
-        """
 
-        # Verify ownership before returning progress.
         goal = goal_repo.get_by_id(
             user_id=user_id,
             goal_id=goal_id,

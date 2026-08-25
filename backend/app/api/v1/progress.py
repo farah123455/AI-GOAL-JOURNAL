@@ -23,6 +23,12 @@ def create_progress(
     data: ProgressCreate,
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
+    if not data.goal_id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="goal_id is required",
+        )
+
     try:
         return progress_service.create_progress(
             user_id=current_user.uid,

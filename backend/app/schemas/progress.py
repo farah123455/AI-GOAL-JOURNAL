@@ -5,7 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProgressCreate(BaseModel):
-    goal_id: str
+    # Optional because some routes provide goal_id in the URL/path.
+    goal_id: Optional[str] = None
 
     progress_value: int = Field(
         ...,
