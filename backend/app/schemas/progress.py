@@ -6,12 +6,27 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ProgressCreate(BaseModel):
     goal_id: str
-    progress_value: int = Field(..., ge=0, le=100)
-    note: Optional[str] = None
+
+    progress_value: int = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="Progress percentage from 0 to 100"
+    )
+
+    note: Optional[str] = Field(
+        None,
+        description="Optional note or reflection detailing progress"
+    )
 
 
 class ProgressUpdate(BaseModel):
-    progress_value: Optional[int] = Field(None, ge=0, le=100)
+    progress_value: Optional[int] = Field(
+        None,
+        ge=0,
+        le=100
+    )
+
     note: Optional[str] = None
 
 

@@ -61,6 +61,12 @@ export const userApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
+  updatePreferences: (preferences) =>
+    fetchWithAuth('/users/me/preferences', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(preferences),
+    }),
 };
 
 /**

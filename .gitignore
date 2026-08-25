@@ -21,12 +21,20 @@ venv/
 ENV/
 env/
 
-# Logs & Temporary Files
+# Logs, Audio Transcripts & Temporary Scratch Files
 *.log
 *.tmp
 *.webm
 *.wav
+doc_text.txt
+scratch/
 
-# OS Artifacts
+# Agent System Logs & Uploads
+.system_generated/
+.user_uploaded/
+
+# OS & IDE Artifacts
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/

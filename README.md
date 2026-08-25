@@ -4,7 +4,7 @@ An intelligent personal journaling and goal-tracking platform tailored for stude
 
 ---
 
-## 1. Project Architecture
+## 1. System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -12,8 +12,10 @@ An intelligent personal journaling and goal-tracking platform tailored for stude
 │  - Public Landing Page (/) & Smart Auth Routing             │
 │  - Modular Firebase Auth (Register, Login, Session Context) │
 │  - MediaRecorder Voice Capture with Editable Review Screen  │
-│  - Dark Theme Design System (#0A0A1A, #6D28D9, #06B6D4)     │
-│  - Reactive Dashboard, Goals Board, AI Coach, Journal Page  │
+│  - Burgundy / Wine Design System                            │
+│  - Lucide Vector Icons & Circular Progress Components       │
+│  - Pages: Dashboard, Progress, Goals, Journal, AI Coach,    │
+│    Insights, Profile, Settings                              │
 └──────────────────────────────┬──────────────────────────────┘
                                │ Authorization: Bearer <Firebase ID Token>
                                ▼
@@ -22,6 +24,8 @@ An intelligent personal journaling and goal-tracking platform tailored for stude
 │  - Firebase ID Token Verification via Google Public Certs   │
 │  - REST API Routers: /users, /journals, /goals, /summaries  │
 │  - Deterministic Business & Goal-Matching Engine            │
+│  - Goal Progress Tracking & AI Progress Detection Engine    │
+│  - User Preferences Persistence API                         │
 └──────────────┬──────────────────────────────┬───────────────┘
                │                              │
                ▼                              ▼
@@ -35,72 +39,87 @@ An intelligent personal journaling and goal-tracking platform tailored for stude
                └──────────────┬───────────────┘
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                 In-Memory Repository Layer                  │
-│  - User-isolated thread-safe stores (Dictionaries + Locks)  │
+│             Repository & Persistence Layer                  │
+│  - Thread-Safe In-Memory Stores (Default for Local MVP)     │
+│  - Docker PostgreSQL Service (port 5432 via docker-compose) │
 │  - Abstract Interfaces (AbstractUserRepository, etc.)       │
-│  - Zero PostgreSQL / Zero Docker in this MVP phase          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. Technology Stack & Design System
+## 2. Technology Stack
 
-- **Frontend**: React 18, Vite 5, Tailwind CSS 3, React Router DOM 6.
-  - **Design System Tokens**:
-    - `Background`: `#0A0A1A`
-    - `Foreground`: `#F1F0FF`
-    - `Primary`: `#6D28D9` (with Primary Gradient `#6D28D9` $\rightarrow$ `#4C1D95`)
-    - `Secondary`: `#1E1B4B` (Secondary Foreground `#C4B5FD`)
-    - `Accent`: `#06B6D4` (Cyan accent for voice recording, AI badges, and highlights)
-    - `Muted`: `#1A1A35` (Muted Foreground `#8B8AAD`)
-  - **Typography**: `Fraunces` serif headings paired with `Inter` body copy.
+- **Frontend**: React 18, Vite 5, Tailwind CSS 3 (Burgundy theme: `#12090B`, `#190D0F`, `#211114`, `#561C24`, `#6D2932`, `#E8D8C4`, `#C7B7A3`), Lucide React 0.395, React Router DOM 6.
 - **Backend**: FastAPI, Python 3.10+, Uvicorn.
 - **Authentication**: Firebase Authentication (Modular client SDK + Backend token verification via Google public X509 certificates).
 - **Speech-to-Text**: `faster-whisper` (Model: `tiny`, Device: `cpu`, Compute: `int8`).
 - **AI Engine**: Google Gemini API (`gemini-3.1-flash-lite` via `google-genai` Python SDK).
-- **Persistence (Current Phase)**: Thread-safe in-memory repository layer with strict per-user data isolation.
-- **Persistence (Future Phase)**: PostgreSQL with SQLAlchemy and Alembic migrations (intentionally deferred).
+- **Database / Container**: Docker PostgreSQL 15 container (`docker-compose.yml`) + In-memory repository layer for thread-safe local isolation.
 
 ---
 
-## 3. Important Architectural Disclaimers
+## 3. Project Specifications & Design Specifications
 
-> [!IMPORTANT]
-> **In-Memory Storage**: PostgreSQL persistence is intentionally deferred in the current phase. The current backend uses an in-memory repository and data is lost when the backend server restarts.
->
-> **Local Speech-to-Text Model**: Whisper transcription uses a locally hosted `faster-whisper` **Tiny** model running on CPU with INT8 quantization (~75 MB model weights, ~320 MB runtime memory footprint) and does **not** require a Whisper API key.
->
-> **4 GB RAM PC Constraint**: The application is strictly optimized for low-resource environments. No CUDA/GPU dependencies are used.
+The project includes technical design specifications located in the root directory:
+
+- [`PROJECT_CONTEXT.md`](file:///d:/MyFiles/AI-GOAL-JOURNAL/PROJECT_CONTEXT.md) — Complete mission, status matrix, and feature roadmap.
+- [`PRODUCTIVITY_SCORE_SPEC.md`](file:///d:/MyFiles/AI-GOAL-JOURNAL/PRODUCTIVITY_SCORE_SPEC.md) — Personal Productivity Score (0–100) design specification, formula, weightings, and example calculations.
+- [`ENCRYPTION_PRIVACY_RESEARCH.md`](file:///d:/MyFiles/AI-GOAL-JOURNAL/ENCRYPTION_PRIVACY_RESEARCH.md) — Application-layer envelope encryption (AES-256-GCM + Cloud KMS) architecture.
+- [`AGENTS.md`](file:///d:/MyFiles/AI-GOAL-JOURNAL/AGENTS.md) — Root agent contract and DOX directory guidelines.
 
 ---
 
-## 4. Prerequisites
+## 4. Upcoming Planned Features Roadmap
 
+```text
+Goal Progress ────► Habit Tracker ────► Daily Streak System
+Goals + target_date ────► Calendar ────► Reminders
+Journals + Progress + Activity + Blockers ────► Personal Productivity Score
+```
+
+1. **Habit Tracker (Planned)**: Recurring daily/weekly habits and automatic journal-based habit detection.
+2. **Daily Streak System (Planned)**: Consecutive active reflection days calculated from goal progress and habit activity.
+3. **Goal Calendar + Reminders (Planned)**: Calendar grid displaying `target_date` deadlines and timely notifications.
+4. **Personal Productivity Score (Planned)**: Deterministic daily 0–100 index derived from completed activities, goal progress, journal consistency, and blocker penalties.
+
+---
+
+## 5. Prerequisites & Quick Start
+
+### Prerequisites
 - **Node.js**: `v18.0.0` or higher
 - **Python**: `3.10+`
-- **npm**: `v9.0.0` or higher
+- **Docker Desktop** (optional, for PostgreSQL database container)
+
+### 🚀 1-Click Launcher (Windows)
+
+Simply double-click the [`run.bat`](file:///d:/MyFiles/AI-GOAL-JOURNAL/run.bat) file in the root directory. It will:
+1. Start the Docker PostgreSQL container on port 5432 (if Docker is available).
+2. Start the FastAPI backend server on `http://localhost:8000`.
+3. Start the React Vite dev server on `http://localhost:5173`.
+4. Open your default browser automatically.
 
 ---
 
-## 5. Setup & Installation Instructions
+## 6. Manual Setup & Installation
 
-### Step 1: Clone Repository & Configure Environment
+### Step 1: Environment Configuration
 
-Copy `.env.example` to `.env` in the project root:
+Copy `.env.example` to `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-Configure your Firebase credentials and Google Gemini API key:
+Configure environment credentials in `.env`:
 
 ```env
 # Frontend Configuration
 VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1
@@ -109,47 +128,41 @@ VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-3.1-flash-lite
 
-# Whisper Configuration (Local CPU INT8 for 4 GB RAM PC)
+# Whisper Configuration
 WHISPER_MODEL=tiny
 WHISPER_DEVICE=cpu
 WHISPER_COMPUTE_TYPE=int8
 FIREBASE_PROJECT_ID=your_project_id
+
+# PostgreSQL Database (Docker Postgres)
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ai_goal_journal
 ```
 
-### Step 2: Install Speech-to-Text & Python Dependencies
-
-To install `faster-whisper` (Tiny model engine) along with FastAPI and all backend packages, run:
+### Step 2: Install Python & Node Dependencies
 
 ```bash
+# Python Backend Dependencies
 python -m pip install -r backend/requirements.txt
-```
 
-> **Installed Whisper Model**: `faster-whisper` Tiny (`model="tiny"`, `device="cpu"`, `compute_type="int8"`). Automatically cached to `~/.cache/huggingface/hub/` on first inference.
-
-### Step 3: Install Frontend Dependencies
-
-```bash
+# Node Frontend Dependencies
 npm install
 ```
 
----
-
-## 6. Running Locally
-
-### Starting Backend (FastAPI + Uvicorn)
+### Step 3: Start Docker PostgreSQL (Optional)
 
 ```bash
-python -m uvicorn app.main:app --app-dir backend --reload --port 8000
+docker compose up -d postgres
 ```
-- API Docs: `http://127.0.0.1:8000/docs`
-- Health Check: `http://127.0.0.1:8000/api/v1/health`
 
-### Starting Frontend (React + Vite)
+### Step 4: Run Dev Servers
 
 ```bash
+# Terminal 1: Backend
+python -m uvicorn app.main:app --app-dir backend --reload --port 8000
+
+# Terminal 2: Frontend
 npm run dev
 ```
-- Web Application: `http://localhost:5173`
 
 ---
 
@@ -162,13 +175,16 @@ All endpoints (except `/health`) require `Authorization: Bearer <Firebase ID Tok
 | `GET` | `/api/v1/health` | Service health, model status, and runtime info. |
 | `GET` | `/api/v1/users/me` | Fetch authenticated user profile and live metrics. |
 | `PUT` | `/api/v1/users/me` | Update user display name and profession. |
+| `PUT` | `/api/v1/users/me/preferences` | Update user preferences (notifications, aiInsights, etc.). |
 | `GET` | `/api/v1/goals` | List goals with optional `?status=` filter (Active, Completed, Stalled). |
 | `POST` | `/api/v1/goals` | Create a new goal milestone. |
 | `GET` | `/api/v1/goals/{id}` | Retrieve specific goal details. |
 | `PUT` | `/api/v1/goals/{id}` | Update goal attributes or status. |
 | `DELETE` | `/api/v1/goals/{id}` | Delete goal. |
+| `POST` | `/api/v1/goals/{id}/progress` | Record 0–100% progress entry for a goal (auto-completes goal at 100%). |
+| `GET` | `/api/v1/goals/{id}/progress` | Retrieve progress history log for a goal. |
 | `GET` | `/api/v1/journals` | List user journal entries (newest first). |
-| `POST` | `/api/v1/journals` | Create journal entry + run Gemini structured analysis. |
+| `POST` | `/api/v1/journals` | Create journal entry + run Gemini structured analysis & progress detection. |
 | `GET` | `/api/v1/journals/{id}` | Retrieve single journal entry with AI breakdown. |
 | `PUT` | `/api/v1/journals/{id}` | Update journal content. |
 | `DELETE` | `/api/v1/journals/{id}` | Delete journal entry. |
@@ -180,7 +196,7 @@ All endpoints (except `/health`) require `Authorization: Bearer <Firebase ID Tok
 
 ## 8. Testing & Verification
 
-### Automated Unit Tests (0 API calls, 0 Whisper loads)
+### Automated Unit Tests
 
 ```bash
 python -m pytest -v

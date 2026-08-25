@@ -3,9 +3,11 @@ import logging
 from typing import Optional, Any
 from app.models.domain import JournalEntry
 from app.schemas.journal import JournalCreate, JournalUpdate
-from app.repositories.postgres import journal_repo
+from app.repositories.in_memory import journal_repo
 from app.services.goal_service import goal_service
 from app.services.gemini_service import gemini_service
+from app.services.progress_service import progress_service
+from app.schemas.progress import ProgressCreate
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,7 @@ class JournalService:
         # 3. Call Gemini AI extraction
         ai_raw = gemini_service.analyze_journal(content=content, existing_goals=goals_dict_list)
 
-        # 4. Perform deterministic matching on extracted activities
+        # 4. Perform deterministic matching on extracted activities & record progress
         activities = ai_raw.get("activities", [])
         for act in activities:
             text = act.get("text", "")
@@ -42,6 +44,25 @@ class JournalService:
             if matched_id:
                 act["related_goal_id"] = matched_id
                 act["related_goal_title"] = matched_title
+
+        # 5. Process AI Progress Updates & save to progress_repo
+        progress_updates = ai_raw.get("progress_updates", [])
+        for prog in progress_updates:
+            hint = prog.get("related_goal_hint")
+            increment = prog.get("progress_increment", 10)
+            note = prog.get("note", "AI journal progress detection")
+            matched_id, matched_title = goal_service.match_activity_to_existing_goal(
+                activity_text=note, hint=hint, existing_goals=existing_goals
+            )
+            if matched_id:
+                existing_goal = goal_service.get_goal(user_id=user_id, goal_id=matched_id)
+                current_val = existing_goal.progress_value if existing_goal else 0
+                new_val = min(100, current_val + increment)
+                progress_service.record_progress(
+                    user_id=user_id,
+                    goal_id=matched_id,
+                    data=ProgressCreate(progress_value=new_val, note=f"{note} (+{increment}%)")
+                )
 
         # 5. Deterministic matching on extracted goals
         goals_suggested = ai_raw.get("goals", [])

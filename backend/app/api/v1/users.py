@@ -27,3 +27,17 @@ def update_my_profile(
             detail="User profile not found",
         )
     return updated
+
+@router.put("/me/preferences", response_model=UserProfileResponse)
+def update_my_preferences(
+    preferences: dict,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    """Update preference flags for the authenticated user."""
+    updated = user_service.update_preferences(uid=current_user.uid, preferences=preferences)
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User profile not found",
+        )
+    return updated

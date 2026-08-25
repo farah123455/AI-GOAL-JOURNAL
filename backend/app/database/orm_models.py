@@ -80,6 +80,7 @@ class JournalORM(Base):
         onupdate=datetime.utcnow
     )
 
+
 class GoalORM(Base):
     __tablename__ = "goals"
 
@@ -126,7 +127,8 @@ class GoalORM(Base):
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow
-    )    
+    )
+
 
 class ProgressORM(Base):
     __tablename__ = "progress"
@@ -141,7 +143,8 @@ class ProgressORM(Base):
 
     progress_value = Column(
         Integer,
-        nullable=False
+        nullable=False,
+        default=0
     )
 
     note = Column(
@@ -152,4 +155,4 @@ class ProgressORM(Base):
     created_at = Column(
         DateTime,
         default=datetime.utcnow
-    )    
+    )

@@ -9,6 +9,7 @@ class User:
     email: str
     display_name: Optional[str] = None
     profession: Optional[str] = None
+    preferences: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
@@ -21,8 +22,18 @@ class Goal:
     category: Optional[str] = None
     status: str = "Active"  # Active | Completed | Stalled
     target_date: Optional[str] = None
+    progress_value: int = 0
+    latest_progress_note: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
+@dataclass
+class Progress:
+    id: str
+    goal_id: str
+    progress_value: int
+    note: Optional[str] = None
+    created_at: datetime = field(default_factory=datetime.utcnow)
+
 @dataclass
 class Progress:
     id: str
