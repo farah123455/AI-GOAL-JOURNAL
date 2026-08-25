@@ -64,15 +64,15 @@ export default function Settings() {
   }
 
   return (
-    <div className="app-page">
-      <header className="border-b border-border bg-surface px-5 py-7 md:px-8 lg:px-10">
+    <div className="app-page bg-slate-50 min-h-screen">
+      <header className="border-b border-slate-200 bg-white px-5 py-7 md:px-8 lg:px-10">
         <div className="mx-auto max-w-[1000px]">
           <p className="section-label">PREFERENCES</p>
           <div className="mt-2 flex items-center gap-3">
-            <SettingsIcon size={23} className="text-beige" />
-            <h1 className="text-3xl font-semibold text-cream">Settings</h1>
+            <SettingsIcon size={23} className="text-indigo-600" />
+            <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
           </div>
-          <p className="mt-2 text-sm text-beige/60">
+          <p className="mt-2 text-sm text-slate-600 font-medium">
             Customize how AI Goal Journal works for you.
           </p>
         </div>
@@ -81,7 +81,7 @@ export default function Settings() {
       <main className="mx-auto max-w-[1000px] px-5 py-7 md:px-8 lg:px-10">
         <div className="space-y-5">
           {error && (
-            <div className="rounded-xl border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-400">
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">
               {error}
             </div>
           )}
@@ -142,9 +142,9 @@ export default function Settings() {
             />
           </SettingSection>
 
-          <div className="flex justify-end gap-4 pt-2">
+          <div className="flex items-center justify-end gap-4 pt-2">
             {saved && (
-              <div className="flex items-center gap-2 text-xs font-semibold text-accent">
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-600">
                 <Check size={14} />
                 Settings saved
               </div>
@@ -153,7 +153,7 @@ export default function Settings() {
             <button
               onClick={saveSettings}
               disabled={saving}
-              className="primary-button"
+              className="primary-button text-xs"
             >
               <Save size={14} />
               {saving ? "Saving…" : "Save settings"}
@@ -167,14 +167,14 @@ export default function Settings() {
 
 function SettingSection({ icon: Icon, title, description, children }) {
   return (
-    <section className="panel p-6 shadow-card">
+    <section className="panel p-6 shadow-sm">
       <div className="flex items-center gap-4">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-burgundy text-beige">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
           <Icon size={19} />
         </div>
         <div>
-          <h2 className="font-semibold text-cream">{title}</h2>
-          <p className="mt-1 text-xs text-beige/60">{description}</p>
+          <h2 className="font-bold text-slate-900">{title}</h2>
+          <p className="mt-1 text-xs text-slate-500 font-medium">{description}</p>
         </div>
       </div>
       <div className="mt-6">{children}</div>
@@ -184,10 +184,10 @@ function SettingSection({ icon: Icon, title, description, children }) {
 
 function SettingRow({ title, description, enabled, onChange, disabled }) {
   return (
-    <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface2 p-4">
+    <div className="flex items-center justify-between gap-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
       <div>
-        <h3 className="text-sm font-semibold text-cream">{title}</h3>
-        <p className="mt-1 text-xs leading-5 text-beige/60">{description}</p>
+        <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+        <p className="mt-1 text-xs leading-5 text-slate-600 font-medium">{description}</p>
       </div>
 
       <button
@@ -196,11 +196,11 @@ function SettingRow({ title, description, enabled, onChange, disabled }) {
         aria-pressed={enabled}
         aria-disabled={disabled}
         className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-          enabled ? "bg-wine" : "bg-muted"
+          enabled ? "bg-indigo-600" : "bg-slate-300"
         } ${disabled ? "opacity-50" : ""}`}
       >
         <span
-          className={`absolute top-1 h-4 w-4 rounded-full bg-cream transition-all ${
+          className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-all ${
             enabled ? "left-6" : "left-1"
           }`}
         />

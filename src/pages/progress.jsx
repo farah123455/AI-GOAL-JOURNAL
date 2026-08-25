@@ -119,14 +119,14 @@ export default function Progress() {
     .slice(0, 4);
 
   return (
-    <div className="app-page">
-      <header className="border-b border-border bg-surface px-5 py-7 md:px-8 lg:px-10">
+    <div className="app-page bg-slate-50 min-h-screen">
+      <header className="border-b border-slate-200 bg-white px-5 py-7 md:px-8 lg:px-10">
         <div className="mx-auto max-w-[1250px]">
           <p className="section-label">PERFORMANCE</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-cream">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
             Progress
           </h1>
-          <p className="mt-2 text-sm text-beige/60">
+          <p className="mt-2 text-sm text-slate-600 font-medium">
             Understand your consistency and movement toward your goals.
           </p>
         </div>
@@ -134,27 +134,30 @@ export default function Progress() {
 
       <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10">
         {loading ? (
-          <section className="panel px-6 py-20 text-center shadow-card">
-            <p className="text-sm text-beige/55">Loading your progress…</p>
+          <section className="panel px-6 py-20 text-center shadow-sm">
+            <p className="text-sm font-medium text-slate-500">Loading your progress…</p>
           </section>
         ) : (
           <>
             {/* METRICS */}
             <div className="grid gap-4 md:grid-cols-3">
               <StatCard
-                icon={<TrendingUp size={18} />}
+                icon={<TrendingUp size={18} className="text-indigo-600" />}
+                iconBg="bg-indigo-50"
                 label="WEEKLY PROGRESS"
                 value={`${average}%`}
                 detail="average this week"
               />
               <StatCard
-                icon={<Flame size={18} />}
+                icon={<Flame size={18} className="text-amber-500" />}
+                iconBg="bg-amber-50"
                 label="CURRENT STREAK"
                 value={String(streak)}
-                detail="days in a row"
+                detail="days active"
               />
               <StatCard
-                icon={<CheckCircle2 size={18} />}
+                icon={<CheckCircle2 size={18} className="text-emerald-600" />}
+                iconBg="bg-emerald-50"
                 label="COMPLETED"
                 value={String(completedActivities)}
                 detail="activities"
@@ -163,9 +166,9 @@ export default function Progress() {
 
             {/* CHART + OVERALL */}
             <div className="mt-5 grid gap-5 lg:grid-cols-[1.5fr_0.8fr]">
-              <div className="panel p-6 shadow-card md:p-7">
+              <div className="panel p-6 shadow-sm md:p-7">
                 <p className="section-label">ACTIVITY OVERVIEW</p>
-                <h2 className="mt-2 text-xl font-semibold text-cream">
+                <h2 className="mt-2 text-xl font-bold text-slate-900">
                   Weekly consistency
                 </h2>
                 <div className="mt-8 flex h-56 items-end gap-3">
@@ -173,11 +176,11 @@ export default function Progress() {
                     <div key={item.day} className="flex h-full flex-1 flex-col justify-end">
                       <div className="flex h-full items-end">
                         <div
-                          className="mx-auto w-full max-w-[42px] rounded-t-lg bg-burgundy transition hover:bg-wine"
+                          className="mx-auto w-full max-w-[42px] rounded-t-lg bg-indigo-600 transition hover:bg-indigo-700"
                           style={{ height: `${item.value}%` }}
                         />
                       </div>
-                      <span className="mt-3 text-center text-[9px] font-semibold tracking-wider text-beige/40">
+                      <span className="mt-3 text-center text-[9px] font-bold tracking-wider text-slate-400">
                         {item.day}
                       </span>
                     </div>
@@ -185,66 +188,66 @@ export default function Progress() {
                 </div>
               </div>
 
-              <div className="panel p-6 shadow-card md:p-7">
+              <div className="panel p-6 shadow-sm md:p-7">
                 <p className="section-label">GOAL COMPLETION</p>
-                <h2 className="mt-2 text-xl font-semibold text-cream">
+                <h2 className="mt-2 text-xl font-bold text-slate-900">
                   Overall progress
                 </h2>
                 <div className="mt-8 flex justify-center">
-                  <div className="relative flex h-40 w-40 items-center justify-center rounded-full border-[12px] border-[#32191D]">
-                    <div className="absolute inset-[-12px] rounded-full border-[12px] border-transparent border-l-burgundy border-t-burgundy border-r-burgundy rotate-[-35deg]" />
+                  <div className="relative flex h-40 w-40 items-center justify-center rounded-full border-[12px] border-slate-100">
+                    <div className="absolute inset-[-12px] rounded-full border-[12px] border-transparent border-l-indigo-600 border-t-indigo-600 border-r-indigo-600 rotate-[-35deg]" />
                     <div className="text-center">
-                      <p className="text-3xl font-semibold text-cream">{overallProgress}%</p>
-                      <p className="mt-1 text-[9px] uppercase tracking-[0.15em] text-beige/45">
+                      <p className="text-3xl font-bold text-slate-900">{overallProgress}%</p>
+                      <p className="mt-1 text-[9px] uppercase tracking-[0.15em] text-slate-400 font-bold">
                         complete
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className="mt-7 border-t border-border pt-5">
+                <div className="mt-7 border-t border-slate-100 pt-5">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] text-beige/45">Goals on track</p>
-                      <p className="mt-1 text-lg font-semibold text-cream">
+                      <p className="text-[10px] text-slate-500 font-medium">Goals on track</p>
+                      <p className="mt-1 text-lg font-bold text-slate-900">
                         {goals.length === 0 ? "0 / 0" : `${activeGoalsCount} / ${goals.length}`}
                       </p>
                     </div>
-                    <Target size={18} className="text-beige/50" />
+                    <Target size={18} className="text-indigo-600" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* ACTIVITY LOG */}
-            <section className="panel mt-5 p-6 shadow-card md:p-7">
+            <section className="panel mt-5 p-6 shadow-sm md:p-7">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="section-label">ACTIVITY LOG</p>
-                  <h2 className="mt-2 text-xl font-semibold text-cream">Recent progress</h2>
+                  <h2 className="mt-2 text-xl font-bold text-slate-900">Recent progress</h2>
                 </div>
-                <CalendarDays size={18} className="text-beige/50" />
+                <CalendarDays size={18} className="text-slate-400" />
               </div>
 
-              <div className="mt-5 divide-y divide-border">
+              <div className="mt-5 divide-y divide-slate-100">
                 {recentActivity.length === 0 ? (
                   <div className="py-8 text-center">
-                    <CheckCircle2 size={22} className="mx-auto text-beige/35" />
-                    <p className="mt-3 text-sm font-semibold text-cream">Nothing yet</p>
-                    <p className="mt-1 text-xs text-beige/45">
+                    <CheckCircle2 size={22} className="mx-auto text-slate-300" />
+                    <p className="mt-3 text-sm font-bold text-slate-900">Nothing yet</p>
+                    <p className="mt-1 text-xs text-slate-500 font-medium">
                       Your recent activity will appear here.
                     </p>
                   </div>
                 ) : (
                   recentActivity.map((activity) => (
                     <div key={activity.id} className="flex items-center gap-4 py-4">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-wine/25 text-cream">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
                         <CheckCircle2 size={16} />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-cream">{activity.title}</p>
-                        <p className="mt-1 text-xs text-beige/50">{activity.detail}</p>
+                        <p className="text-sm font-bold text-slate-900">{activity.title}</p>
+                        <p className="mt-1 text-xs text-slate-600 font-medium">{activity.detail}</p>
                       </div>
-                      <span className="text-[10px] text-beige/35">{activity.time}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{activity.time}</span>
                     </div>
                   ))
                 )}
@@ -257,16 +260,16 @@ export default function Progress() {
   );
 }
 
-function StatCard({ icon, label, value, detail }) {
+function StatCard({ icon, iconBg = "bg-indigo-50", label, value, detail }) {
   return (
-    <div className="panel p-5 shadow-card">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-wine/25 text-cream">
+    <div className="panel p-5 shadow-sm">
+      <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconBg}`}>
         {icon}
       </div>
       <p className="mt-5 section-label">{label}</p>
       <div className="mt-1 flex items-baseline gap-2">
-        <span className="text-2xl font-semibold text-cream">{value}</span>
-        <span className="text-[11px] text-beige/45">{detail}</span>
+        <span className="text-2xl font-bold text-slate-900">{value}</span>
+        <span className="text-[11px] text-slate-500 font-medium">{detail}</span>
       </div>
     </div>
   );

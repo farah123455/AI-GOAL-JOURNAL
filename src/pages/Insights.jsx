@@ -29,36 +29,36 @@ export default function Insights() {
   ];
 
   return (
-    <div className="app-page">
-      <header className="border-b border-border bg-surface px-5 py-7 md:px-8 lg:px-10">
+    <div className="app-page bg-slate-50 min-h-screen">
+      <header className="border-b border-slate-200 bg-white px-5 py-7 md:px-8 lg:px-10">
         <div className="mx-auto max-w-[1250px]">
           <p className="section-label">PERSONAL INTELLIGENCE</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-cream">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
             Insights
           </h1>
-          <p className="mt-2 text-sm text-beige/60">
+          <p className="mt-2 text-sm text-slate-600 font-medium">
             Understand your patterns and make better decisions.
           </p>
         </div>
       </header>
 
       <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10">
-        <section className="panel p-7 md:p-9 bg-gradient-to-br from-burgundy to-surface border border-border shadow-card">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cream text-burgundy">
+        <section className="rounded-2xl p-7 md:p-9 bg-gradient-to-r from-indigo-600 to-indigo-800 border border-indigo-700 shadow-md text-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md text-white">
             <Sparkles size={22} />
           </div>
 
-          <h2 className="mt-6 text-2xl font-semibold text-cream">
+          <h2 className="mt-6 text-2xl font-bold text-white">
             Your personal growth snapshot
           </h2>
 
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-beige/80">
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-indigo-100 font-medium">
             Your progress is built from the small actions you take every day. Keep your goals realistic, reflect regularly, and focus on consistency rather than perfection.
           </p>
 
           <button
             onClick={() => navigate("/progress")}
-            className="mt-6 flex items-center gap-2 rounded-xl bg-cream px-4 py-3 text-xs font-bold text-burgundy hover:bg-beige transition"
+            className="mt-6 flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-xs font-bold text-indigo-600 hover:bg-indigo-50 transition shadow-sm"
           >
             View progress
             <ArrowUpRight size={14} />
@@ -69,12 +69,12 @@ export default function Insights() {
           {insights.map((item) => {
             const Icon = item.icon;
             return (
-              <article key={item.title} className="panel p-6 shadow-card">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-burgundy text-beige">
+              <article key={item.title} className="panel p-6 shadow-sm">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
                   <Icon size={18} />
                 </div>
-                <h3 className="mt-5 font-semibold text-cream">{item.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-beige/70">{item.text}</p>
+                <h3 className="mt-5 font-bold text-slate-900">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600 font-medium">{item.text}</p>
               </article>
             );
           })}

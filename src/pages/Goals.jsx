@@ -131,15 +131,15 @@ export default function Goals() {
   }
 
   return (
-    <div className="app-page">
-      <header className="border-b border-border bg-surface px-5 py-7 md:px-8 lg:px-10">
+    <div className="app-page bg-slate-50 min-h-screen">
+      <header className="border-b border-slate-200 bg-white px-5 py-7 md:px-8 lg:px-10">
         <div className="mx-auto max-w-[1250px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="section-label">TARGETS & MILESTONES</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-cream">
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
               Goals
             </h1>
-            <p className="mt-2 text-sm text-beige/60">
+            <p className="mt-2 text-sm text-slate-600 font-medium">
               Define target goals, track progress percentages, and celebrate wins.
             </p>
           </div>
@@ -167,8 +167,8 @@ export default function Goals() {
                 onClick={() => setStatusFilter(st)}
                 className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition ${
                   statusFilter === st
-                    ? "bg-burgundy text-cream shadow-card"
-                    : "bg-surface2 text-beige/70 border border-border hover:bg-wine/30 hover:text-cream"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
                 {st === "" ? "All Goals" : st}
@@ -176,34 +176,34 @@ export default function Goals() {
             ))}
           </div>
 
-          <span className="text-xs text-beige/50 font-mono">
+          <span className="text-xs text-slate-500 font-mono font-medium">
             Showing {filteredGoals.length} {filteredGoals.length === 1 ? "goal" : "goals"}
           </span>
         </div>
 
         {/* Create / Edit Modal Form */}
         {showCreateModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-            <div className="panel w-full max-w-xl p-6 shadow-glow border border-border bg-surface max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
-                <h3 className="text-lg font-bold text-cream flex items-center gap-2">
-                  <Target size={18} className="text-beige" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+            <div className="panel w-full max-w-xl p-6 shadow-xl border border-slate-200 bg-white max-h-[90vh] overflow-y-auto rounded-2xl">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Target size={18} className="text-indigo-600" />
                   {editingGoal ? "Edit Goal" : "Create New Goal"}
                 </h3>
-                <button onClick={resetForm} className="text-beige hover:text-cream">
+                <button onClick={resetForm} className="text-slate-400 hover:text-slate-700">
                   <X size={18} />
                 </button>
               </div>
 
               {formError && (
-                <div className="mb-4 rounded-xl bg-red-950/30 p-3 text-xs text-red-400 border border-red-900/40">
+                <div className="mb-4 rounded-xl bg-red-50 p-3 text-xs text-red-600 border border-red-200">
                   {formError}
                 </div>
               )}
 
               <form onSubmit={handleSaveGoal} className="space-y-4">
                 <div>
-                  <label className="text-xs font-semibold text-beige/70 block mb-1">
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
                     Goal Title *
                   </label>
                   <input
@@ -212,13 +212,13 @@ export default function Goals() {
                     placeholder="e.g. Master FastAPI Backend Architecture"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="input-dark p-3 text-sm"
+                    className="input-field p-3 text-sm bg-white border border-slate-200 rounded-xl text-slate-900"
                   />
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div>
-                    <label className="text-xs font-semibold text-beige/70 block mb-1">
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">
                       Category
                     </label>
                     <input
@@ -226,18 +226,18 @@ export default function Goals() {
                       placeholder="Career, Academics"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="input-dark p-2.5 text-sm"
+                      className="input-field p-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-beige/70 block mb-1">
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">
                       Status
                     </label>
                     <select
                       value={status}
                       onChange={(e) => setStatus(e.target.value)}
-                      className="input-dark p-2.5 text-sm bg-surface2"
+                      className="input-field p-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900"
                     >
                       <option value="Active">Active</option>
                       <option value="Completed">Completed</option>
@@ -246,21 +246,21 @@ export default function Goals() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-beige/70 block mb-1">
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">
                       Target Date
                     </label>
                     <input
                       type="date"
                       value={targetDate}
                       onChange={(e) => setTargetDate(e.target.value)}
-                      className="input-dark p-2.5 text-sm"
+                      className="input-field p-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900"
                     />
                   </div>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="text-xs font-semibold text-beige/70 block mb-1">
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">
                       Progress (%): {progressValue}%
                     </label>
                     <input
@@ -269,12 +269,12 @@ export default function Goals() {
                       max="100"
                       value={progressValue}
                       onChange={(e) => setProgressValue(Number(e.target.value))}
-                      className="w-full accent-burgundy"
+                      className="w-full accent-indigo-600"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-beige/70 block mb-1">
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">
                       Latest Progress Note
                     </label>
                     <input
@@ -282,13 +282,13 @@ export default function Goals() {
                       placeholder="e.g. Finished modules 1 & 2"
                       value={progressNote}
                       onChange={(e) => setProgressNote(e.target.value)}
-                      className="input-dark p-2.5 text-sm"
+                      className="input-field p-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-beige/70 block mb-1">
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
                     Description & Success Criteria
                   </label>
                   <textarea
@@ -296,16 +296,16 @@ export default function Goals() {
                     placeholder="What does completing this goal look like?"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="input-dark p-3 text-sm"
+                    className="input-field p-3 text-sm bg-white border border-slate-200 rounded-xl text-slate-900"
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-3 border-t border-border">
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={resetForm}
                     disabled={saving}
-                    className="rounded-xl px-4 py-2 text-xs font-semibold text-beige/70 hover:bg-surface2"
+                    className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
                   >
                     Cancel
                   </button>
@@ -320,14 +320,14 @@ export default function Goals() {
 
         {/* Goals Grid */}
         {loading ? (
-          <section className="panel px-6 py-20 text-center shadow-card">
-            <p className="text-sm text-beige/55">Loading goals…</p>
+          <section className="panel px-6 py-20 text-center shadow-sm">
+            <p className="text-sm font-medium text-slate-500">Loading goals…</p>
           </section>
         ) : filteredGoals.length === 0 ? (
-          <section className="panel px-6 py-16 text-center shadow-card">
-            <Target size={36} className="mx-auto text-beige/40 mb-3" />
-            <h3 className="text-lg font-bold text-cream">No goals found</h3>
-            <p className="mt-1 text-xs text-beige/60 max-w-sm mx-auto">
+          <section className="panel px-6 py-16 text-center shadow-sm">
+            <Target size={36} className="mx-auto text-slate-300 mb-3" />
+            <h3 className="text-lg font-bold text-slate-900">No goals found</h3>
+            <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto font-medium">
               {statusFilter
                 ? `You have no goals with '${statusFilter}' status.`
                 : "Start your accountability journey by creating your first goal milestone."}
@@ -350,25 +350,25 @@ export default function Goals() {
               return (
                 <div
                   key={goal.id}
-                  className="panel p-6 shadow-card flex flex-col justify-between border-border hover:border-wine transition"
+                  className="panel p-6 shadow-sm flex flex-col justify-between border-slate-200 hover:border-indigo-300 transition"
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className={`rounded-lg px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                             goal.status === "Completed"
-                              ? "bg-green-950/40 text-green-400 border border-green-900/40"
+                              ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
                               : goal.status === "Stalled"
-                              ? "bg-red-950/40 text-red-400 border border-red-900/40"
-                              : "bg-wine/30 text-cream border border-wine/50"
+                              ? "bg-red-50 text-red-600 border border-red-200"
+                              : "bg-indigo-50 text-indigo-600 border border-indigo-200"
                           }`}
                         >
-                          {goal.status}
+                          {goal.status === "Active" ? "On Track" : goal.status}
                         </span>
 
                         {goal.category && (
-                          <span className="rounded-lg bg-surface2 px-2.5 py-0.5 text-[10px] font-medium text-beige/80 border border-border">
+                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200">
                             {goal.category}
                           </span>
                         )}
@@ -377,14 +377,14 @@ export default function Goals() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => openEdit(goal)}
-                          className="p-1.5 text-beige/60 hover:text-cream transition rounded-lg hover:bg-surface2"
+                          className="p-1.5 text-slate-400 hover:text-indigo-600 transition rounded-lg hover:bg-slate-100"
                           title="Edit Goal"
                         >
                           <Pencil size={15} />
                         </button>
                         <button
                           onClick={() => handleDelete(goal.id)}
-                          className="p-1.5 text-beige/60 hover:text-red-400 transition rounded-lg hover:bg-surface2"
+                          className="p-1.5 text-slate-400 hover:text-red-600 transition rounded-lg hover:bg-slate-100"
                           title="Delete Goal"
                         >
                           <Trash2 size={15} />
@@ -397,18 +397,18 @@ export default function Goals() {
                         <CircularProgress
                           value={prog}
                           className="w-16 h-16"
-                          trackClass="stroke-[#352024]"
-                          fillClass="stroke-[#561C24]"
+                          trackClass="stroke-slate-200"
+                          fillClass={goal.status === "Completed" ? "stroke-emerald-500" : "stroke-indigo-600"}
                         />
                       </div>
 
                       <div className="flex-1">
-                        <h3 className="text-base font-bold text-cream leading-snug">
+                        <h3 className="text-base font-bold text-slate-900 leading-snug">
                           {goal.title}
                         </h3>
 
                         {goal.description && (
-                          <p className="mt-1.5 text-xs text-beige/70 leading-relaxed whitespace-pre-wrap">
+                          <p className="mt-1.5 text-xs text-slate-600 leading-relaxed whitespace-pre-wrap font-medium">
                             {goal.description}
                           </p>
                         )}
@@ -416,25 +416,25 @@ export default function Goals() {
                     </div>
 
                     {goal.latest_progress_note && (
-                      <div className="mt-3.5 rounded-xl bg-surface2 p-2.5 border border-border text-[11px] text-beige/80 italic">
+                      <div className="mt-3.5 rounded-xl bg-slate-50 p-2.5 border border-slate-200 text-[11px] text-slate-700 italic font-medium">
                         Latest: {goal.latest_progress_note}
                       </div>
                     )}
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-border flex flex-wrap items-center justify-between gap-2 text-xs text-beige/60">
-                    <span className="text-[11px]">
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                    <span className="text-[11px] font-medium">
                       {goal.target_date
                         ? `Target: ${new Date(goal.target_date).toLocaleDateString()}`
                         : `Created: ${new Date(goal.created_at || goal.createdAt).toLocaleDateString()}`}
                     </span>
 
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px]">Status:</span>
+                      <span className="text-[11px] font-medium">Status:</span>
                       <select
                         value={goal.status}
                         onChange={(e) => handleQuickStatusChange(goal.id, e.target.value)}
-                        className="rounded-lg border border-border bg-surface2 px-2 py-0.5 text-xs font-medium text-cream focus:outline-none"
+                        className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-800 focus:outline-none"
                       >
                         <option value="Active">Active</option>
                         <option value="Completed">Completed</option>

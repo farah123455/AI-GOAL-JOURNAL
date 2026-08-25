@@ -5,8 +5,8 @@
 export default function CircularProgress({
   value,
   className = "w-24 h-24",
-  trackClass = "stroke-[#352024]",
-  fillClass = "stroke-[#561C24]",
+  trackClass = "stroke-slate-200",
+  fillClass = "stroke-indigo-600",
   center,
 }) {
   const safeValue = (() => {
@@ -55,7 +55,7 @@ export default function CircularProgress({
           />
         </g>
       </svg>
-      <span className="absolute pointer-events-none text-xs font-semibold text-cream sm:text-sm">
+      <span className="absolute pointer-events-none text-xs font-bold text-slate-900 sm:text-sm">
         {center ?? `${safeValue}%`}
       </span>
     </div>
