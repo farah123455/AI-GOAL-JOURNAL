@@ -51,18 +51,6 @@ export default function Profile() {
 
   return (
     <div className="app-page bg-slate-50 min-h-screen">
-      <header className="border-b border-slate-200 bg-white px-5 py-7 md:px-8 lg:px-10">
-        <div className="mx-auto max-w-[1000px]">
-          <p className="section-label">ACCOUNT</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-            User Profile
-          </h1>
-          <p className="mt-2 text-sm text-slate-600 font-medium">
-            Manage your account details and review your productivity statistics.
-          </p>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-[1000px] px-5 py-7 md:px-8 lg:px-10">
         {statusMessage && (
           <div role="status" className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-600 font-semibold">

@@ -12,6 +12,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useData } from "../context/DataContext";
+import { DashboardSkeleton } from "../components/LoadingSkeleton";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -66,70 +67,64 @@ export default function Dashboard() {
 
   return (
     <div className="app-page bg-slate-50 min-h-screen">
-      <header className="border-b border-slate-200 bg-white px-5 py-7 md:px-8 lg:px-10">
-        <div className="mx-auto max-w-[1250px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <header className="border-b border-slate-200 bg-white/80 backdrop-blur-md px-6 py-8 md:px-10 lg:px-12">
+        <div className="mx-auto max-w-[1350px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
           <div>
-            <p className="section-label">OVERVIEW</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-              Good day, {name} 👋
-            </h1>
-            <p className="mt-2 text-sm text-slate-600 font-medium">
+            <div className="flex flex-wrap items-center gap-3.5">
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
+                Good day, {name} <span className="animate-bounce">👋</span>
+              </h1>
+              <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1.5 text-xs font-bold text-amber-700 border border-amber-200 shadow-sm">
+                <Flame size={16} className="text-amber-500 fill-amber-400" /> {streak} days streak
+              </span>
+            </div>
+            <p className="mt-2.5 text-base text-slate-600 font-medium">
               Track daily momentum, conquer blockers, and align your activities with your goals.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div>
             <button
               onClick={() => navigate("/journal")}
-              className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 border border-slate-200 hover:bg-slate-50 transition shadow-sm"
+              className="primary-button px-6 py-3 text-sm font-bold shadow-md hover:shadow-indigo-200 hover:-translate-y-0.5"
             >
-              <BookOpen size={15} className="text-indigo-600" />
-              New Journal
-            </button>
-            <button
-              onClick={() => navigate("/goals")}
-              className="primary-button"
-            >
-              <Plus size={15} />
-              New Goal
+              <BookOpen size={18} />
+              + New Journal Entry
             </button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10">
+      <main className="mx-auto max-w-[1350px] px-6 py-8 md:px-10 lg:px-12">
         {loading ? (
-          <section className="panel px-6 py-20 text-center shadow-sm">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent mx-auto mb-3" />
-            <p className="text-sm font-medium text-slate-500">Loading productivity metrics…</p>
-          </section>
+          <DashboardSkeleton />
         ) : (
-          <div className="flex flex-col gap-6">
-            {/* Key Metrics Grid */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex flex-col gap-8 animate-fade-in">
+            {/* Key Metrics Grid (Enlarged Stat Cards) */}
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard
-                icon={<Target size={18} className="text-indigo-600" />}
+                icon={<Target size={22} className="text-indigo-600" />}
                 iconBg="bg-indigo-50"
                 label="ACTIVE GOALS"
                 value={String(activeGoals.length)}
                 detail="in progress"
               />
               <StatCard
-                icon={<CheckCircle2 size={18} className="text-emerald-600" />}
+                icon={<CheckCircle2 size={22} className="text-emerald-600" />}
                 iconBg="bg-emerald-50"
                 label="COMPLETED GOALS"
                 value={String(completedGoals.length)}
                 detail="achieved"
               />
               <StatCard
-                icon={<Flame size={18} className="text-amber-500" />}
+                icon={<Flame size={22} className="text-amber-500" />}
                 iconBg="bg-amber-50"
                 label="CURRENT STREAK"
                 value={String(streak)}
                 detail="days active"
               />
               <StatCard
-                icon={<AlertTriangle size={18} className="text-purple-600" />}
+                icon={<AlertTriangle size={22} className="text-purple-600" />}
                 iconBg="bg-purple-50"
                 label="ACTIVE BLOCKERS"
                 value={String(recentBlockers.length)}
@@ -137,15 +132,15 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* AI Reflection Banner */}
+            {/* AI Reflection Banner (Enlarged Box & Fonts) */}
             {latestAnalysis ? (
-              <section className="rounded-2xl p-6 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-white border border-indigo-200/80 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
-                    <Sparkles size={16} className="text-purple-600" />
+              <section className="rounded-3xl p-7 md:p-9 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-white border border-indigo-200/90 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                  <span className="text-sm font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-2">
+                    <Sparkles size={20} className="text-purple-600 animate-pulse" />
                     Latest AI Reflection Insight
                   </span>
-                  <span className="text-[11px] text-slate-500 font-mono font-medium">
+                  <span className="text-sm text-slate-500 font-mono font-semibold">
                     {new Date(latestJournal.created_at || latestJournal.createdAt).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
@@ -156,113 +151,125 @@ export default function Dashboard() {
                 </div>
 
                 {latestAnalysis.quick_summary && (
-                  <p className="text-sm font-semibold text-slate-900 italic mb-3 leading-relaxed">
+                  <p className="text-xl font-bold text-slate-900 italic mb-4 leading-relaxed">
                     "{latestAnalysis.quick_summary}"
                   </p>
                 )}
 
                 {latestAnalysis.insights?.length > 0 && (
-                  <div className="rounded-xl bg-white/90 p-3.5 border border-indigo-100 text-xs text-slate-700 shadow-sm">
-                    <strong className="text-indigo-600 font-semibold">Coach Note:</strong> {latestAnalysis.insights[0]}
+                  <div className="rounded-2xl bg-white/95 p-5 border border-indigo-100 text-base text-slate-800 shadow-sm leading-relaxed font-medium">
+                    <strong className="text-indigo-600 font-bold">Coach Note:</strong> {latestAnalysis.insights[0]}
                   </div>
                 )}
               </section>
             ) : (
-              <section className="panel p-6 text-center shadow-sm">
-                <p className="text-xs text-slate-500 font-medium">
+              <section className="panel p-8 text-center shadow-sm">
+                <p className="text-base text-slate-600 font-medium">
                   You haven't logged any journal entries yet. Record your thoughts to unlock AI insights!
                 </p>
                 <button
                   onClick={() => navigate("/journal")}
-                  className="primary-button mt-3"
+                  className="primary-button mt-4 text-sm font-bold"
                 >
                   Write First Journal
                 </button>
               </section>
             )}
 
-            {/* Middle Row: AI Coach Summary & Active Blockers */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <section className="panel p-6 shadow-sm flex flex-col justify-between">
+            {/* Middle Row: High-End AI Coach Summary & Active Blockers Cards */}
+            <div className="grid gap-7 md:grid-cols-2">
+              {/* AI ACCOUNTABILITY COACH CARD */}
+              <section className="rounded-3xl p-7 sm:p-8 bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white border border-indigo-200/90 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300 min-h-[320px]">
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="section-label flex items-center gap-1.5 text-indigo-600">
-                      <Sparkles size={14} className="text-indigo-600" />
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-purple-100/80 px-3.5 py-1 text-xs font-bold text-purple-700 border border-purple-200 shadow-sm">
+                      <Sparkles size={16} className="text-purple-600 animate-pulse" />
                       AI ACCOUNTABILITY COACH
-                    </h3>
+                    </span>
                     <button
                       onClick={() => navigate("/coach")}
-                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                      className="text-sm font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 group transition"
                     >
-                      View Report <ArrowUpRight size={13} />
+                      View Report <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                     </button>
                   </div>
 
                   {summary ? (
-                    <div>
-                      <h4 className="text-base font-bold text-slate-900 mb-2 leading-snug">
+                    <div className="mt-4">
+                      <h4 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3.5 leading-snug tracking-tight">
                         "{summary.headline}"
                       </h4>
                       {summary.coaching_suggestion && (
-                        <p className="text-xs text-slate-600 line-clamp-3 bg-slate-50 p-3 rounded-xl border border-slate-200 leading-relaxed font-medium">
+                        <div className="border-l-4 border-indigo-500 bg-white/90 p-4.5 rounded-r-2xl shadow-sm border border-slate-100 text-base text-slate-700 leading-relaxed font-medium">
                           {summary.coaching_suggestion}
-                        </p>
+                        </div>
                       )}
                     </div>
                   ) : (
-                    <div className="text-center py-6">
-                      <p className="text-xs text-slate-400 font-medium">
-                        No weekly summary generated yet.
-                      </p>
+                    <div className="text-center py-10 bg-white/80 rounded-2xl border border-indigo-100 my-2">
+                      <Sparkles size={32} className="mx-auto text-purple-400 mb-2 animate-pulse" />
+                      <p className="text-base text-slate-700 font-bold">No weekly summary generated yet</p>
+                      <p className="text-xs text-slate-500 mt-1 font-medium">Reflect daily to unlock weekly accountability coaching.</p>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-slate-100">
+                <div className="mt-6 pt-4 border-t border-indigo-100">
                   <button
                     onClick={() => navigate("/coach")}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-50 px-4 py-2.5 text-xs font-semibold text-indigo-600 border border-indigo-100 hover:bg-indigo-100 transition"
+                    className="primary-button w-full py-3.5 text-sm font-bold shadow-md hover:shadow-indigo-200"
                   >
-                    Open Accountability Coach
+                    <Sparkles size={16} />
+                    Open Accountability Coach →
                   </button>
                 </div>
               </section>
 
-              <section className="panel p-6 shadow-sm flex flex-col justify-between">
+              {/* ACTIVE BLOCKERS CARD */}
+              <section className="panel p-7 sm:p-8 shadow-md bg-white border border-slate-200 rounded-3xl flex flex-col justify-between hover:shadow-lg transition-all duration-300 min-h-[320px]">
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="section-label flex items-center gap-1.5 text-red-600">
-                      <AlertTriangle size={14} />
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3.5 py-1 text-xs font-bold text-rose-700 border border-rose-200 shadow-sm">
+                      <AlertTriangle size={16} className="text-rose-500" />
                       ACTIVE BLOCKERS ({recentBlockers.length})
-                    </h3>
-                    <span className="text-[11px] text-slate-400 font-medium">From recent logs</span>
+                    </span>
+                    <span className="text-xs font-bold text-slate-400 font-mono">From recent logs</span>
                   </div>
 
                   {recentBlockers.length > 0 ? (
-                    <ul className="flex flex-col gap-2">
+                    <ul className="flex flex-col gap-3 mt-4">
                       {recentBlockers.slice(0, 4).map((b, i) => (
                         <li
                           key={i}
-                          className="text-xs text-slate-800 flex items-center justify-between gap-2 bg-red-50 p-2.5 rounded-xl border border-red-100"
+                          className="text-base text-slate-800 flex items-center justify-between gap-3 bg-rose-50/70 p-4 rounded-2xl border border-rose-100 transition-all hover:bg-rose-100/60 font-semibold"
                         >
-                          <span className="truncate font-medium">{b.text}</span>
-                          <span className="shrink-0 rounded bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-600 capitalize">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className="text-lg shrink-0">⚠️</span>
+                            <span className="truncate">{b.text}</span>
+                          </div>
+                          <span className="shrink-0 rounded-lg bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700 capitalize border border-rose-200">
                             {b.category || "other"}
                           </span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-xs text-slate-400 italic py-6 text-center">
-                      Zero blockers detected in your recent reflections. Smooth sailing!
-                    </p>
+                    <div className="rounded-2xl bg-emerald-50/70 border border-emerald-100 p-6 my-3 text-center">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 mx-auto mb-3 shadow-sm">
+                        <CheckCircle2 size={24} />
+                      </div>
+                      <h4 className="text-base font-bold text-slate-900 mb-1">Zero Active Blockers Detected</h4>
+                      <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                        Your goal momentum is smooth sailing! Keep reflecting to catch future friction early.
+                      </p>
+                    </div>
                   )}
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-slate-100">
+                <div className="mt-6 pt-4 border-t border-slate-100">
                   <button
                     onClick={() => navigate("/journal")}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-2.5 text-xs font-semibold text-slate-700 border border-slate-200 hover:bg-slate-100 transition"
+                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-slate-50 px-5 py-3.5 text-sm font-bold text-slate-800 border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
                   >
                     View Journal History →
                   </button>
@@ -270,50 +277,52 @@ export default function Dashboard() {
               </section>
             </div>
 
-            {/* Active Goals Preview */}
+            {/* Active Goals Preview (Enlarged Fonts) */}
             <section>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-slate-900">Active Goals ({activeGoals.length})</h2>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-2xl font-bold text-slate-900">Active Goals ({activeGoals.length})</h2>
                 <button
                   onClick={() => navigate("/goals")}
-                  className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                  className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 group"
                 >
-                  Manage Goals <ArrowUpRight size={13} />
+                  Manage Goals <ArrowUpRight size={15} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </button>
               </div>
 
               {activeGoals.length === 0 ? (
-                <div className="panel p-6 text-center">
-                  <p className="text-xs text-slate-500 font-medium">No active goals currently defined.</p>
+                <div className="panel p-8 text-center">
+                  <p className="text-base text-slate-500 font-medium">No active goals currently defined.</p>
                   <button
                     onClick={() => navigate("/goals")}
-                    className="primary-button mt-3"
+                    className="primary-button mt-4 text-sm font-bold"
                   >
                     Set a Goal
                   </button>
                 </div>
               ) : (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {activeGoals.slice(0, 3).map((goal) => (
                     <div
                       key={goal.id}
-                      className="panel p-5 hover:border-indigo-300 hover:shadow-md transition cursor-pointer"
+                      className="panel p-7 hover:border-indigo-300 hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer flex flex-col justify-between"
                       onClick={() => navigate("/goals")}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600 border border-emerald-200">
-                          On Track
-                        </span>
-                        {goal.target_date && (
-                          <span className="text-[10px] text-slate-400 font-mono font-medium">
-                            Due {new Date(goal.target_date).toLocaleDateString()}
+                      <div>
+                        <div className="flex items-center justify-between mb-3.5">
+                          <span className="rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-600 border border-emerald-200">
+                            On Track
                           </span>
+                          {goal.target_date && (
+                            <span className="text-xs text-slate-500 font-mono font-semibold">
+                              Due {new Date(goal.target_date).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-900 leading-snug">{goal.title}</h3>
+                        {goal.description && (
+                          <p className="mt-2.5 text-base text-slate-600 line-clamp-2 leading-relaxed font-medium">{goal.description}</p>
                         )}
                       </div>
-                      <h3 className="text-sm font-bold text-slate-900 leading-snug">{goal.title}</h3>
-                      {goal.description && (
-                        <p className="mt-1 text-xs text-slate-600 line-clamp-2">{goal.description}</p>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -328,14 +337,16 @@ export default function Dashboard() {
 
 function StatCard({ icon, iconBg = "bg-indigo-50", label, value, detail }) {
   return (
-    <div className="panel p-5 shadow-sm">
-      <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconBg}`}>
+    <div className="panel p-6 sm:p-7 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
+      <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${iconBg} shadow-sm`}>
         {icon}
       </div>
-      <p className="mt-5 section-label">{label}</p>
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="text-2xl font-bold text-slate-900">{value}</span>
-        <span className="text-[11px] text-slate-500 font-medium">{detail}</span>
+      <div>
+        <p className="mt-5 section-label text-xs font-bold tracking-wider">{label}</p>
+        <div className="mt-1.5 flex items-baseline gap-2.5">
+          <span className="text-4xl font-bold text-slate-900">{value}</span>
+          <span className="text-sm text-slate-500 font-semibold">{detail}</span>
+        </div>
       </div>
     </div>
   );

@@ -65,19 +65,6 @@ export default function Settings() {
 
   return (
     <div className="app-page bg-slate-50 min-h-screen">
-      <header className="border-b border-slate-200 bg-white px-5 py-7 md:px-8 lg:px-10">
-        <div className="mx-auto max-w-[1000px]">
-          <p className="section-label">PREFERENCES</p>
-          <div className="mt-2 flex items-center gap-3">
-            <SettingsIcon size={23} className="text-indigo-600" />
-            <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
-          </div>
-          <p className="mt-2 text-sm text-slate-600 font-medium">
-            Customize how AI Goal Journal works for you.
-          </p>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-[1000px] px-5 py-7 md:px-8 lg:px-10">
         <div className="space-y-5">
           {error && (

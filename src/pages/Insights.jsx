@@ -30,18 +30,6 @@ export default function Insights() {
 
   return (
     <div className="app-page bg-slate-50 min-h-screen">
-      <header className="border-b border-slate-200 bg-white px-5 py-7 md:px-8 lg:px-10">
-        <div className="mx-auto max-w-[1250px]">
-          <p className="section-label">PERSONAL INTELLIGENCE</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-            Insights
-          </h1>
-          <p className="mt-2 text-sm text-slate-600 font-medium">
-            Understand your patterns and make better decisions.
-          </p>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10">
         <section className="rounded-2xl p-7 md:p-9 bg-gradient-to-r from-indigo-600 to-indigo-800 border border-indigo-700 shadow-md text-white">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md text-white">

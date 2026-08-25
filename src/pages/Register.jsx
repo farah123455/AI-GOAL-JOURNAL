@@ -50,7 +50,7 @@ export default function Register() {
                 <Target size={21} className="text-white" />
               </div>
               <div>
-                <p className="text-sm font-bold text-white">GOAL JOURNAL</p>
+                <p className="text-sm font-bold text-white">AI JOURNAL</p>
                 <p className="text-[10px] uppercase tracking-[0.18em] text-indigo-200 font-semibold">
                   Personal growth system
                 </p>
@@ -82,7 +82,7 @@ export default function Register() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-600">
                   <Target size={21} className="text-white" />
                 </div>
-                <p className="text-sm font-bold text-slate-900">GOAL JOURNAL</p>
+                <p className="text-sm font-bold text-slate-900">AI JOURNAL</p>
               </div>
             </div>
 
@@ -164,12 +164,12 @@ export default function Register() {
                   </div>
                 </div>
 
-                <label className="flex items-start gap-3 text-xs leading-5 text-slate-600 font-medium">
+                <label className="flex items-start gap-3 text-sm leading-6 text-slate-700 font-medium">
                   <input
                     type="checkbox"
                     checked={accepted}
                     onChange={(e) => setAccepted(e.target.checked)}
-                    className="mt-1 accent-indigo-600"
+                    className="mt-1 h-5 w-5 rounded-md accent-indigo-600 shrink-0 cursor-pointer"
                   />
                   <span>
                     I agree to the terms and understand that my journal activity will be used to generate personalized insights.

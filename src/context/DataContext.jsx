@@ -118,13 +118,14 @@ export function DataProvider({ children }) {
   }, []);
 
   // Load initial data when authenticated user arrives
+  const userId = user?.uid;
   useEffect(() => {
-    if (user) {
+    if (userId) {
       fetchAllData({ quiet: true });
     } else {
       clearCache();
     }
-  }, [user, fetchAllData, clearCache]);
+  }, [userId, fetchAllData, clearCache]);
 
   // --- Cache Mutation Helpers ---
   const addGoal = useCallback((newGoal) => {

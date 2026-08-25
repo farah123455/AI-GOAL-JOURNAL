@@ -41,7 +41,7 @@ export default function Login() {
               </div>
               <div>
                 <p className="text-sm font-bold tracking-wide text-white">
-                  GOAL JOURNAL
+                  AI JOURNAL
                 </p>
                 <p className="text-[10px] uppercase tracking-[0.18em] text-indigo-200 font-semibold">
                   Personal growth system
@@ -76,7 +76,7 @@ export default function Login() {
                   <Target size={21} className="text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-900">GOAL JOURNAL</p>
+                  <p className="text-sm font-bold text-slate-900">AI JOURNAL</p>
                   <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500 font-semibold">
                     Personal growth
                   </p>

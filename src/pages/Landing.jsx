@@ -19,7 +19,7 @@ export default function Landing() {
           {/* Tagline Pill */}
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/80 px-4 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur-md mb-6">
             <span className="h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
-            <span>AI Goal Journal & Accountability Coach</span>
+            <span>AI Journal & Accountability Coach</span>
           </div>
 
           {/* Main Headline */}

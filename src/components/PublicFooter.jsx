@@ -14,7 +14,7 @@ export default function PublicFooter() {
               </div>
               <div>
                 <p className="text-sm font-bold tracking-tight text-slate-900">
-                  GOAL JOURNAL
+                  AI JOURNAL
                 </p>
                 <p className="text-[9px] uppercase tracking-[0.18em] text-slate-500 font-semibold">
                   Growth workspace
@@ -48,7 +48,7 @@ export default function PublicFooter() {
         </div>
 
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
-          <p>© {new Date().getFullYear()} AI Goal Journal & Accountability Coach. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} AI Journal. All rights reserved.</p>
           <p className="italic text-indigo-600 font-medium">Powered by Google Gemini & faster-whisper.</p>
         </div>
       </div>

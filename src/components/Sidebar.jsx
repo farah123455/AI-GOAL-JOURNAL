@@ -32,14 +32,14 @@ const navigation = [
     label: "Growth",
     items: [
       {
-        name: "Goals",
-        path: "/goals",
-        icon: Target,
-      },
-      {
         name: "Journal",
         path: "/journal",
         icon: BookOpen,
+      },
+      {
+        name: "Manual Goal",
+        path: "/goals",
+        icon: Target,
       },
       {
         name: "AI Coach",
@@ -79,9 +79,9 @@ export default function Sidebar() {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="fixed left-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-800 shadow-sm lg:hidden"
+        className="fixed left-4 top-4 z-40 flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-800 shadow-sm lg:hidden"
       >
-        <Menu size={19} />
+        <Menu size={20} />
       </button>
 
       {/* MOBILE OVERLAY */}
@@ -92,23 +92,23 @@ export default function Sidebar() {
         />
       )}
 
-      {/* STATIC SIDEBAR */}
+      {/* STATIC SIDEBAR (Broader 285px width) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[255px] shrink-0 flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[285px] shrink-0 flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:static lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* BRAND */}
-        <div className="flex h-[76px] shrink-0 items-center justify-between border-b border-slate-200 px-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
-              <Target size={19} className="text-white" />
+        {/* BRAND (Broader 84px header height) */}
+        <div className="flex h-[84px] shrink-0 items-center justify-between border-b border-slate-200 px-6">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
+              <Target size={21} className="text-white" />
             </div>
             <div>
-              <p className="text-sm font-bold tracking-tight text-slate-900">
-                GOAL JOURNAL
+              <p className="text-base font-bold tracking-tight text-slate-900">
+                AI JOURNAL
               </p>
-              <p className="text-[9px] uppercase tracking-[0.18em] text-slate-500 font-medium">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-semibold">
                 Growth workspace
               </p>
             </div>
@@ -119,18 +119,18 @@ export default function Sidebar() {
             onClick={() => setMobileOpen(false)}
             className="text-slate-500 hover:text-slate-900 lg:hidden"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
         {/* NAVIGATION */}
-        <div className="flex-1 px-3 py-5 overflow-hidden">
+        <div className="flex-1 px-4 py-6 overflow-y-auto space-y-7">
           {navigation.map((section) => (
-            <div key={section.label} className="mb-6">
-              <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            <div key={section.label}>
+              <p className="mb-2.5 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
                 {section.label}
               </p>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -139,14 +139,20 @@ export default function Sidebar() {
                       to={item.path}
                       onClick={() => setMobileOpen(false)}
                       className={({ isActive }) =>
-                        `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                        `group flex items-center gap-3.5 rounded-xl px-3.5 py-3 text-[15px] font-medium transition ${
                           isActive
-                            ? "bg-indigo-50 text-indigo-600 shadow-sm font-semibold"
-                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            ? "bg-indigo-50 text-indigo-600 shadow-sm font-bold"
+                            : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                         }`
                       }
                     >
-                      <Icon size={17} strokeWidth={item.path === '/coach' || item.path === '/insights' ? 2 : 1.8} className={({ isActive }) => isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"} />
+                      <Icon
+                        size={19}
+                        strokeWidth={item.path === '/coach' || item.path === '/insights' ? 2 : 1.8}
+                        className={({ isActive }) =>
+                          isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
+                        }
+                      />
                       <span>{item.name}</span>
                     </NavLink>
                   );

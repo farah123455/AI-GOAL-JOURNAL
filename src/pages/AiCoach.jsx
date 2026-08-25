@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Sparkles, Trophy, AlertTriangle, Target, Zap } from "lucide-react";
 import { summaryApi } from "../services/api";
 import { useData } from "../context/DataContext";
+import { CoachLoadingState } from "../components/LoadingSkeleton";
 
 export default function AiCoach() {
   const { summary, hasLoadedSummary, fetchSummary, setSummaryInCache } = useData();
@@ -30,18 +31,8 @@ export default function AiCoach() {
 
   return (
     <div className="app-page bg-slate-50 min-h-screen">
-      <header className="border-b border-slate-200 bg-white px-5 py-7 md:px-8 lg:px-10">
-        <div className="mx-auto max-w-[1250px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <p className="section-label">ACCOUNTABILITY COACH</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
-              <Sparkles className="text-purple-600" size={26} /> Weekly AI Accountability Coach
-            </h1>
-            <p className="mt-2 text-sm text-slate-600 font-medium">
-              Synthesizes your recent reflections, goal progress, and recurring blockers into actionable coaching insights.
-            </p>
-          </div>
-
+      <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10">
+        <div className="mb-6 flex justify-end">
           <button
             onClick={handleGenerateFresh}
             disabled={generating}
@@ -51,19 +42,14 @@ export default function AiCoach() {
             {generating ? "Analyzing with Gemini..." : "Generate Fresh Summary"}
           </button>
         </div>
-      </header>
-
-      <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10">
         {error && (
           <div role="alert" className="mb-6 rounded-xl bg-red-50 p-4 text-xs text-red-600 border border-red-200">
             <strong>Notice: </strong> {error}
           </div>
         )}
 
-        {loading ? (
-          <section className="panel px-6 py-20 text-center shadow-sm">
-            <p className="text-sm font-medium text-slate-500">Synthesizing weekly accountability report...</p>
-          </section>
+        {loading || generating ? (
+          <CoachLoadingState />
         ) : summary ? (
           <div className="flex flex-col gap-6">
             {/* Executive Headline & Coaching Advice Banner */}

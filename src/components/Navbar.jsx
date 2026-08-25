@@ -10,25 +10,41 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  Search,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useData } from "../context/DataContext";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { goals, summary, journals } = useData();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [readIds, setReadIds] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const popoverRef = useRef(null);
   const accountRef = useRef(null);
 
   const email = user?.email || "user@example.com";
   const initial = email.charAt(0).toUpperCase();
+
+  const pageTitles = {
+    "/dashboard": "Dashboard",
+    "/journal": "Journal & Refinement",
+    "/goals": "Manual Goals",
+    "/coach": "Weekly AI Coach",
+    "/insights": "AI Insights",
+    "/progress": "Progress & Growth",
+    "/profile": "User Profile",
+    "/settings": "Settings",
+  };
+
+  const currentTitle = pageTitles[location.pathname] || "Dashboard";
 
   const notificationsList = [
     {
@@ -90,31 +106,56 @@ export default function Navbar() {
     navigate("/login");
   }
 
+  function handleSearchSubmit(e) {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/journal?q=${encodeURIComponent(searchQuery)}`);
+    }
+  }
+
   return (
-    <header className="sticky top-0 z-30 flex h-[76px] shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-5 backdrop-blur-md md:px-8">
-      {/* LEFT */}
-      <div className="ml-12 lg:ml-0">
-        <div className="hidden items-center gap-2 md:flex">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
-            Personal growth workspace
-          </span>
-        </div>
+    <header className="sticky top-0 z-30 flex h-[84px] shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-6 backdrop-blur-md md:px-9">
+      {/* LEFT: Dynamic Page Title */}
+      <div className="flex items-center gap-2 pl-12 lg:pl-0">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 truncate">
+          {currentTitle}
+        </h1>
       </div>
 
-      {/* RIGHT */}
-      <div className="flex items-center gap-3">
+      {/* RIGHT: Global Search, Coach Badge, Notifications & Account */}
+      <div className="flex items-center gap-3.5">
+        {/* Search Bar */}
+        <form onSubmit={handleSearchSubmit} className="hidden md:flex items-center relative">
+          <Search size={16} className="absolute left-3.5 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search journals, goals..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-56 lg:w-72 rounded-xl border border-slate-200 bg-slate-50/90 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+          />
+        </form>
+
+        {/* Coach Active Pill Badge */}
+        <button
+          onClick={() => navigate("/coach")}
+          className="hidden sm:inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-1.5 text-xs font-bold text-purple-700 border border-purple-200 hover:bg-purple-100 transition shadow-sm"
+        >
+          <Sparkles size={14} className="text-purple-600 animate-pulse" />
+          Coach Active
+        </button>
+
         {/* NOTIFICATION BUTTON & POPOVER */}
         <div className="relative" ref={popoverRef}>
           <button
             type="button"
             onClick={() => setShowNotifications((prev) => !prev)}
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600 hover:bg-white"
+            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600 hover:bg-white shadow-sm"
             title="Notifications"
           >
-            <Bell size={17} />
+            <Bell size={18} />
             {unreadCount > 0 && (
-              <span className="absolute right-2.5 top-2 h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
+              <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
             )}
           </button>
 
@@ -123,7 +164,7 @@ export default function Navbar() {
             <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white shadow-lg z-50 p-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                 <div className="flex items-center gap-2">
-                  <Bell size={16} className="text-indigo-600" />
+                  <Bell size={17} className="text-indigo-600" />
                   <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
                   {unreadCount > 0 && (
                     <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600 border border-indigo-100">
@@ -144,7 +185,7 @@ export default function Navbar() {
                     onClick={() => setShowNotifications(false)}
                     className="text-slate-400 hover:text-slate-700"
                   >
-                    <X size={14} />
+                    <X size={15} />
                   </button>
                 </div>
               </div>
@@ -198,10 +239,10 @@ export default function Navbar() {
               {initial}
             </div>
             <div className="hidden sm:block text-left">
-              <p className="max-w-[120px] truncate text-xs font-semibold text-slate-900">
+              <p className="max-w-[120px] truncate text-xs font-bold text-slate-900 leading-tight">
                 {email}
               </p>
-              <p className="text-[9px] text-slate-500 font-medium">
+              <p className="text-[10px] text-slate-500 font-medium">
                 Account
               </p>
             </div>

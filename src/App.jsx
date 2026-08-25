@@ -15,21 +15,13 @@ import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { useAuth } from "./context/AuthContext";
+import { FullscreenLoadingScreen } from "./components/LoadingSkeleton";
 
 function RootIndexRoute() {
   const { user, checkingAuth } = useAuth();
 
   if (checkingAuth) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-cream">
-        <div className="text-center">
-          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-burgundy border-t-cream" />
-          <p className="text-xs font-semibold uppercase tracking-wider text-beige/70">
-            Loading Goal Journal...
-          </p>
-        </div>
-      </div>
-    );
+    return <FullscreenLoadingScreen />;
   }
 
   if (user) {
