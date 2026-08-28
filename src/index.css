@@ -1,0 +1,292 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #0F172A;
+  background: #F8FAFC;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 16px;
+}
+
+html {
+  min-height: 100%;
+  background: #F8FAFC;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #F8FAFC;
+  color: #0F172A;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+#root {
+  min-height: 100vh;
+  background: #F8FAFC;
+}
+
+/* Custom Keyframe Animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(79, 70, 229, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* DART & TARGET GOAL LOADING ANIMATIONS */
+@keyframes dartFly {
+  0% {
+    transform: translate(-40px, -40px) rotate(-45deg) scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: translate(4px, 4px) rotate(5deg) scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes targetPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.3);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 24px 8px rgba(79, 70, 229, 0.25);
+  }
+}
+
+@keyframes bookWrite {
+  0%, 100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  25% {
+    transform: rotate(-8deg) translateY(-5px);
+  }
+  75% {
+    transform: rotate(8deg) translateY(-2px);
+  }
+}
+
+@keyframes sparkleSpin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.25);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+.animate-dart {
+  animation: dartFly 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) infinite alternate;
+}
+
+.animate-target-pulse {
+  animation: targetPulse 2s ease-in-out infinite;
+}
+
+.animate-book-write {
+  animation: bookWrite 2s ease-in-out infinite;
+}
+
+.animate-sparkle-spin {
+  animation: sparkleSpin 3s linear infinite;
+}
+
+/* Scrollbar styling */
+* {
+  box-sizing: border-box;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Selection */
+::selection {
+  background: #C7D2FE;
+  color: #312E81;
+}
+
+@layer components {
+  .app-page {
+    min-height: calc(100vh - 84px);
+    background: #F8FAFC;
+    color: #0F172A;
+    animation: fadeIn 300ms ease-out forwards;
+  }
+
+  .panel {
+    border: 1px solid #E2E8F0;
+    border-radius: 20px;
+    background: #FFFFFF;
+    box-shadow: 0 2px 8px -1px rgb(15 23 42 / 0.05);
+    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  }
+
+  .panel:hover {
+    box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
+  }
+
+  .glass-panel {
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 6px 24px -2px rgba(79, 70, 229, 0.06);
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #64748B;
+  }
+
+  .primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+    padding: 13px 26px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #FFFFFF;
+    transition: all 180ms ease;
+    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.3);
+  }
+
+  .primary-button:hover {
+    background: linear-gradient(135deg, #4338CA 0%, #3730A3 100%);
+    transform: translateY(-1.5px);
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
+  }
+
+  .primary-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
+  }
+
+  .input-dark, .input-field {
+    width: 100%;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    background: #FFFFFF;
+    color: #0F172A;
+    font-size: 16px;
+    padding: 14px 18px;
+    outline: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  }
+
+  .input-dark::placeholder, .input-field::placeholder {
+    color: #94A3B8;
+  }
+
+  .input-dark:focus, .input-field:focus {
+    border-color: #4F46E5;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+  }
+
+  /* Custom Checkbox Styling */
+  input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #4F46E5;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+
+  /* Shimmer Skeleton Loader Class */
+  .skeleton-box {
+    background: linear-gradient(90deg, #F1F5F9 0%, #E2E8F0 50%, #F1F5F9 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 12px;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-float {
+    animation: floatSlow 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 2.5s ease-in-out infinite;
+  }
+}
+
+input, textarea, select {
+  color-scheme: light;
+  font-size: 16px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: none;
+  opacity: 0.75;
+}
