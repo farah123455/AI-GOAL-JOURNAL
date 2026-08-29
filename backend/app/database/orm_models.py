@@ -156,3 +156,53 @@ class ProgressORM(Base):
         DateTime,
         default=datetime.utcnow
     )
+class AISummaryORM(Base):
+    __tablename__ = "ai_summaries"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    headline = Column(
+        String,
+        nullable=False
+    )
+
+    wins = Column(
+        JSONB,
+        nullable=False,
+        default=list
+    )
+
+    recurring_blockers = Column(
+        JSONB,
+        nullable=False,
+        default=list
+    )
+
+    goal_status_changes = Column(
+        JSONB,
+        nullable=False,
+        default=list
+    )
+
+    mood_trend = Column(
+        String,
+        nullable=False,
+        default="stable"
+    )
+
+    coaching_suggestion = Column(
+        Text,
+        nullable=True
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )    
+    

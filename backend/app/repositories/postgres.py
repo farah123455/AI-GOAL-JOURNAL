@@ -2,13 +2,26 @@ from datetime import datetime
 from typing import Optional
 
 from app.database.connection import SessionLocal
-from app.database.orm_models import UserORM, JournalORM, GoalORM,ProgressORM
-from app.models.domain import User, JournalEntry, Goal,Progress
+from app.database.orm_models import (
+    UserORM,
+    JournalORM,
+    GoalORM,
+    ProgressORM,
+    AISummaryORM,
+)
+from app.models.domain import (
+    User,
+    JournalEntry,
+    Goal,
+    Progress,
+    WeeklySummary,
+)
 from app.repositories.base import (
     AbstractUserRepository,
     AbstractJournalRepository,
     AbstractGoalRepository,
     AbstractProgressRepository,
+    AbstractSummaryRepository,
 )
 
 class PostgresUserRepository(AbstractUserRepository):
@@ -846,7 +859,126 @@ class PostgresProgressRepository(AbstractProgressRepository):
 
         finally:
             db.close()
+
+
+class PostgresSummaryRepository(AbstractSummaryRepository):
+
+    def _get_internal_user_id(
+        self,
+        db,
+        firebase_uid: str
+    ) -> Optional[int]:
+
+        user = (
+            db.query(UserORM)
+            .filter(UserORM.firebase_uid == firebase_uid)
+            .first()
+        )
+
+        return user.id if user else None
+
+    def _to_domain(
+        self,
+        row: AISummaryORM,
+        firebase_uid: str
+    ) -> WeeklySummary:
+
+        return WeeklySummary(
+            id=str(row.id),
+            user_id=firebase_uid,
+            headline=row.headline,
+            wins=row.wins or [],
+            recurring_blockers=row.recurring_blockers or [],
+            goal_status_changes=row.goal_status_changes or [],
+            mood_trend=row.mood_trend or "stable",
+            coaching_suggestion=row.coaching_suggestion or "",
+            created_at=row.created_at,
+        )
+
+    def save(
+        self,
+        summary: WeeklySummary
+    ) -> WeeklySummary:
+
+        db = SessionLocal()
+
+        try:
+            internal_user_id = self._get_internal_user_id(
+                db,
+                summary.user_id
+            )
+
+            if internal_user_id is None:
+                raise LookupError(
+                    "Authenticated Firebase user does not exist in PostgreSQL"
+                )
+
+            db_summary = AISummaryORM(
+                user_id=internal_user_id,
+                headline=summary.headline,
+                wins=summary.wins,
+                recurring_blockers=summary.recurring_blockers,
+                goal_status_changes=summary.goal_status_changes,
+                mood_trend=summary.mood_trend,
+                coaching_suggestion=summary.coaching_suggestion,
+                created_at=summary.created_at,
+            )
+
+            db.add(db_summary)
+            db.commit()
+            db.refresh(db_summary)
+
+            return self._to_domain(
+                db_summary,
+                summary.user_id
+            )
+
+        except Exception:
+            db.rollback()
+            raise
+
+        finally:
+            db.close()
+
+    def get_latest_by_user(
+        self,
+        user_id: str
+    ) -> Optional[WeeklySummary]:
+
+        db = SessionLocal()
+
+        try:
+            internal_user_id = self._get_internal_user_id(
+                db,
+                user_id
+            )
+
+            if internal_user_id is None:
+                return None
+
+            row = (
+                db.query(AISummaryORM)
+                .filter(
+                    AISummaryORM.user_id == internal_user_id
+                )
+                .order_by(
+                    AISummaryORM.created_at.desc()
+                )
+                .first()
+            )
+
+            if not row:
+                return None
+
+            return self._to_domain(
+                row,
+                user_id
+            )
+
+        finally:
+            db.close()            
 user_repo = PostgresUserRepository()
 journal_repo = PostgresJournalRepository()
 goal_repo = PostgresGoalRepository()
 progress_repo = PostgresProgressRepository()
+summary_repo = PostgresSummaryRepository()
