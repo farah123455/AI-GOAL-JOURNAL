@@ -7,8 +7,8 @@ from sqlalchemy import (
     String,
     Text,
     ForeignKey,
+    JSON,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 
 from app.database.connection import Base
 
@@ -65,7 +65,7 @@ class JournalORM(Base):
     )
 
     ai_analysis = Column(
-        JSONB,
+        JSON,
         nullable=True
     )
 
@@ -156,6 +156,8 @@ class ProgressORM(Base):
         DateTime,
         default=datetime.utcnow
     )
+
+
 class AISummaryORM(Base):
     __tablename__ = "ai_summaries"
 
@@ -173,19 +175,19 @@ class AISummaryORM(Base):
     )
 
     wins = Column(
-        JSONB,
+        JSON,
         nullable=False,
         default=list
     )
 
     recurring_blockers = Column(
-        JSONB,
+        JSON,
         nullable=False,
         default=list
     )
 
     goal_status_changes = Column(
-        JSONB,
+        JSON,
         nullable=False,
         default=list
     )
@@ -204,5 +206,4 @@ class AISummaryORM(Base):
     created_at = Column(
         DateTime,
         default=datetime.utcnow
-    )    
-    
+    )

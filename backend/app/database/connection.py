@@ -14,13 +14,15 @@ load_dotenv(ENV_FILE)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise RuntimeError(
-        "DATABASE_URL is not configured in the root .env file."
-    )
+    DATABASE_URL = "sqlite:///./app.db"
+
+# SQLite specific connect args
+connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
 
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    connect_args=connect_args,
 )
 
 SessionLocal = sessionmaker(
@@ -31,6 +33,14 @@ SessionLocal = sessionmaker(
 
 Base = declarative_base()
 
+def init_db():
+    try:
+        import app.database.orm_models  # Register ORM models
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"Database init note: {e}")
+
+init_db()
 
 def get_db():
     db = SessionLocal()

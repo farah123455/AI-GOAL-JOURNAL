@@ -37,5 +37,6 @@ class GoalResponse(BaseModel):
     target_date: Optional[str] = None
     progress_value: int = 0
     latest_progress_note: Optional[str] = None
+    estimated_days_remaining: Optional[int] = None
     created_at: datetime
     updated_at: datetime

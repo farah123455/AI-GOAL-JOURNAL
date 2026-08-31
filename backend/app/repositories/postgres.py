@@ -58,8 +58,10 @@ class PostgresUserRepository(AbstractUserRepository):
                 changed = False
 
                 if email and user.email != email:
-                    user.email = email
-                    changed = True
+                    existing_email_user = db.query(UserORM).filter(UserORM.email == email, UserORM.id != user.id).first()
+                    if not existing_email_user:
+                        user.email = email
+                        changed = True
 
                 if name and not user.display_name:
                     user.display_name = name
@@ -158,7 +160,24 @@ class PostgresJournalRepository(AbstractJournalRepository):
             .filter(UserORM.firebase_uid == firebase_uid)
             .first()
         )
-
+        if not user:
+            try:
+                email_val = firebase_uid if "@" in firebase_uid else f"{firebase_uid}@example.com"
+                user = UserORM(
+                    firebase_uid=firebase_uid,
+                    email=email_val,
+                    display_name=firebase_uid.split("@")[0],
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            except Exception:
+                db.rollback()
+                user = (
+                    db.query(UserORM)
+                    .filter(UserORM.firebase_uid == firebase_uid)
+                    .first()
+                )
         return user.id if user else None
 
     def create(self, journal: JournalEntry) -> JournalEntry:
@@ -171,9 +190,16 @@ class PostgresJournalRepository(AbstractJournalRepository):
             )
 
             if internal_user_id is None:
-                raise LookupError(
-                    "Authenticated Firebase user does not exist in PostgreSQL"
+                email_val = journal.user_id if "@" in journal.user_id else f"{journal.user_id}@example.com"
+                user_row = UserORM(
+                    firebase_uid=journal.user_id,
+                    email=email_val,
+                    display_name=journal.user_id.split("@")[0],
                 )
+                db.add(user_row)
+                db.commit()
+                db.refresh(user_row)
+                internal_user_id = user_row.id
 
             db_journal = JournalORM(
                 user_id=internal_user_id,
@@ -417,6 +443,24 @@ class PostgresGoalRepository(AbstractGoalRepository):
             .filter(UserORM.firebase_uid == firebase_uid)
             .first()
         )
+        if not user:
+            try:
+                email_val = firebase_uid if "@" in firebase_uid else f"{firebase_uid}@example.com"
+                user = UserORM(
+                    firebase_uid=firebase_uid,
+                    email=email_val,
+                    display_name=firebase_uid.split("@")[0],
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            except Exception:
+                db.rollback()
+                user = (
+                    db.query(UserORM)
+                    .filter(UserORM.firebase_uid == firebase_uid)
+                    .first()
+                )
 
         return user.id if user else None
 
@@ -448,9 +492,16 @@ class PostgresGoalRepository(AbstractGoalRepository):
             )
 
             if internal_user_id is None:
-                raise LookupError(
-                    "Authenticated Firebase user does not exist in PostgreSQL"
+                email_val = goal.user_id if "@" in goal.user_id else f"{goal.user_id}@example.com"
+                user_row = UserORM(
+                    firebase_uid=goal.user_id,
+                    email=email_val,
+                    display_name=goal.user_id.split("@")[0],
                 )
+                db.add(user_row)
+                db.commit()
+                db.refresh(user_row)
+                internal_user_id = user_row.id
 
             db_goal = GoalORM(
                 user_id=internal_user_id,
@@ -676,6 +727,24 @@ class PostgresProgressRepository(AbstractProgressRepository):
             .filter(UserORM.firebase_uid == firebase_uid)
             .first()
         )
+        if not user:
+            try:
+                email_val = firebase_uid if "@" in firebase_uid else f"{firebase_uid}@example.com"
+                user = UserORM(
+                    firebase_uid=firebase_uid,
+                    email=email_val,
+                    display_name=firebase_uid.split("@")[0],
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            except Exception:
+                db.rollback()
+                user = (
+                    db.query(UserORM)
+                    .filter(UserORM.firebase_uid == firebase_uid)
+                    .first()
+                )
 
         return user.id if user else None
 
@@ -874,6 +943,24 @@ class PostgresSummaryRepository(AbstractSummaryRepository):
             .filter(UserORM.firebase_uid == firebase_uid)
             .first()
         )
+        if not user:
+            try:
+                email_val = firebase_uid if "@" in firebase_uid else f"{firebase_uid}@example.com"
+                user = UserORM(
+                    firebase_uid=firebase_uid,
+                    email=email_val,
+                    display_name=firebase_uid.split("@")[0],
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            except Exception:
+                db.rollback()
+                user = (
+                    db.query(UserORM)
+                    .filter(UserORM.firebase_uid == firebase_uid)
+                    .first()
+                )
 
         return user.id if user else None
 
@@ -909,9 +996,16 @@ class PostgresSummaryRepository(AbstractSummaryRepository):
             )
 
             if internal_user_id is None:
-                raise LookupError(
-                    "Authenticated Firebase user does not exist in PostgreSQL"
+                email_val = summary.user_id if "@" in summary.user_id else f"{summary.user_id}@example.com"
+                user_row = UserORM(
+                    firebase_uid=summary.user_id,
+                    email=email_val,
+                    display_name=summary.user_id.split("@")[0],
                 )
+                db.add(user_row)
+                db.commit()
+                db.refresh(user_row)
+                internal_user_id = user_row.id
 
             db_summary = AISummaryORM(
                 user_id=internal_user_id,

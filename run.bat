@@ -8,13 +8,13 @@ echo.
 echo [1/3] Checking Docker ^& PostgreSQL Container...
 docker compose up -d postgres 2>nul
 if %errorlevel% neq 0 (
-    echo [INFO] Docker not running or not found. Continuing with Local MVP In-Memory Persistence.
+    echo [INFO] Docker not running or not found. Continuing with Local MVP In-Memory / SQLite Persistence.
 ) else (
     echo [SUCCESS] PostgreSQL container started on port 5432.
 )
 echo.
 
-echo [2/3] Starting FastAPI Backend Server on http://localhost:8000 ...
+echo [2/3] Starting FastAPI Backend Server on http://127.0.0.1:8000 ...
 start "AI Goal Journal - FastAPI Backend" cmd /k "python -m uvicorn app.main:app --app-dir backend --reload --port 8000"
 
 echo [3/3] Starting React Vite Frontend on http://localhost:5173 ...

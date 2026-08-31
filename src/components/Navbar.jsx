@@ -18,7 +18,7 @@ import { useData } from "../context/DataContext";
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { goals, summary, journals } = useData();
+  const { goals = [], summary, journals = [] } = useData();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
@@ -91,12 +91,12 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-[76px] shrink-0 items-center justify-between border-b border-border bg-[#190D0F]/95 px-5 backdrop-blur-xl md:px-8">
+    <header className="sticky top-0 z-30 flex h-[76px] shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur-xl md:px-8 shadow-sm">
       {/* LEFT */}
       <div className="ml-12 lg:ml-0">
         <div className="hidden items-center gap-2 md:flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-burgundy" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-beige/60">
+          <span className="h-2 w-2 rounded-full bg-teal-600 animate-pulse" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-teal-800">
             Personal growth workspace
           </span>
         </div>
@@ -109,24 +109,24 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setShowNotifications((prev) => !prev)}
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface text-beige transition hover:border-burgundy hover:text-cream"
+            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-teal-600 hover:text-teal-700"
             title="Notifications"
           >
             <Bell size={17} />
             {unreadCount > 0 && (
-              <span className="absolute right-2.5 top-2 h-2 w-2 rounded-full bg-burgundy animate-pulse" />
+              <span className="absolute right-2.5 top-2 h-2 w-2 rounded-full bg-teal-600 animate-pulse" />
             )}
           </button>
 
           {/* NOTIFICATIONS POPOVER DROPDOWN */}
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-border bg-surface shadow-glow z-50 p-4">
-              <div className="flex items-center justify-between border-b border-border pb-3 mb-3">
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white shadow-xl z-50 p-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                 <div className="flex items-center gap-2">
-                  <Bell size={16} className="text-beige" />
-                  <h3 className="text-sm font-bold text-cream">Notifications</h3>
+                  <Bell size={16} className="text-teal-700" />
+                  <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
                   {unreadCount > 0 && (
-                    <span className="rounded-full bg-wine/30 px-2 py-0.5 text-[10px] font-bold text-cream border border-wine/50">
+                    <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-bold text-teal-800">
                       {unreadCount} new
                     </span>
                   )}
@@ -135,14 +135,14 @@ export default function Navbar() {
                   {unreadCount > 0 && (
                     <button
                       onClick={markAllRead}
-                      className="text-[11px] text-beige/60 hover:text-cream transition flex items-center gap-1"
+                      className="text-[11px] text-slate-500 hover:text-teal-700 transition flex items-center gap-1 font-semibold"
                     >
                       <Check size={12} /> Mark read
                     </button>
                   )}
                   <button
                     onClick={() => setShowNotifications(false)}
-                    className="text-beige/60 hover:text-cream"
+                    className="text-slate-400 hover:text-slate-700"
                   >
                     <X size={14} />
                   </button>
@@ -163,19 +163,19 @@ export default function Navbar() {
                       }}
                       className={`p-3 rounded-xl border transition cursor-pointer flex items-start gap-3 ${
                         isRead
-                          ? "bg-surface2/50 border-border opacity-70"
-                          : "bg-surface2 border-border hover:border-wine"
+                          ? "bg-slate-50 border-slate-100 opacity-75"
+                          : "bg-teal-50/40 border-teal-200 hover:border-teal-400"
                       }`}
                     >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-wine/30 text-cream mt-0.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-white mt-0.5">
                         <Icon size={15} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="text-xs font-bold text-cream truncate">{n.title}</p>
-                          <span className="text-[10px] text-beige/40 font-mono">{n.time}</span>
+                          <p className="text-xs font-bold text-slate-900 truncate">{n.title}</p>
+                          <span className="text-[10px] text-slate-400 font-mono">{n.time}</span>
                         </div>
-                        <p className="text-xs text-beige/70 mt-1 line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
                           {n.message}
                         </p>
                       </div>
@@ -192,28 +192,28 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setShowAccountMenu((prev) => !prev)}
-            className="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-1.5 transition hover:border-burgundy"
+            className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 transition hover:border-teal-600"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-burgundy text-xs font-bold text-cream">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-700 text-xs font-bold text-white">
               {initial}
             </div>
             <div className="hidden sm:block text-left">
-              <p className="max-w-[120px] truncate text-xs font-semibold text-cream">
+              <p className="max-w-[120px] truncate text-xs font-bold text-slate-900">
                 {email}
               </p>
-              <p className="text-[9px] text-beige/50">
+              <p className="text-[9px] text-slate-500 font-semibold">
                 Account
               </p>
             </div>
-            <ChevronDown size={14} className="text-beige/60 hidden sm:block" />
+            <ChevronDown size={14} className="text-slate-400 hidden sm:block" />
           </button>
 
           {/* ACCOUNT DROPDOWN MENU */}
           {showAccountMenu && (
-            <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-border bg-surface shadow-glow z-50 p-2">
-              <div className="px-3 py-2 border-b border-border mb-1">
-                <p className="text-xs font-bold text-cream truncate">{email}</p>
-                <p className="text-[10px] text-beige/50 uppercase tracking-wider mt-0.5">Personal Workspace</p>
+            <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl z-50 p-2">
+              <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                <p className="text-xs font-bold text-slate-900 truncate">{email}</p>
+                <p className="text-[10px] font-bold text-teal-700 uppercase tracking-wider mt-0.5">Personal Workspace</p>
               </div>
 
               <button
@@ -221,9 +221,9 @@ export default function Navbar() {
                   setShowAccountMenu(false);
                   navigate("/profile");
                 }}
-                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-cream hover:bg-surface2 transition"
+                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition"
               >
-                <User size={15} className="text-beige" />
+                <User size={15} className="text-slate-500" />
                 <span>Profile</span>
               </button>
 
@@ -232,17 +232,17 @@ export default function Navbar() {
                   setShowAccountMenu(false);
                   navigate("/settings");
                 }}
-                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-cream hover:bg-surface2 transition"
+                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition"
               >
-                <Settings size={15} className="text-beige" />
+                <Settings size={15} className="text-slate-500" />
                 <span>Settings</span>
               </button>
 
-              <div className="my-1 border-t border-border" />
+              <div className="my-1 border-t border-slate-100" />
 
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-950/30 transition"
+                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition"
               >
                 <LogOut size={15} />
                 <span>Sign Out</span>

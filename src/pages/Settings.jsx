@@ -3,9 +3,10 @@ import {
   Bell,
   Sparkles,
   BookOpen,
-  Moon,
   Save,
   Check,
+  ShieldCheck,
+  Lock,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useData } from "../context/DataContext";
@@ -15,7 +16,6 @@ const defaults = {
   notifications: true,
   aiInsights: true,
   journalReminders: true,
-  compactMode: false,
 };
 
 function mergeWithDefaults(preferences) {
@@ -65,15 +65,15 @@ export default function Settings() {
 
   return (
     <div className="app-page">
-      <header className="border-b border-border bg-surface px-5 py-7 md:px-8 lg:px-10">
+      <header className="border-b border-slate-200 bg-white px-5 py-7 md:px-8 lg:px-10">
         <div className="mx-auto max-w-[1000px]">
-          <p className="section-label">PREFERENCES</p>
+          <p className="section-label">PREFERENCES & PRIVACY</p>
           <div className="mt-2 flex items-center gap-3">
-            <SettingsIcon size={23} className="text-beige" />
-            <h1 className="text-3xl font-semibold text-cream">Settings</h1>
+            <SettingsIcon size={23} className="text-teal-700" />
+            <h1 className="text-3xl font-semibold text-slate-900">Settings</h1>
           </div>
-          <p className="mt-2 text-sm text-beige/60">
-            Customize how AI Goal Journal works for you.
+          <p className="mt-2 text-sm text-slate-600">
+            Customize notification preferences, AI coaching, and privacy safeguards.
           </p>
         </div>
       </header>
@@ -81,7 +81,7 @@ export default function Settings() {
       <main className="mx-auto max-w-[1000px] px-5 py-7 md:px-8 lg:px-10">
         <div className="space-y-5">
           {error && (
-            <div className="rounded-xl border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-400">
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
               {error}
             </div>
           )}
@@ -89,11 +89,11 @@ export default function Settings() {
           <SettingSection
             icon={Bell}
             title="Notifications"
-            description="Stay updated with reminders."
+            description="Stay updated with daily reflection reminders."
           >
             <SettingRow
               title="Enable notifications"
-              description="Receive important reminders and updates."
+              description="Receive reminders to log your daily goal journal."
               enabled={settings.notifications}
               onChange={() => update("notifications")}
               disabled={saving}
@@ -103,11 +103,11 @@ export default function Settings() {
           <SettingSection
             icon={Sparkles}
             title="AI Preferences"
-            description="Control personalized AI insights."
+            description="Control personalized AI coaching & structured extractions."
           >
             <SettingRow
-              title="Enable AI insights"
-              description="Generate reflections based on your activity."
+              title="Enable AI insights & coaching"
+              description="Generate reflections and progress calculations based on your activity."
               enabled={settings.aiInsights}
               onChange={() => update("aiInsights")}
               disabled={saving}
@@ -116,35 +116,38 @@ export default function Settings() {
 
           <SettingSection
             icon={BookOpen}
-            title="Journal"
-            description="Manage your reflection experience."
+            title="Journal Habits"
+            description="Manage your habit and reflection experience."
           >
             <SettingRow
-              title="Journal reminders"
-              description="Receive reminders to maintain your journaling habit."
+              title="Journal habit reminders"
+              description="Receive subtle prompts to keep up your journaling streak."
               enabled={settings.journalReminders}
               onChange={() => update("journalReminders")}
               disabled={saving}
             />
           </SettingSection>
 
-          <SettingSection
-            icon={Moon}
-            title="Interface"
-            description="Adjust the application layout."
-          >
-            <SettingRow
-              title="Compact mode"
-              description="Use a more condensed content layout."
-              enabled={settings.compactMode}
-              onChange={() => update("compactMode")}
-              disabled={saving}
-            />
-          </SettingSection>
+          {/* HIPAA & PRIVACY SECURITY GUARANTEE CARD */}
+          <section className="panel p-6 shadow-card bg-emerald-50/60 border border-emerald-200">
+            <div className="flex items-center gap-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-700 text-white">
+                <ShieldCheck size={22} />
+              </div>
+              <div>
+                <h2 className="font-bold text-emerald-950 flex items-center gap-2">
+                  <Lock size={15} /> HIPAA Privacy & Security Guarantee
+                </h2>
+                <p className="mt-1 text-xs text-emerald-800 leading-relaxed">
+                  Your daily reflections and health goals are secured with Application-Layer Envelope Encryption (AES-256-GCM). Audio transcripts are transcribed locally and deleted immediately from disk. Zero unencrypted logs are stored.
+                </p>
+              </div>
+            </div>
+          </section>
 
           <div className="flex justify-end gap-4 pt-2">
             {saved && (
-              <div className="flex items-center gap-2 text-xs font-semibold text-accent">
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700">
                 <Check size={14} />
                 Settings saved
               </div>
@@ -167,14 +170,14 @@ export default function Settings() {
 
 function SettingSection({ icon: Icon, title, description, children }) {
   return (
-    <section className="panel p-6 shadow-card">
+    <section className="panel p-6 shadow-card bg-white border border-slate-200">
       <div className="flex items-center gap-4">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-burgundy text-beige">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-800 border border-teal-200">
           <Icon size={19} />
         </div>
         <div>
-          <h2 className="font-semibold text-cream">{title}</h2>
-          <p className="mt-1 text-xs text-beige/60">{description}</p>
+          <h2 className="font-semibold text-slate-900">{title}</h2>
+          <p className="mt-1 text-xs text-slate-500">{description}</p>
         </div>
       </div>
       <div className="mt-6">{children}</div>
@@ -184,10 +187,10 @@ function SettingSection({ icon: Icon, title, description, children }) {
 
 function SettingRow({ title, description, enabled, onChange, disabled }) {
   return (
-    <div className="flex items-center justify-between gap-5 rounded-xl border border-border bg-surface2 p-4">
+    <div className="flex items-center justify-between gap-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
       <div>
-        <h3 className="text-sm font-semibold text-cream">{title}</h3>
-        <p className="mt-1 text-xs leading-5 text-beige/60">{description}</p>
+        <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+        <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
       </div>
 
       <button
@@ -196,11 +199,11 @@ function SettingRow({ title, description, enabled, onChange, disabled }) {
         aria-pressed={enabled}
         aria-disabled={disabled}
         className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-          enabled ? "bg-wine" : "bg-muted"
+          enabled ? "bg-teal-700" : "bg-slate-300"
         } ${disabled ? "opacity-50" : ""}`}
       >
         <span
-          className={`absolute top-1 h-4 w-4 rounded-full bg-cream transition-all ${
+          className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-all shadow-sm ${
             enabled ? "left-6" : "left-1"
           }`}
         />

@@ -79,7 +79,7 @@ export default function Sidebar() {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="fixed left-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface text-cream shadow-card lg:hidden"
+        className="fixed left-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-800 shadow-md lg:hidden"
       >
         <Menu size={19} />
       </button>
@@ -87,28 +87,28 @@ export default function Sidebar() {
       {/* MOBILE OVERLAY */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* STATIC NON-SCROLLABLE SIDEBAR */}
+      {/* STATIC NON-SCROLLABLE LIGHT THEME SIDEBAR */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[255px] shrink-0 flex-col border-r border-border bg-[#190D0F] transition-transform duration-200 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[255px] shrink-0 flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:static lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* BRAND */}
-        <div className="flex h-[76px] shrink-0 items-center justify-between border-b border-border px-5">
+        <div className="flex h-[76px] shrink-0 items-center justify-between border-b border-slate-200 px-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-burgundy shadow-[0_8px_20px_rgba(109,41,50,0.3)]">
-              <Target size={19} className="text-cream" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-700 text-white shadow-md">
+              <Target size={19} />
             </div>
             <div>
-              <p className="text-sm font-bold tracking-wide text-cream">
+              <p className="text-sm font-bold tracking-wide text-slate-900">
                 GOAL JOURNAL
               </p>
-              <p className="text-[9px] uppercase tracking-[0.18em] text-beige/70">
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-teal-700">
                 Growth workspace
               </p>
             </div>
@@ -117,17 +117,17 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="text-beige lg:hidden"
+            className="text-slate-500 hover:text-slate-800 lg:hidden"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* STATIC NAVIGATION (NO OVERFLOW-Y SCROLLING) */}
+        {/* NAVIGATION LINKS */}
         <div className="flex-1 px-3 py-5 overflow-hidden">
           {navigation.map((section) => (
             <div key={section.label} className="mb-6">
-              <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-beige/50">
+              <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-teal-700">
                 {section.label}
               </p>
               <div className="space-y-1">
@@ -139,14 +139,14 @@ export default function Sidebar() {
                       to={item.path}
                       onClick={() => setMobileOpen(false)}
                       className={({ isActive }) =>
-                        `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+                        `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
                           isActive
-                            ? "bg-burgundy text-cream shadow-[0_6px_18px_rgba(109,41,50,0.22)]"
-                            : "text-beige/75 hover:bg-surface2 hover:text-cream"
+                            ? "bg-teal-700 text-white shadow-md"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                         }`
                       }
                     >
-                      <Icon size={17} strokeWidth={1.8} />
+                      <Icon size={17} strokeWidth={2} />
                       <span>{item.name}</span>
                     </NavLink>
                   );

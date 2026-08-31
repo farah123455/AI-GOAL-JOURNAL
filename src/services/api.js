@@ -1,19 +1,31 @@
 import { auth } from '../firebase';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:8000/api/v1'
+    : 'http://127.0.0.1:8000/api/v1');
 
 /**
  * Retrieves the current Firebase user's ID token and formats Authorization header.
  */
 export async function getAuthHeaders() {
   const currentUser = auth.currentUser;
-  if (!currentUser) {
-    return {};
+  if (currentUser) {
+    const token = await currentUser.getIdToken();
+    return {
+      Authorization: `Bearer ${token}`,
+    };
   }
-  const token = await currentUser.getIdToken();
-  return {
-    Authorization: `Bearer ${token}`,
-  };
+
+  const savedDevUser = localStorage.getItem('local_dev_user');
+  if (savedDevUser) {
+    return {
+      Authorization: `Bearer mock-dev-token-123`,
+    };
+  }
+
+  return {};
 }
 
 /**
@@ -55,6 +67,7 @@ export async function fetchWithAuth(url, options = {}) {
  */
 export const userApi = {
   getProfile: () => fetchWithAuth('/users/me'),
+  getProductivityScore: () => fetchWithAuth('/users/me/productivity-score'),
   updateProfile: (data) =>
     fetchWithAuth('/users/me', {
       method: 'PUT',
