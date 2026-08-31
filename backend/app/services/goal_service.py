@@ -3,7 +3,7 @@ import re
 from typing import Optional, Any
 from app.models.domain import Goal
 from app.schemas.goal import GoalCreate, GoalUpdate
-from app.repositories.postgres import goal_repo
+from app.repositories.in_memory import goal_repo
 
 import math
 from datetime import datetime
