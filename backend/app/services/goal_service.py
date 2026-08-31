@@ -1,15 +1,15 @@
+import logging
+logger = logging.getLogger(__name__)
 import uuid
 import re
+import difflib
 from typing import Optional, Any
 from app.models.domain import Goal
 from app.schemas.goal import GoalCreate, GoalUpdate
 from app.repositories.in_memory import goal_repo
 
 import math
-from datetime import datetime
-
-import math
-from datetime import datetime
+from datetime import datetime, timezone
 
 class GoalService:
     def _enrich_goal(self, goal: Optional[Goal]) -> Optional[Goal]:
@@ -36,8 +36,11 @@ class GoalService:
             return goal
 
         # Active or Stalled goal velocity calculation
-        created_dt = goal.created_at or datetime.utcnow()
-        days_active = max(1, (datetime.utcnow() - created_dt).days)
+        created_dt = goal.created_at or datetime.now(timezone.utc)
+        if created_dt.tzinfo is None:
+            created_dt = created_dt.replace(tzinfo=timezone.utc)
+
+        days_active = max(1, (datetime.now(timezone.utc) - created_dt).days)
         velocity = max(val / days_active, 2.0)  # Default min 2% / day
         remaining_percentage = max(0, 100 - val)
         goal.estimated_days_remaining = math.ceil(remaining_percentage / velocity)
@@ -130,5 +133,72 @@ class GoalService:
             return best_match.id, best_match.title
 
         return None, None
+
+    def is_duplicate_goal(
+        self, candidate_title: str, existing_goals: list[Goal], threshold: float = 0.60
+    ) -> Optional[Goal]:
+        if not candidate_title or not existing_goals:
+            return None
+
+        candidate_norm = candidate_title.strip().lower()
+        stop_words = {"to", "a", "an", "the", "in", "for", "on", "with", "my", "and", "learn", "complete", "finish"}
+        cand_tokens = set(re.findall(r"\w+", candidate_norm)) - stop_words
+
+        for goal in existing_goals:
+            existing_title = goal.title.strip().lower()
+
+            if candidate_norm == existing_title or candidate_norm in existing_title or existing_title in candidate_norm:
+                return goal
+
+            exist_tokens = set(re.findall(r"\w+", existing_title)) - stop_words
+            if cand_tokens and exist_tokens:
+                overlap = len(cand_tokens & exist_tokens)
+                if overlap >= 2 or (len(cand_tokens) <= 2 and overlap == len(cand_tokens)):
+                    return goal
+
+            ratio = difflib.SequenceMatcher(None, candidate_norm, existing_title).ratio()
+            if ratio >= threshold:
+                return goal
+
+        return None
+
+    def auto_create_goals_from_journal(
+        self, user_id: str, extracted_goals: list[dict], existing_goals: list[Goal]
+    ) -> list[Goal]:
+        created = []
+        for g_data in extracted_goals:
+            if not g_data.get("is_new", True) or g_data.get("confidence", 1.0) < 0.65:
+                continue
+
+            title = (g_data.get("title") or g_data.get("text") or "").strip()
+            if not title or len(title) < 3:
+                continue
+
+            duplicate = self.is_duplicate_goal(title, existing_goals)
+            if duplicate:
+                g_data["is_new"] = False
+                g_data["matched_existing_goal_id"] = duplicate.id
+                g_data["matched_existing_goal_title"] = duplicate.title
+                logger.info("Auto-goal skipped duplicate: '%s' matched with '%s'", title, duplicate.title)
+                continue
+
+            new_goal_dto = GoalCreate(
+                title=title,
+                description=g_data.get("description") or "Auto-generated from journal entry.",
+                category=g_data.get("category") or "Personal",
+                status="Active",
+                target_date=g_data.get("target_date"),
+                progress_value=0,
+            )
+
+            new_goal = self.create_goal(user_id=user_id, data=new_goal_dto)
+            created.append(new_goal)
+            existing_goals.append(new_goal)
+
+            g_data["is_new"] = True
+            g_data["auto_created_goal_id"] = new_goal.id
+            logger.info("Auto-created goal '%s' (ID: %s) for user %s", new_goal.title, new_goal.id, user_id)
+
+        return created
 
 goal_service = GoalService()

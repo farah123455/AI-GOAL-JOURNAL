@@ -34,6 +34,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchAllData({ quiet: true });
+
+    // Refresh goals & stats whenever user returns to this window/tab
+    const onFocus = () => fetchAllData({ quiet: true });
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, [fetchAllData]);
 
   const loading = initialLoading && !profile && goals.length === 0 && journals.length === 0;

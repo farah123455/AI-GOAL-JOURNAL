@@ -24,6 +24,7 @@ export default function Journal() {
     fetchJournals,
     addJournal,
     deleteJournalFromCache,
+    fetchAllData,
   } = useData();
 
   const [activeTab, setActiveTab] = useState("text"); // 'text' | 'voice'
@@ -66,6 +67,7 @@ export default function Journal() {
       });
 
       addJournal(result);
+      await fetchAllData({ quiet: true });
       setLatestAnalysis(result.ai_analysis);
       setSelectedJournal(result);
       if (source === "text") {

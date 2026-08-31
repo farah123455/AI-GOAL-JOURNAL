@@ -34,7 +34,15 @@ class JournalService:
         # 3. Call Gemini AI extraction
         ai_raw = gemini_service.analyze_journal(content=content, existing_goals=goals_dict_list)
 
-        # 4. Perform deterministic matching on extracted activities & record progress
+        # 4. AI Automatic Goal Creation with Deduplication
+        extracted_candidate_goals = ai_raw.get("goals", [])
+        auto_created_goals = goal_service.auto_create_goals_from_journal(
+            user_id=user_id,
+            extracted_goals=extracted_candidate_goals,
+            existing_goals=existing_goals,
+        )
+
+        # 5. Perform deterministic matching on extracted activities & record progress
         activities = ai_raw.get("activities", [])
         for act in activities:
             text = act.get("text", "")
@@ -46,7 +54,7 @@ class JournalService:
                 act["related_goal_id"] = matched_id
                 act["related_goal_title"] = matched_title
 
-        # 5. Process AI Progress Updates & save to progress_repo
+        # 6. Process AI Progress Updates & save to progress_repo
         progress_updates = ai_raw.get("progress_updates", [])
         for prog in progress_updates:
             hint = prog.get("related_goal_hint")
@@ -85,7 +93,7 @@ class JournalService:
                     data=GoalUpdate(progress_value=new_val, status=new_status, latest_progress_note=note)
                 )
 
-        # 5. Deterministic matching on extracted goals
+        # 7. Deterministic matching on extracted goals
         goals_suggested = ai_raw.get("goals", [])
         for g_sug in goals_suggested:
             text = g_sug.get("text", "")
@@ -97,7 +105,7 @@ class JournalService:
                 g_sug["matched_existing_goal_id"] = matched_id
                 g_sug["matched_existing_goal_title"] = matched_title
 
-        # 6. Assemble and persist JournalEntry
+        # 8. Assemble and persist JournalEntry
         journal_entry = JournalEntry(
             id=entry_id,
             user_id=user_id,

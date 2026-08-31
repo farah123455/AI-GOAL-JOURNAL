@@ -52,7 +52,11 @@ ATTENTION MECHANISM & FOCUS RULES:
    - 'ongoing': Tasks currently in progress ("working on presentation").
    - 'planned': Intentions for the future ("will study tomorrow").
    Do NOT mark planned tasks as completed!
-- RULE 3 (QUANTITATIVE & ACCURATE PROGRESS):
+- RULE 3 (AUTOMATIC GOAL DETECTION & DEDUPLICATION):
+   Identify explicit or strong implicit commitments to new medium/long-term objectives ("I want to learn Docker", "Aiming to run 5k", "Planning to launch portfolio").
+   If the intention already corresponds to an existing goal from the context below, set "is_new": false and provide "matched_existing_goal_id".
+   Assign a confidence score (0.0 to 1.0) and suggest a category ('Career', 'Learning', 'Health', 'Finance', 'Personal', or 'Other').
+- RULE 4 (QUANTITATIVE & ACCURATE PROGRESS):
    When user mentions goal progress, evaluate quantitative units if present (e.g. "3 out of 10 modules done" -> quantified_completed: 3, quantified_total: 10).
    Categorize effort_level as: 'minor' (+5-10%), 'moderate' (+15-20%), 'major' (+25-35%), or 'completion' (goal 100% finished).
 
@@ -74,8 +78,12 @@ Return ONLY a valid JSON object strictly matching this schema:
   ],
   "goals": [
     {{
-      "text": "Goal description",
+      "title": "Concise, actionable goal title (3-7 words)",
+      "description": "Context and rationale extracted from journal",
+      "category": "Career | Learning | Health | Finance | Personal | Other",
       "is_new": true,
+      "confidence": 0.90,
+      "target_date": "YYYY-MM-DD or null",
       "matched_existing_goal_id": null
     }}
   ],
