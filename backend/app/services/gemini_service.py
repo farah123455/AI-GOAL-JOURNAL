@@ -5,8 +5,11 @@ import logging
 from typing import Optional, Any
 from google import genai
 from app.core.config import settings
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
+
+today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 def _clean_json_response(raw_text: str) -> str:
     """Strip markdown backticks or extra text wrapping JSON."""
@@ -44,6 +47,7 @@ class GeminiService:
             goals_context = f"\nUser's Current Active Goals:\n{goals_list_str}\n"
 
         prompt = f"""You are an expert AI Goal Journal & Accountability Coach analyzing a user's daily journal entry.
+Today's Date: {today_str}
 
 ATTENTION MECHANISM & FOCUS RULES:
 - RULE 1 (BACKSTAGING vs ACTIVE TODAY): Separate historical commitments or background context ("backstaging") from concrete actions executed today. Pay primary attention to what the user actively worked on today.
@@ -56,6 +60,7 @@ ATTENTION MECHANISM & FOCUS RULES:
    Identify explicit or strong implicit commitments to new medium/long-term objectives ("I want to learn Docker", "Aiming to run 5k", "Planning to launch portfolio").
    If the intention already corresponds to an existing goal from the context below, set "is_new": false and provide "matched_existing_goal_id".
    Assign a confidence score (0.0 to 1.0) and suggest a category ('Career', 'Learning', 'Health', 'Finance', 'Personal', or 'Other').
+   If target date is mentioned (e.g., "by next month" or "by December"), calculate the exact target date relative to Today's Date ({today_str}). Ensure the year is 2026 or future.
 - RULE 4 (QUANTITATIVE & ACCURATE PROGRESS):
    When user mentions goal progress, evaluate quantitative units if present (e.g. "3 out of 10 modules done" -> quantified_completed: 3, quantified_total: 10).
    Categorize effort_level as: 'minor' (+5-10%), 'moderate' (+15-20%), 'major' (+25-35%), or 'completion' (goal 100% finished).

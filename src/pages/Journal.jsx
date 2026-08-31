@@ -39,9 +39,13 @@ export default function Journal() {
 
   const loadingList = !hasLoadedJournals;
 
-  useEffect(() => {
-    fetchJournals({ quiet: hasLoadedJournals });
-  }, [fetchJournals, hasLoadedJournals]);
+  const autoCreatedGoals =
+    latestAnalysis?.goals?.filter((g) => g.is_new || g.auto_created_goal_id) || [];
+
+useEffect(() => {
+  // Always fetch fresh journals on component load
+  fetchJournals({ quiet: false });
+}, [fetchJournals]);
 
   // Reset pagination when search query changes
   useEffect(() => {
@@ -241,14 +245,46 @@ export default function Journal() {
             {/* LATEST AI EXTRACTION BANNER */}
             {latestAnalysis && (
               <section className="rounded-3xl p-7 bg-gradient-to-r from-indigo-50 via-purple-50 to-white border border-indigo-200/90 shadow-md animate-fade-in">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-700 mb-3 flex items-center gap-2">
                   <Sparkles size={18} className="text-purple-600 animate-pulse" /> AI Structured Journal Extraction
                 </h3>
+
+                {/* AUTO-CREATED GOAL BADGE */}
+                {autoCreatedGoals.length > 0 && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-200 shadow-xs animate-bounce">
+                      <CheckCircle2 size={14} className="text-emerald-600" />
+                      {autoCreatedGoals.length} New Goal{autoCreatedGoals.length > 1 ? "s" : ""} Auto-Created!
+                    </span>
+                  )}
+                </div>
 
                 {latestAnalysis.quick_summary && (
                   <p className="text-lg font-bold text-slate-900 italic mb-4">
                     "{latestAnalysis.quick_summary}"
                   </p>
+                )}
+
+                {/* Auto-Created Goal Details List */}
+                {autoCreatedGoals.length > 0 && (
+                  <div className="mb-4 rounded-2xl bg-emerald-50/80 p-4 border border-emerald-200">
+                    <h4 className="text-xs font-bold text-emerald-900 mb-2 flex items-center gap-1.5">
+                      🎯 New Goal Added to Your Board:
+                    </h4>
+                    <ul className="space-y-1 text-xs text-emerald-800 font-semibold">
+                      {autoCreatedGoals.map((g, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+                          <span>{g.title || g.text}</span>
+                          {g.category && (
+                            <span className="text-[10px] bg-emerald-200/70 text-emerald-900 px-1.5 py-0.5 rounded">
+                              {g.category}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -306,7 +342,7 @@ export default function Journal() {
 
               {loadingList ? (
                 <JournalLoadingState />
-              ) : filteredJournals.length === 0 ? (
+              ) : hasLoadedJournals && filteredJournals.length === 0 ? (
                 <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
                   <BookOpen size={32} className="mx-auto text-slate-300 mb-2" />
                   <p className="text-base text-slate-900 font-bold">No journal entries found</p>
