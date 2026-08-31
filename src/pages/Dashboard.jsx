@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Target,
   BookOpen,
@@ -8,6 +8,9 @@ import {
   Sparkles,
   CheckCircle2,
   AlertTriangle,
+  Zap,
+  HelpCircle,
+  X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -26,6 +29,8 @@ export default function Dashboard() {
     initialLoading,
     fetchAllData,
   } = useData();
+
+  const [showScoreModal, setShowScoreModal] = useState(false);
 
   useEffect(() => {
     fetchAllData({ quiet: true });
@@ -62,6 +67,80 @@ export default function Dashboard() {
       }
     }
     return count;
+  })();
+
+  // --- DETERMINISTIC PRODUCTIVITY SCORE CALCULATION ---
+  const productivityScoreData = (() => {
+    const now = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(now.getDate() - 7);
+
+    // 1. Goal Progress Score (30%)
+    let goalProgressScore = 0;
+    if (activeGoals.length > 0) {
+      const effectiveScores = activeGoals.map((g) => {
+        let p = g.progress_percent !== undefined && g.progress_percent !== null ? Number(g.progress_percent) : 50;
+        const updatedAt = new Date(g.updated_at || g.created_at || now);
+        const daysStale = Math.floor((now - updatedAt) / (1000 * 60 * 60 * 24));
+        if (daysStale > 30) {
+          const decay = Math.max(0, 1 - (daysStale - 30) / 30);
+          p *= decay;
+        }
+        return p;
+      });
+      goalProgressScore = effectiveScores.reduce((acc, curr) => acc + curr, 0) / effectiveScores.length;
+    }
+
+    // 2. Goal Completion Score (20%)
+    let goalCompletionScore = 0;
+    if (goals.length > 0) {
+      let ratio = (completedGoals.length / goals.length) * 100;
+      if (goals.length < 3) ratio *= 0.8;
+      goalCompletionScore = Math.min(100, ratio);
+    }
+
+    // 3. Completed Activities (20%) & Consistency (20%) & Blockers (-10%)
+    let completedActivitiesCount = 0;
+    let blockerCount = 0;
+    const journalDays = new Set();
+
+    journals.forEach((j) => {
+      const createdAt = new Date(j.created_at || j.createdAt);
+      if (createdAt >= sevenDaysAgo) {
+        journalDays.add(createdAt.toDateString());
+        const analysis = j.ai_analysis || {};
+        (analysis.activities || []).forEach((act) => {
+          if ((typeof act === "object" && act.status === "completed") || typeof act === "string") {
+            completedActivitiesCount++;
+          }
+        });
+        blockerCount += (analysis.blockers || []).length;
+      }
+    });
+
+    const completedActivitiesScore = Math.min(100, (completedActivitiesCount / 10) * 100);
+    const journalConsistencyScore = Math.min(100, (journalDays.size / 5) * 100);
+    const blockerPenalty = Math.min(15, blockerCount * 3);
+
+    const baseScore =
+      0.3 * goalProgressScore +
+      0.2 * goalCompletionScore +
+      0.2 * completedActivitiesScore +
+      0.2 * journalConsistencyScore;
+
+    const finalScore = Math.round(Math.max(0, Math.min(100, baseScore - blockerPenalty)));
+
+    return {
+      finalScore,
+      goalProgressScore: Math.round(goalProgressScore),
+      goalCompletionScore: Math.round(goalCompletionScore),
+      completedActivitiesScore: Math.round(completedActivitiesScore),
+      journalConsistencyScore: Math.round(journalConsistencyScore),
+      blockerPenalty: Math.round(blockerPenalty),
+      blockerCount,
+      completedActivitiesCount,
+      daysJournaled: journalDays.size,
+    };
   })();
 
   const name = profile?.display_name || user?.displayName || user?.email?.split("@")[0] || "there";
@@ -101,8 +180,27 @@ export default function Dashboard() {
           <DashboardSkeleton />
         ) : (
           <div className="flex flex-col gap-8">
-            {/* Key Metrics Grid (Enlarged Stat Cards) */}
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 stagger-in">
+            {/* Top Metrics Grid: Updated to 5-col layout on large screens */}
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5 stagger-in">
+              <div
+                onClick={() => setShowScoreModal(true)}
+                className="panel p-6 sm:p-7 shadow-sm flex flex-col justify-between hover-lift cursor-pointer bg-gradient-to-br from-indigo-50/70 to-purple-50/50 border-indigo-200"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-sm">
+                    <Zap size={22} className="fill-current" />
+                  </div>
+                  <HelpCircle size={18} className="text-slate-400 hover:text-indigo-600" />
+                </div>
+                <div>
+                  <p className="mt-5 section-label text-xs font-bold tracking-wider text-indigo-700">PRODUCTIVITY SCORE</p>
+                  <div className="mt-1.5 flex items-baseline gap-2.5">
+                    <AnimatedNumber value={String(productivityScoreData.finalScore)} className="text-4xl font-extrabold text-indigo-900" />
+                    <span className="text-sm text-indigo-600 font-semibold">/ 100</span>
+                  </div>
+                </div>
+              </div>
+
               <StatCard
                 icon={<Target size={22} className="text-indigo-600" />}
                 iconBg="bg-indigo-50"
@@ -133,7 +231,7 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* AI Reflection Banner (Enlarged Box & Fonts) */}
+            {/* AI Reflection Banner */}
             {latestAnalysis ? (
               <section className="animate-rise rounded-3xl p-7 md:p-9 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-white border border-indigo-200/90 shadow-md hover-lift">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
@@ -177,9 +275,8 @@ export default function Dashboard() {
               </section>
             )}
 
-            {/* Middle Row: High-End AI Coach Summary & Active Blockers Cards */}
+            {/* Middle Row: AI Coach Summary & Active Blockers Cards */}
             <div className="grid gap-7 md:grid-cols-2 stagger-in">
-              {/* AI ACCOUNTABILITY COACH CARD */}
               <section className="rounded-3xl p-7 sm:p-8 bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white border border-indigo-200/90 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300 min-h-[320px]">
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -226,7 +323,6 @@ export default function Dashboard() {
                 </div>
               </section>
 
-              {/* ACTIVE BLOCKERS CARD */}
               <section className="panel p-7 sm:p-8 shadow-md bg-white border border-slate-200 rounded-3xl flex flex-col justify-between hover:shadow-lg transition-all duration-300 min-h-[320px]">
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -278,7 +374,7 @@ export default function Dashboard() {
               </section>
             </div>
 
-            {/* Active Goals Preview (Enlarged Fonts) */}
+            {/* Active Goals Preview */}
             <section>
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-2xl font-bold text-slate-900">Active Goals ({activeGoals.length})</h2>
@@ -332,6 +428,82 @@ export default function Dashboard() {
           </div>
         )}
       </main>
+
+      {/* AUDITABLE SCORE BREAKDOWN MODAL */}
+      {showScoreModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 animate-rise">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white">
+                  <Zap size={20} className="fill-current" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Score Formula Breakdown</h3>
+                  <p className="text-xs text-slate-500 font-medium">Deterministic calculation based on your activity</p>
+                </div>
+              </div>
+              <button onClick={() => setShowScoreModal(false)} className="text-slate-400 hover:text-slate-600">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4 my-6">
+              <div className="flex items-center justify-between text-sm">
+                <div>
+                  <p className="font-semibold text-slate-800">Goal Progress (30%)</p>
+                  <p className="text-xs text-slate-500">Average across {activeGoals.length} active goals</p>
+                </div>
+                <span className="font-bold text-slate-900">{productivityScoreData.goalProgressScore} / 100</span>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <div>
+                  <p className="font-semibold text-slate-800">Goal Completion (20%)</p>
+                  <p className="text-xs text-slate-500">{completedGoals.length} completed of {goals.length} total</p>
+                </div>
+                <span className="font-bold text-slate-900">{productivityScoreData.goalCompletionScore} / 100</span>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <div>
+                  <p className="font-semibold text-slate-800">Completed Activities (20%)</p>
+                  <p className="text-xs text-slate-500">{productivityScoreData.completedActivitiesCount} done (Target: 10/wk)</p>
+                </div>
+                <span className="font-bold text-slate-900">{productivityScoreData.completedActivitiesScore} / 100</span>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <div>
+                  <p className="font-semibold text-slate-800">Journal Consistency (20%)</p>
+                  <p className="text-xs text-slate-500">{productivityScoreData.daysJournaled} active days (Target: 5/wk)</p>
+                </div>
+                <span className="font-bold text-slate-900">{productivityScoreData.journalConsistencyScore} / 100</span>
+              </div>
+
+              <div className="flex items-center justify-between text-sm text-rose-600 pt-2 border-t border-slate-100">
+                <div>
+                  <p className="font-semibold">Blocker Penalty (Deduction)</p>
+                  <p className="text-xs text-rose-400">{productivityScoreData.blockerCount} blockers detected (-3 pts each, max -15)</p>
+                </div>
+                <span className="font-bold">-{productivityScoreData.blockerPenalty} pts</span>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-indigo-50 p-4 flex items-center justify-between border border-indigo-100">
+              <span className="text-sm font-bold text-indigo-900">Total Productivity Score</span>
+              <span className="text-2xl font-extrabold text-indigo-700">{productivityScoreData.finalScore}/100</span>
+            </div>
+
+            <button
+              onClick={() => setShowScoreModal(false)}
+              className="mt-6 w-full py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
