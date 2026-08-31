@@ -10,8 +10,10 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
-import { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { popIn, prefersReducedMotion } from "../animations/motion";
+import { animate } from "animejs";
 
 const navigation = [
   {
@@ -78,6 +80,47 @@ const navigation = [
 
 export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+  const activeIconRef = useRef(null);
+  const navRef = useRef(null);
+  const indicatorRef = useRef(null);
+
+  // Connected navigation: when the active page changes, its icon gives a
+  // subtle "you are here" spring. Skipped for reduced-motion users.
+  useEffect(() => {
+    if (!activeIconRef.current || prefersReducedMotion()) return;
+    popIn(activeIconRef.current, { scale: 1.18 });
+  }, [location.pathname]);
+
+  // Sliding indicator: the small indigo bar glides to the active nav item
+  // instead of the active state merely jumping between items.
+  useEffect(() => {
+    const nav = navRef.current;
+    const indicator = indicatorRef.current;
+    if (!nav || !indicator) return;
+    const activeLink =
+      nav.querySelector(`a[href="${location.pathname}"]`) ||
+      nav.querySelector(`a[href="${location.pathname}/"]`);
+    if (!activeLink) {
+      indicator.style.opacity = "0";
+      return;
+    }
+    const top = activeLink.offsetTop;
+    const height = activeLink.offsetHeight;
+    if (prefersReducedMotion()) {
+      indicator.style.transform = `translateY(${top}px)`;
+      indicator.style.height = `${height}px`;
+      indicator.style.opacity = "1";
+      return;
+    }
+    animate(indicator, {
+      translateY: top,
+      height,
+      opacity: [0.4, 1],
+      duration: 450,
+      ease: "outBack(1.4)",
+    });
+  }, [location.pathname, mobileOpen]);
 
   return (
     <>
@@ -130,7 +173,14 @@ export default function Sidebar() {
         </div>
 
         {/* NAVIGATION */}
-        <div className="flex-1 px-4 py-6 overflow-y-auto space-y-7">
+        <div ref={navRef} className="relative flex-1 px-4 py-6 overflow-y-auto space-y-7">
+          {/* Sliding active-page indicator (moves between nav items) */}
+          <span
+            ref={indicatorRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1.5 top-0 w-1 rounded-full bg-indigo-500 opacity-0"
+            style={{ height: 0 }}
+          />
           {navigation.map((section) => (
             <div key={section.label}>
               <p className="mb-2.5 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
@@ -155,6 +205,13 @@ export default function Sidebar() {
                       <Icon
                         size={19}
                         strokeWidth={item.path === '/coach' || item.path === '/insights' ? 2 : 1.8}
+                        ref={(node) => {
+                          // Keep a live ref to the currently active icon so the
+                          // "you are here" spring can target it after navigation.
+                          if (node && item.path === location.pathname) {
+                            activeIconRef.current = node;
+                          }
+                        }}
                         className={({ isActive }) =>
                           isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
                         }

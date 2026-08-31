@@ -4,6 +4,7 @@ import Input from "../components/Input";
 import { userApi } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useData } from "../context/DataContext";
+import { animateCountUp, stopAnim } from "../animations/motion";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -49,8 +50,18 @@ export default function Profile() {
     }
   }
 
+  // Statistics count up once the profile data is available (the "journey"
+  // summary reveals itself) — guarded so it never re-runs on every render.
+  useEffect(() => {
+    if (loading || !profile) return;
+    const root = document.querySelector("[data-profile-root]");
+    if (!root) return;
+    const anims = animateCountUp(root);
+    return () => anims.forEach(stopAnim);
+  }, [loading, profile]);
+
   return (
-    <div className="app-page bg-slate-50 min-h-screen">
+    <div className="app-page bg-slate-50 min-h-screen" data-profile-root>
       <main className="mx-auto max-w-[1000px] px-5 py-7 md:px-8 lg:px-10">
         {statusMessage && (
           <div role="status" className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-600 font-semibold">
@@ -99,15 +110,15 @@ export default function Profile() {
               {/* Quick Metrics Bar */}
               <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-3 gap-3 text-center">
                 <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                  <div className="text-2xl font-bold text-slate-900">{profile?.stats?.total_journals ?? 0}</div>
+                  <div className="text-2xl font-bold text-slate-900" data-count-up>{profile?.stats?.total_journals ?? 0}</div>
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mt-0.5">Journals</div>
                 </div>
                 <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                  <div className="text-2xl font-bold text-slate-900">{profile?.stats?.active_goals ?? 0}</div>
+                  <div className="text-2xl font-bold text-slate-900" data-count-up>{profile?.stats?.active_goals ?? 0}</div>
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mt-0.5">Active Goals</div>
                 </div>
                 <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                  <div className="text-2xl font-bold text-emerald-600">{profile?.stats?.completed_goals ?? 0}</div>
+                  <div className="text-2xl font-bold text-emerald-600" data-count-up>{profile?.stats?.completed_goals ?? 0}</div>
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mt-0.5">Completed</div>
                 </div>
               </div>

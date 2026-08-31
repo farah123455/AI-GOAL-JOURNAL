@@ -9,12 +9,13 @@ import {
   Sparkles,
   TrendingUp,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useData } from "../context/DataContext";
 import { goalApi } from "../services/api";
 import CircularProgress from "../components/CircularProgress";
 import GoalCompletionCelebration from "../components/GoalCompletionCelebration";
 import { GridSkeleton, GoalLoadingState } from "../components/LoadingSkeleton";
+import { popIn } from "../animations/motion";
 
 export default function Goals() {
   const {
@@ -32,6 +33,24 @@ export default function Goals() {
   // Never persisted, so it never replays on page load/refresh or when completed
   // goals are fetched from the backend.
   const [celebratingGoal, setCelebratingGoal] = useState(null);
+
+  // Motion: the freshly created goal card pops in once it renders.
+  // Completion additionally emits a small "growth particle" burst from the
+  // card itself, on top of the dedicated GoalCompletionCelebration overlay.
+  const newGoalIdRef = useRef(null);
+
+  useEffect(() => {
+    if (!newGoalIdRef.current) return;
+    const el = document.querySelector(`[data-goal-id="${newGoalIdRef.current}"]`);
+    newGoalIdRef.current = null;
+    if (el) popIn(el, { scale: 1.03 });
+  }, [goals]);
+
+  /** Small particle burst on the card that just reached 100%. */
+  function celebrateGoalCard(goalId) {
+    const el = document.querySelector(`[data-goal-id="${goalId}"]`);
+    if (el) spawnGrowthParticles(el);
+  }
 
   // Form states
   const [title, setTitle] = useState("");
@@ -99,6 +118,7 @@ export default function Goals() {
         updateGoalInCache(updated);
         if (editingGoal.status !== "Completed" && status === "Completed") {
           setCelebratingGoal(updated);
+          celebrateGoalCard(editingGoal.id);
         }
       } else {
         const payload = {
@@ -111,6 +131,7 @@ export default function Goals() {
         };
         const created = await goalApi.createGoal(payload);
         addGoal(created);
+        newGoalIdRef.current = created?.id;
       }
       resetForm();
     } catch (err) {
@@ -136,6 +157,7 @@ export default function Goals() {
       updateGoalInCache(updated);
       if (goals.find((g) => g.id === goalId)?.status !== "Completed" && newStatus === "Completed") {
         setCelebratingGoal(updated);
+        celebrateGoalCard(goalId);
       }
     } catch (err) {
       alert("Failed to update status: " + err.message);
@@ -143,7 +165,7 @@ export default function Goals() {
   }
 
   return (
-    <div className="app-page bg-slate-50 min-h-screen">
+    <div className="app-page bg-slate-50 min-h-screen relative" data-particle-scope>
       <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10">
         {/* Status Filter & Action Bar */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -348,6 +370,7 @@ export default function Goals() {
               return (
                 <div
                   key={goal.id}
+                  data-goal-id={goal.id}
                   className={`panel p-6 shadow-sm flex flex-col justify-between border-slate-200 hover:border-indigo-300 hover:shadow-md hover:-translate-y-1 transition-all duration-200 ${goal.status === "Completed" ? "ring-1 ring-emerald-100 bg-emerald-50/30 shadow-emerald-500/30 hover:translate-y-0" : ""}`}
                 >
                   <div>

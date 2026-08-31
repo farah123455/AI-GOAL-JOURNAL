@@ -13,6 +13,13 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useData } from "../context/DataContext";
 import { DashboardSkeleton } from "../components/LoadingSkeleton";
+import GrowthConstellation from "../components/GrowthConstellation";
+import {
+  animateCountUp,
+  animateProgressFills,
+  attachScrollReveals,
+  stopAnim,
+} from "../animations/motion";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -31,6 +38,20 @@ export default function Dashboard() {
   }, [fetchAllData]);
 
   const loading = initialLoading && !profile && goals.length === 0 && journals.length === 0;
+
+  // Data reveals (count-ups, progress fills, scroll reveals) run once when
+  // the dashboard content becomes available — never on every re-render.
+  useEffect(() => {
+    if (loading) return;
+    const root = document.querySelector("[data-dashboard-root]");
+    if (!root) return;
+    const anims = [...animateCountUp(root), ...animateProgressFills(root)];
+    const disconnect = attachScrollReveals(root);
+    return () => {
+      anims.forEach(stopAnim);
+      disconnect();
+    };
+  }, [loading]);
 
   const latestJournal = journals[0];
   const latestAnalysis = latestJournal?.ai_analysis;
@@ -66,10 +87,10 @@ export default function Dashboard() {
   const name = profile?.display_name || user?.displayName || user?.email?.split("@")[0] || "there";
 
   return (
-    <div className="app-page bg-slate-50 min-h-screen">
+    <div className="app-page bg-slate-50 min-h-screen relative" data-dashboard-root data-particle-scope>
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-md px-6 py-8 md:px-10 lg:px-12">
         <div className="mx-auto max-w-[1350px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-          <div>
+          <div data-motion>
             <div className="flex flex-wrap items-center gap-3.5">
               <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
                 Good day, {name} <span className="animate-bounce">👋</span>
@@ -83,13 +104,14 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div>
+          <div data-motion className="flex flex-col items-start sm:items-end gap-4">
+            <GrowthConstellation className="hidden lg:block w-56 opacity-80" />
             <button
               onClick={() => navigate("/journal")}
               className="primary-button px-6 py-3 text-sm font-bold shadow-md hover:shadow-indigo-200 hover:-translate-y-0.5"
             >
-              <BookOpen size={18} />
-              + New Journal Entry
+              <Plus size={16} />
+              New Journal Entry
             </button>
           </div>
         </div>
@@ -134,7 +156,7 @@ export default function Dashboard() {
 
             {/* AI Reflection Banner (Enlarged Box & Fonts) */}
             {latestAnalysis ? (
-              <section className="rounded-3xl p-7 md:p-9 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-white border border-indigo-200/90 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
+              <section data-scroll-reveal className="rounded-3xl p-7 md:p-9 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-white border border-indigo-200/90 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                   <span className="text-sm font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-2">
                     <Sparkles size={20} className="text-purple-600 animate-pulse" />
@@ -226,7 +248,7 @@ export default function Dashboard() {
               </section>
 
               {/* ACTIVE BLOCKERS CARD */}
-              <section className="panel p-7 sm:p-8 shadow-md bg-white border border-slate-200 rounded-3xl flex flex-col justify-between hover:shadow-lg transition-all duration-300 min-h-[320px]">
+              <section data-scroll-reveal className="panel p-7 sm:p-8 shadow-md bg-white border border-slate-200 rounded-3xl flex flex-col justify-between hover:shadow-lg transition-all duration-300 min-h-[320px]">
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3.5 py-1 text-xs font-bold text-rose-700 border border-rose-200 shadow-sm">
@@ -278,7 +300,7 @@ export default function Dashboard() {
             </div>
 
             {/* Active Goals Preview (Enlarged Fonts) */}
-            <section>
+            <section data-scroll-reveal>
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-2xl font-bold text-slate-900">Active Goals ({activeGoals.length})</h2>
                 <button
@@ -337,14 +359,17 @@ export default function Dashboard() {
 
 function StatCard({ icon, iconBg = "bg-indigo-50", label, value, detail }) {
   return (
-    <div className="panel p-6 sm:p-7 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
+    <div
+      data-motion
+      className="panel p-6 sm:p-7 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between"
+    >
       <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${iconBg} shadow-sm`}>
         {icon}
       </div>
       <div>
         <p className="mt-5 section-label text-xs font-bold tracking-wider">{label}</p>
         <div className="mt-1.5 flex items-baseline gap-2.5">
-          <span className="text-4xl font-bold text-slate-900">{value}</span>
+          <span className="text-4xl font-bold text-slate-900" data-count-up>{value}</span>
           <span className="text-sm text-slate-500 font-semibold">{detail}</span>
         </div>
       </div>

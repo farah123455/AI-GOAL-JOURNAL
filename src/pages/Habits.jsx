@@ -9,7 +9,7 @@ import {
   CalendarCheck,
   Trophy,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
   loadHabits,
@@ -23,6 +23,7 @@ import {
   calculateBestStreak,
   habitStats,
 } from "../utils/habitStorage";
+import { spawnGrowthParticles, popIn, floatLoop } from "../animations/motion";
 
 const FREQUENCIES = [
   { value: "daily", label: "Daily" },
@@ -127,19 +128,36 @@ export default function Habits() {
     setDeletingHabit(null);
   }
 
-  function toggleCheck(habitId, date) {
+  function toggleCheck(habitId, date, btnEl) {
     const dates = completions[habitId] || [];
-    const nextDates = dates.includes(date)
-      ? dates.filter((d) => d !== date)
-      : [...dates, date];
+    const isCompleting = !dates.includes(date);
+    const nextDates = isCompleting
+      ? [...dates, date]
+      : dates.filter((d) => d !== date);
     saveToStorage(habits, { ...completions, [habitId]: nextDates });
+
+    // Daily rhythm: a completed habit emits a small "growth point" burst
+    // and its streak value springs — momentum the user can feel.
+    if (isCompleting && btnEl) {
+      spawnGrowthParticles(btnEl, { count: 7 });
+      const streakEl = btnEl.closest("[data-habit-card]")?.querySelector("[data-habit-streak]");
+      if (streakEl) popIn(streakEl, { scale: 1.3 });
+    }
   }
 
   const today = todayISO();
 
+  // Gentle float for the empty-state icon while no habits exist.
+  useEffect(() => {
+    if (habits.length > 0) return;
+    const el = document.querySelector("[data-empty-float]");
+    if (!el) return;
+    return floatLoop(el);
+  }, [habits.length]);
+
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 relative" data-particle-scope>
       {/* PAGE HEADER */}
       <header className="flex flex-wrap items-center justify-between gap-4 mb-7">
         <div>
@@ -192,7 +210,7 @@ export default function Habits() {
       {habits.length === 0 ? (
         <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm animate-fade-in">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-indigo-50 border border-indigo-100 shadow-sm mb-5">
-            <Repeat size={34} className="text-indigo-600" />
+            <Repeat size={34} className="text-indigo-600" data-empty-float />
           </div>
           <h3 className="text-lg font-bold text-slate-900">No Habits Tracked Yet</h3>
           <p className="mt-1.5 text-xs text-slate-500 max-w-md mx-auto leading-relaxed font-medium">
@@ -221,6 +239,7 @@ export default function Habits() {
             return (
               <div
                 key={habit.id}
+                data-habit-card
                 className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-3 mb-4">
@@ -272,7 +291,7 @@ export default function Habits() {
                 {habit.frequency !== "weekly" && (
                   <button
                     type="button"
-                    onClick={() => toggleCheck(habit.id, today)}
+                    onClick={(e) => toggleCheck(habit.id, today, e.currentTarget)}
                     aria-pressed={doneToday}
                     className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold border transition active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                       doneToday
@@ -325,6 +344,7 @@ export default function Habits() {
                 {/* STREAK FOOTER */}
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                   <span
+                    data-habit-streak
                     className={`inline-flex items-center gap-1.5 font-bold ${
                       currentStreak > 0 ? "text-orange-600" : "text-slate-400"
                     }`}

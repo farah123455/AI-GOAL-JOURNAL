@@ -1,7 +1,13 @@
 /**
  * src/components/CircularProgress.jsx
  * Circular progress indicator built with SVG.
+ * On mount the ring draws itself from empty to its real value (Anime.js),
+ * giving every progress ring across the app a visible entrance.
  */
+import { useLayoutEffect, useRef } from "react";
+import { animate } from "animejs";
+import { prefersReducedMotion } from "../animations/motion";
+
 export default function CircularProgress({
   value,
   className = "w-24 h-24",
@@ -15,10 +21,33 @@ export default function CircularProgress({
     return Math.min(100, Math.max(0, Math.round(n)));
   })();
 
+  const ringRef = useRef(null);
+
   const radius = 38;
   const strokeWidth = 7;
   const circumference = 2 * Math.PI * radius;
   const dashoffset = circumference - (safeValue / 100) * circumference;
+
+  // Draw-in on mount: from a fully empty ring to the real value.
+  useLayoutEffect(() => {
+    const ring = ringRef.current;
+    if (!ring || prefersReducedMotion()) return;
+    ring.style.transition = "none";
+    const anim = animate(ring, {
+      strokeDashoffset: [circumference, dashoffset],
+      duration: 1100,
+      delay: 250,
+      ease: "out(3)",
+      onComplete: () => {
+        ring.style.transition = "";
+      },
+    });
+    return () => {
+      anim.pause();
+      anim.revert?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={"relative inline-flex items-center justify-center " + className}>
@@ -40,6 +69,7 @@ export default function CircularProgress({
         />
         <g transform="rotate(-90 50 50)">
           <circle
+            ref={ringRef}
             className={fillClass}
             cx="50"
             cy="50"
