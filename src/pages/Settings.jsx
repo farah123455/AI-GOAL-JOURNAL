@@ -65,7 +65,7 @@ export default function Settings() {
 
   return (
     <div className="app-page bg-slate-50 min-h-screen">
-      <main className="mx-auto max-w-[1000px] px-5 py-7 md:px-8 lg:px-10">
+      <main className="mx-auto max-w-[1000px] px-5 py-7 md:px-8 lg:px-10 animate-rise">
         <div className="space-y-5">
           {error && (
             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">

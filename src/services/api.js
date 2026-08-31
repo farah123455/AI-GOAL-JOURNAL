@@ -156,3 +156,17 @@ export const summaryApi = {
       method: 'POST',
     }),
 };
+
+/**
+ * Goal Progress API
+ */
+export const progressApi = {
+  createProgress: (data) =>
+    fetchWithAuth('/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  getGoalProgress: (goalId) => fetchWithAuth(`/progress/goal/${goalId}`),
+  getLatestGoalProgress: (goalId) => fetchWithAuth(`/progress/goal/${goalId}/latest`),
+};

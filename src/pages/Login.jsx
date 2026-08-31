@@ -34,7 +34,9 @@ export default function Login() {
         {/* BRAND SIDE */}
         <div className="relative hidden overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 border-r border-indigo-700 lg:flex text-white">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.15),transparent_45%)]" />
-          <div className="relative flex w-full flex-col justify-between p-12 xl:p-16">
+          <div className="absolute -left-10 top-24 h-56 w-56 rounded-full bg-white/10 blur-3xl animate-orb" />
+          <div className="absolute bottom-16 right-8 h-40 w-40 rounded-full bg-violet-300/20 blur-3xl animate-orb" style={{ animationDelay: "1.4s" }} />
+          <div className="relative flex w-full flex-col justify-between p-12 xl:p-16 animate-rise">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md">
                 <Target size={21} className="text-white" />
@@ -69,7 +71,7 @@ export default function Login() {
 
         {/* LOGIN FORM */}
         <div className="flex items-center justify-center px-6 py-12">
-          <div className="w-full max-w-md">
+          <div className="w-full max-w-md animate-rise">
             <div className="mb-8 lg:hidden">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-600">

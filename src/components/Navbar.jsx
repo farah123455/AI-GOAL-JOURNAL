@@ -117,7 +117,10 @@ export default function Navbar() {
     <header className="sticky top-0 z-30 flex h-[84px] shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-6 backdrop-blur-md md:px-9">
       {/* LEFT: Dynamic Page Title */}
       <div className="flex items-center gap-2 pl-12 lg:pl-0">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 truncate">
+        <h1
+          key={currentTitle}
+          className="animate-title text-xl sm:text-2xl font-bold tracking-tight text-slate-900 truncate"
+        >
           {currentTitle}
         </h1>
       </div>
@@ -150,7 +153,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setShowNotifications((prev) => !prev)}
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600 hover:bg-white shadow-sm"
+            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:scale-105 shadow-sm"
             title="Notifications"
           >
             <Bell size={18} />
@@ -161,7 +164,7 @@ export default function Navbar() {
 
           {/* NOTIFICATIONS POPOVER DROPDOWN */}
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white shadow-lg z-50 p-4">
+            <div className="popover-enter absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white shadow-lg z-50 p-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                 <div className="flex items-center gap-2">
                   <Bell size={17} className="text-indigo-600" />
@@ -251,7 +254,7 @@ export default function Navbar() {
 
           {/* ACCOUNT DROPDOWN MENU */}
           {showAccountMenu && (
-            <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white shadow-lg z-50 p-2">
+            <div className="popover-enter absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white shadow-lg z-50 p-2">
               <div className="px-3 py-2 border-b border-slate-100 mb-1">
                 <p className="text-xs font-bold text-slate-900 truncate">{email}</p>
                 <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mt-0.5">Personal Workspace</p>

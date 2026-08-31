@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { userApi, goalApi, journalApi, summaryApi } from '../services/api';
 import { useAuth } from './AuthContext';
 
+import { notifyGoalCompleted } from '../components/GoalCelebration';
+
 const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
@@ -11,6 +13,7 @@ export function DataProvider({ children }) {
   const [goals, setGoals] = useState([]);
   const [journals, setJournals] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [recentlyCompletedGoal, setRecentlyCompletedGoal] = useState(null);
 
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
   const [hasLoadedGoals, setHasLoadedGoals] = useState(false);
@@ -24,11 +27,27 @@ export function DataProvider({ children }) {
     setGoals([]);
     setJournals([]);
     setSummary(null);
+    setRecentlyCompletedGoal(null);
     setHasLoadedProfile(false);
     setHasLoadedGoals(false);
     setHasLoadedJournals(false);
     setHasLoadedSummary(false);
-    setInitialLoading(true);
+    setInitialLoading(false);
+  }, []);
+
+  const triggerGoalCompletion = useCallback((goal) => {
+    if (!goal) return;
+    const completedGoalWith100 = {
+      ...goal,
+      status: 'Completed',
+      progress_value: 100,
+    };
+    setRecentlyCompletedGoal(completedGoalWith100);
+    notifyGoalCompleted(completedGoalWith100);
+  }, []);
+
+  const clearCompletedGoalTrigger = useCallback(() => {
+    setRecentlyCompletedGoal(null);
   }, []);
 
   // Fetch Profile
@@ -86,11 +105,11 @@ export function DataProvider({ children }) {
   // Fetch All Data
   const fetchAllData = useCallback(async (options = { quiet: false }) => {
     try {
-      const [profileRes, goalsRes, journalsRes, summaryRes] = await Promise.allSettled([
+      // 1. Fetch core data concurrently
+      const [profileRes, goalsRes, journalsRes] = await Promise.allSettled([
         userApi.getProfile(),
         goalApi.listGoals(),
         journalApi.listJournals(),
-        summaryApi.getWeeklySummary(),
       ]);
 
       if (profileRes.status === 'fulfilled') {
@@ -105,10 +124,22 @@ export function DataProvider({ children }) {
         setJournals(journalsRes.value || []);
         setHasLoadedJournals(true);
       }
-      if (summaryRes.status === 'fulfilled') {
-        setSummary(summaryRes.value);
-        setHasLoadedSummary(true);
-      }
+
+      // Unblock initial loading immediately so UI renders in < 50ms
+      setInitialLoading(false);
+
+      // 2. Fetch AI Coach summary non-blockingly
+      summaryApi
+        .getWeeklySummary()
+        .then((summaryData) => {
+          if (summaryData) {
+            setSummary(summaryData);
+            setHasLoadedSummary(true);
+          }
+        })
+        .catch((err) => {
+          console.warn('Background fetchSummary warning:', err);
+        });
     } catch (err) {
       console.error('DataContext fetchAllData error:', err);
       if (!options.quiet) throw err;
@@ -169,6 +200,7 @@ export function DataProvider({ children }) {
         goals,
         journals,
         summary,
+        recentlyCompletedGoal,
         hasLoadedProfile,
         hasLoadedGoals,
         hasLoadedJournals,
@@ -182,6 +214,8 @@ export function DataProvider({ children }) {
         addGoal,
         updateGoalInCache,
         deleteGoalFromCache,
+        triggerGoalCompletion,
+        clearCompletedGoalTrigger,
         addJournal,
         updateJournalInCache,
         deleteJournalFromCache,

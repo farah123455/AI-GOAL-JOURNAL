@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Calendar,
   Target,
   BookOpen,
   Sparkles,
@@ -20,6 +21,11 @@ const navigation = [
         name: "Dashboard",
         path: "/dashboard",
         icon: LayoutDashboard,
+      },
+      {
+        name: "Calendar",
+        path: "/calendar",
+        icon: Calendar,
       },
       {
         name: "Progress",
@@ -79,7 +85,7 @@ export default function Sidebar() {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="fixed left-4 top-4 z-40 flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-800 shadow-sm lg:hidden"
+        className="fixed left-4 top-4 z-40 flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:scale-105 hover:border-indigo-300 lg:hidden"
       >
         <Menu size={20} />
       </button>
@@ -94,14 +100,14 @@ export default function Sidebar() {
 
       {/* STATIC SIDEBAR (Broader 285px width) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[285px] shrink-0 flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[285px] shrink-0 flex-col border-r border-slate-200 bg-white transition-transform duration-300 ease-out lg:static lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* BRAND (Broader 84px header height) */}
         <div className="flex h-[84px] shrink-0 items-center justify-between border-b border-slate-200 px-6">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-600 shadow-sm animate-float">
               <Target size={21} className="text-white" />
             </div>
             <div>
@@ -139,21 +145,30 @@ export default function Sidebar() {
                       to={item.path}
                       onClick={() => setMobileOpen(false)}
                       className={({ isActive }) =>
-                        `group flex items-center gap-3.5 rounded-xl px-3.5 py-3 text-[15px] font-medium transition ${
+                        `group relative flex items-center gap-3.5 rounded-xl px-3.5 py-3 text-[15px] font-medium transition-all duration-200 ${
                           isActive
-                            ? "bg-indigo-50 text-indigo-600 shadow-sm font-bold"
-                            : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                            ? "bg-indigo-50 text-indigo-600 shadow-sm font-bold nav-active-glow"
+                            : "text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:translate-x-0.5"
                         }`
                       }
                     >
-                      <Icon
-                        size={19}
-                        strokeWidth={item.path === '/coach' || item.path === '/insights' ? 2 : 1.8}
-                        className={({ isActive }) =>
-                          isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
-                        }
-                      />
-                      <span>{item.name}</span>
+                      {({ isActive }) => (
+                        <>
+                          {isActive && (
+                            <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-indigo-600" />
+                          )}
+                          <Icon
+                            size={19}
+                            strokeWidth={item.path === "/coach" || item.path === "/insights" ? 2 : 1.8}
+                            className={
+                              isActive
+                                ? "text-indigo-600"
+                                : "text-slate-400 group-hover:text-slate-600 transition-colors"
+                            }
+                          />
+                          <span>{item.name}</span>
+                        </>
+                      )}
                     </NavLink>
                   );
                 })}

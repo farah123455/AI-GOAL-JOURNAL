@@ -51,7 +51,7 @@ export default function Profile() {
 
   return (
     <div className="app-page bg-slate-50 min-h-screen">
-      <main className="mx-auto max-w-[1000px] px-5 py-7 md:px-8 lg:px-10">
+      <main className="mx-auto max-w-[1000px] px-5 py-7 md:px-8 lg:px-10 animate-rise">
         {statusMessage && (
           <div role="status" className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-600 font-semibold">
             ✓ {statusMessage}

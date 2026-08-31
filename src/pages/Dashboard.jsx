@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useData } from "../context/DataContext";
 import { DashboardSkeleton } from "../components/LoadingSkeleton";
+import AnimatedNumber from "../components/AnimatedNumber";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ export default function Dashboard() {
           <div>
             <div className="flex flex-wrap items-center gap-3.5">
               <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
-                Good day, {name} <span className="animate-bounce">👋</span>
+                Good day, {name} <span className="animate-wave">👋</span>
               </h1>
               <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1.5 text-xs font-bold text-amber-700 border border-amber-200 shadow-sm">
                 <Flame size={16} className="text-amber-500 fill-amber-400" /> {streak} days streak
@@ -99,9 +100,9 @@ export default function Dashboard() {
         {loading ? (
           <DashboardSkeleton />
         ) : (
-          <div className="flex flex-col gap-8 animate-fade-in">
+          <div className="flex flex-col gap-8">
             {/* Key Metrics Grid (Enlarged Stat Cards) */}
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 stagger-in">
               <StatCard
                 icon={<Target size={22} className="text-indigo-600" />}
                 iconBg="bg-indigo-50"
@@ -134,7 +135,7 @@ export default function Dashboard() {
 
             {/* AI Reflection Banner (Enlarged Box & Fonts) */}
             {latestAnalysis ? (
-              <section className="rounded-3xl p-7 md:p-9 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-white border border-indigo-200/90 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
+              <section className="animate-rise rounded-3xl p-7 md:p-9 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-white border border-indigo-200/90 shadow-md hover-lift">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                   <span className="text-sm font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-2">
                     <Sparkles size={20} className="text-purple-600 animate-pulse" />
@@ -163,7 +164,7 @@ export default function Dashboard() {
                 )}
               </section>
             ) : (
-              <section className="panel p-8 text-center shadow-sm">
+              <section className="panel p-8 text-center shadow-sm animate-rise">
                 <p className="text-base text-slate-600 font-medium">
                   You haven't logged any journal entries yet. Record your thoughts to unlock AI insights!
                 </p>
@@ -177,7 +178,7 @@ export default function Dashboard() {
             )}
 
             {/* Middle Row: High-End AI Coach Summary & Active Blockers Cards */}
-            <div className="grid gap-7 md:grid-cols-2">
+            <div className="grid gap-7 md:grid-cols-2 stagger-in">
               {/* AI ACCOUNTABILITY COACH CARD */}
               <section className="rounded-3xl p-7 sm:p-8 bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white border border-indigo-200/90 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300 min-h-[320px]">
                 <div>
@@ -300,11 +301,11 @@ export default function Dashboard() {
                   </button>
                 </div>
               ) : (
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 stagger-in">
                   {activeGoals.slice(0, 3).map((goal) => (
                     <div
                       key={goal.id}
-                      className="panel p-7 hover:border-indigo-300 hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                      className="panel p-7 hover:border-indigo-300 cursor-pointer flex flex-col justify-between hover-lift"
                       onClick={() => navigate("/goals")}
                     >
                       <div>
@@ -337,14 +338,14 @@ export default function Dashboard() {
 
 function StatCard({ icon, iconBg = "bg-indigo-50", label, value, detail }) {
   return (
-    <div className="panel p-6 sm:p-7 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
-      <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${iconBg} shadow-sm`}>
+    <div className="panel p-6 sm:p-7 shadow-sm flex flex-col justify-between hover-lift">
+      <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${iconBg} shadow-sm transition-transform duration-300 hover:scale-110`}>
         {icon}
       </div>
       <div>
         <p className="mt-5 section-label text-xs font-bold tracking-wider">{label}</p>
         <div className="mt-1.5 flex items-baseline gap-2.5">
-          <span className="text-4xl font-bold text-slate-900">{value}</span>
+          <AnimatedNumber value={value} className="text-4xl font-bold text-slate-900" />
           <span className="text-sm text-slate-500 font-semibold">{detail}</span>
         </div>
       </div>

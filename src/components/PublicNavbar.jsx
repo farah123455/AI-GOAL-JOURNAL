@@ -24,9 +24,9 @@ export default function PublicNavbar() {
 
         {/* Anchor Links (Enlarged) */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-bold uppercase tracking-wider text-slate-700">
-          <a href="#features" className="hover:text-indigo-600 transition">Features</a>
-          <a href="#how-it-works" className="hover:text-indigo-600 transition">How It Works</a>
-          <a href="#privacy" className="hover:text-indigo-600 transition">Privacy</a>
+          <a href="#features" className="hover:text-indigo-600 transition relative after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:bg-indigo-600 after:transition-all hover:after:w-full">Features</a>
+          <a href="#how-it-works" className="hover:text-indigo-600 transition relative after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:bg-indigo-600 after:transition-all hover:after:w-full">How It Works</a>
+          <a href="#privacy" className="hover:text-indigo-600 transition relative after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:bg-indigo-600 after:transition-all hover:after:w-full">Privacy</a>
         </nav>
 
         {/* Auth CTAs (Enlarged) */}

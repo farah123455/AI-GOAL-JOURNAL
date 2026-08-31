@@ -143,9 +143,9 @@ export default function Progress() {
             <p className="text-base font-medium text-slate-500">Loading your performance metrics…</p>
           </section>
         ) : (
-          <div className="space-y-8 animate-fade-in">
+          <div className="space-y-8">
             {/* METRICS STAT CARDS */}
-            <div className="grid gap-5 md:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-3 stagger-in">
               <StatCard
                 icon={<TrendingUp size={20} className="text-indigo-600" />}
                 iconBg="bg-indigo-50"
@@ -298,7 +298,7 @@ export default function Progress() {
 
 function StatCard({ icon, iconBg = "bg-indigo-50", label, value, detail }) {
   return (
-    <div className="panel p-6 shadow-sm bg-white rounded-3xl flex flex-col justify-between hover:shadow-md transition">
+    <div className="panel p-6 shadow-sm bg-white rounded-3xl flex flex-col justify-between hover-lift">
       <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${iconBg}`}>
         {icon}
       </div>

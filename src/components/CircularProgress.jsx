@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 /**
  * src/components/CircularProgress.jsx
  * Circular progress indicator built with SVG.
@@ -18,7 +20,21 @@ export default function CircularProgress({
   const radius = 38;
   const strokeWidth = 7;
   const circumference = 2 * Math.PI * radius;
-  const dashoffset = circumference - (safeValue / 100) * circumference;
+  const [shown, setShown] = useState(0);
+
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      setShown(safeValue);
+      return undefined;
+    }
+
+    setShown(0);
+    const id = requestAnimationFrame(() => setShown(safeValue));
+    return () => cancelAnimationFrame(id);
+  }, [safeValue]);
+
+  const dashoffset = circumference - (shown / 100) * circumference;
 
   return (
     <div className={"relative inline-flex items-center justify-center " + className}>
@@ -50,7 +66,7 @@ export default function CircularProgress({
             strokeDasharray={circumference}
             strokeDashoffset={dashoffset}
             style={{
-              transition: "stroke-dashoffset 500ms ease, stroke 500ms ease",
+              transition: "stroke-dashoffset 900ms cubic-bezier(0.16, 1, 0.3, 1), stroke 500ms ease",
             }}
           />
         </g>

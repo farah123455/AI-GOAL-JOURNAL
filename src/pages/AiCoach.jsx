@@ -31,7 +31,7 @@ export default function AiCoach() {
 
   return (
     <div className="app-page bg-slate-50 min-h-screen">
-      <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10">
+      <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10 animate-rise">
         <div className="mb-6 flex justify-end">
           <button
             onClick={handleGenerateFresh}

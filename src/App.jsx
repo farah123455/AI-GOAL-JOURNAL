@@ -7,6 +7,7 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Progress from "./pages/progress";
 import Goals from "./pages/Goals";
+import Calendar from "./pages/Calendar";
 import Journal from "./pages/Journal";
 import AiCoach from "./pages/AiCoach";
 import Insights from "./pages/Insights";
@@ -64,6 +65,7 @@ export default function App() {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/calendar" element={<Calendar />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/goals" element={<Goals />} />
         <Route path="/journal" element={<Journal />} />

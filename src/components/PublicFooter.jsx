@@ -3,7 +3,7 @@ import { Target } from 'lucide-react';
 
 export default function PublicFooter() {
   return (
-    <footer className="border-t border-slate-200 bg-white py-12 px-6">
+    <footer id="privacy" className="border-t border-slate-200 bg-white py-12 px-6">
       <div className="mx-auto max-w-[1250px]">
         <div className="grid gap-8 md:grid-cols-4 pb-8 border-b border-slate-200">
           {/* Brand Col */}

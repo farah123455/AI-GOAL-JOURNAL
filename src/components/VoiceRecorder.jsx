@@ -226,8 +226,8 @@ export default function VoiceRecorder({ onTranscriptReady, onDirectSubmit, isSub
                 {[40, 70, 30, 90, 60, 80, 45, 95, 60, 30, 75].map((h, i) => (
                   <span
                     key={i}
-                    style={{ height: `${h}%` }}
-                    className="w-1.5 rounded-full bg-indigo-600 animate-pulse transition-all duration-150"
+                    style={{ animationDelay: `${i * 90}ms` }}
+                    className="eq-bar w-1.5 h-10 rounded-full bg-indigo-600"
                   />
                 ))}
               </div>

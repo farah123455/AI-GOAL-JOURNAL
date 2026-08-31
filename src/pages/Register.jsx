@@ -43,8 +43,10 @@ export default function Register() {
       <div className="grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
         <div className="relative hidden overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 border-r border-indigo-700 lg:flex text-white">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_35%_25%,rgba(255,255,255,0.15),transparent_45%)]" />
+          <div className="absolute -left-8 top-20 h-52 w-52 rounded-full bg-white/10 blur-3xl animate-orb" />
+          <div className="absolute bottom-12 right-6 h-36 w-36 rounded-full bg-emerald-300/15 blur-3xl animate-orb" style={{ animationDelay: "1.6s" }} />
 
-          <div className="relative flex w-full flex-col justify-between p-12 xl:p-16">
+          <div className="relative flex w-full flex-col justify-between p-12 xl:p-16 animate-rise">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md">
                 <Target size={21} className="text-white" />
@@ -76,7 +78,7 @@ export default function Register() {
         </div>
 
         <div className="flex items-center justify-center px-6 py-12">
-          <div className="w-full max-w-md">
+          <div className="w-full max-w-md animate-rise">
             <div className="mb-8 lg:hidden">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-600">

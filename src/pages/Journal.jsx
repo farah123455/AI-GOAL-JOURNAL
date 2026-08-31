@@ -12,6 +12,7 @@ import {
   Search,
 } from "lucide-react";
 import VoiceRecorder from "../components/VoiceRecorder";
+import Pagination from "../components/Pagination";
 import { journalApi } from "../services/api";
 import { useData } from "../context/DataContext";
 import { GridSkeleton, JournalLoadingState } from "../components/LoadingSkeleton";
@@ -32,12 +33,19 @@ export default function Journal() {
   const [latestAnalysis, setLatestAnalysis] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedJournal, setSelectedJournal] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const loadingList = !hasLoadedJournals;
 
   useEffect(() => {
     fetchJournals({ quiet: hasLoadedJournals });
   }, [fetchJournals, hasLoadedJournals]);
+
+  // Reset pagination when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   async function handleSave(contentToSave, source = "text") {
     setError("");
@@ -97,6 +105,9 @@ export default function Journal() {
       )
     : journals;
 
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedJournals = filteredJournals.slice(startIndex, startIndex + itemsPerPage);
+
   const todayFormatted = new Date().toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -135,7 +146,7 @@ export default function Journal() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* LEFT MAIN WORKSPACE COLUMN ("TODAY'S ENTRY") */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-7 min-w-0">
-            <section className="panel p-7 sm:p-9 shadow-sm bg-white border border-slate-200 rounded-3xl animate-fade-in">
+            <section className="panel p-7 sm:p-9 shadow-sm bg-white border border-slate-200 rounded-3xl animate-rise">
               {/* Top Sub-Header Bar inside Card */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-5 border-b border-slate-100">
                 <div className="flex items-center gap-3">
@@ -300,68 +311,82 @@ export default function Journal() {
                   <p className="text-xs text-slate-500 mt-1 font-medium">Record your daily reflections above to populate your archive.</p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-4 max-h-[720px] overflow-y-auto pr-1 animate-fade-in">
-                  {filteredJournals.map((j) => {
-                    const tags = getTagsForJournal(j);
-                    const emoji = getEmojiForJournal(j);
-                    return (
-                      <div
-                        key={j.id}
-                        onClick={() => setSelectedJournal(j)}
-                        className={`group rounded-2xl p-5 border transition-all duration-200 cursor-pointer ${
-                          selectedJournal?.id === j.id
-                            ? "border-indigo-500 bg-indigo-50/40 ring-2 ring-indigo-100 shadow-sm"
-                            : "border-slate-200 bg-slate-50/60 hover:bg-white hover:border-indigo-300 hover:shadow-md"
-                        }`}
-                      >
-                        {/* Top row: Date & Emoji */}
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                            <Calendar size={14} className="text-indigo-600" />
-                            {new Date(j.created_at || j.createdAt).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </span>
-                          <span className="text-base bg-white rounded-lg px-2 py-0.5 border border-slate-200 shadow-2xs">
-                            {emoji}
-                          </span>
-                        </div>
-
-                        {/* Content Excerpt */}
-                        <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed font-medium mb-3">
-                          {j.content}
-                        </p>
-
-                        {/* Tag Pills matching Image 2 */}
-                        <div className="flex items-center justify-between pt-3 border-t border-slate-200/80">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            {tags.map((tag, idx) => (
-                              <span
-                                key={idx}
-                                className="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 border border-slate-200 shadow-2xs"
-                              >
-                                {tag}
-                              </span>
-                            ))}
+                <>
+                  <div className="flex flex-col gap-4 max-h-[720px] overflow-y-auto pr-1 animate-fade-in">
+                    {paginatedJournals.map((j) => {
+                      const tags = getTagsForJournal(j);
+                      const emoji = getEmojiForJournal(j);
+                      return (
+                        <div
+                          key={j.id}
+                          onClick={() => setSelectedJournal(j)}
+                          className={`group rounded-2xl p-5 border transition-all duration-200 cursor-pointer ${
+                            selectedJournal?.id === j.id
+                              ? "border-indigo-500 bg-indigo-50/40 ring-2 ring-indigo-100 shadow-sm"
+                              : "border-slate-200 bg-slate-50/60 hover:bg-white hover:border-indigo-300 hover:shadow-md"
+                          }`}
+                        >
+                          {/* Top row: Date & Emoji */}
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                              <Calendar size={14} className="text-indigo-600" />
+                              {new Date(j.created_at || j.createdAt).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </span>
+                            <span className="text-base bg-white rounded-lg px-2 py-0.5 border border-slate-200 shadow-2xs">
+                              {emoji}
+                            </span>
                           </div>
 
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteJournal(j.id);
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                            title="Delete Journal"
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                          {/* Content Excerpt */}
+                          <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed font-medium mb-3">
+                            {j.content}
+                          </p>
+
+                          {/* Tag Pills matching Image 2 */}
+                          <div className="flex items-center justify-between pt-3 border-t border-slate-200/80">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {tags.map((tag, idx) => (
+                                <span
+                                  key={idx}
+                                  className="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 border border-slate-200 shadow-2xs"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteJournal(j.id);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                              title="Delete Journal"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+
+                  <Pagination
+                    currentPage={currentPage}
+                    totalItems={filteredJournals.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={(newLimit) => {
+                      setItemsPerPage(newLimit);
+                      setCurrentPage(1);
+                    }}
+                    itemsPerPageOptions={[5, 10, 20]}
+                  />
+                </>
               )}
             </section>
           </div>

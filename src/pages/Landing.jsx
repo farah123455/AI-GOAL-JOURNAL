@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import PublicNavbar from "../components/PublicNavbar";
 import PublicFooter from "../components/PublicFooter";
-import { Target, Mic, Sparkles, Trophy, ArrowRight, ShieldCheck } from "lucide-react";
+import Reveal from "../components/Reveal";
+import { Target, Mic, Sparkles, Trophy, ArrowRight } from "lucide-react";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -13,27 +14,29 @@ export default function Landing() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-14 pb-20 md:pt-24 md:pb-32 px-5 md:px-8">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-indigo-200/40 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-indigo-200/40 rounded-full blur-[120px] pointer-events-none animate-orb" />
+        <div className="absolute top-10 left-[8%] h-40 w-40 rounded-full bg-violet-200/40 blur-3xl pointer-events-none animate-orb" style={{ animationDelay: "1.2s" }} />
+        <div className="absolute bottom-10 right-[12%] h-48 w-48 rounded-full bg-emerald-200/30 blur-3xl pointer-events-none animate-orb" style={{ animationDelay: "2s" }} />
 
         <div className="relative mx-auto max-w-[1250px] text-center">
           {/* Tagline Pill */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/80 px-4 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur-md mb-6">
+          <div className="animate-rise inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/80 px-4 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur-md mb-6">
             <span className="h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
             <span>AI Journal & Accountability Coach</span>
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-slate-900 leading-[1.12] max-w-4xl mx-auto">
+          <h1 className="animate-rise text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-slate-900 leading-[1.12] max-w-4xl mx-auto" style={{ animationDelay: "80ms" }}>
             Turn daily reflections into structured momentum.
           </h1>
 
           {/* Subheading */}
-          <p className="mt-6 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed font-medium">
+          <p className="animate-rise mt-6 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed font-medium" style={{ animationDelay: "140ms" }}>
             Speak or write naturally about your day. Google Gemini and local Whisper AI extract completed activities, identify blockers, track goals, and deliver weekly accountability coaching.
           </p>
 
           {/* Action CTAs */}
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="animate-rise mt-8 flex flex-col sm:flex-row items-center justify-center gap-3" style={{ animationDelay: "200ms" }}>
             <button
               onClick={() => navigate("/register")}
               className="primary-button w-full sm:w-auto px-7 py-3.5 text-sm"
@@ -53,7 +56,7 @@ export default function Landing() {
           </p>
 
           {/* Visual Interactive Preview */}
-          <div className="mt-14 mx-auto max-w-4xl panel p-5 sm:p-7 shadow-lg border border-slate-200 bg-white text-left">
+          <div className="animate-rise mt-14 mx-auto max-w-4xl panel p-5 sm:p-7 shadow-lg border border-slate-200 bg-white text-left hover-lift" style={{ animationDelay: "280ms" }}>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-5">
               <div className="flex items-center gap-2">
                 <span className="h-3 w-3 rounded-full bg-red-400" />
@@ -132,9 +135,9 @@ export default function Landing() {
       </section>
 
       {/* Feature Pillars Section */}
-      <section className="py-20 px-5 md:px-8 bg-white border-y border-slate-200">
+      <section id="features" className="py-20 px-5 md:px-8 bg-white border-y border-slate-200">
         <div className="mx-auto max-w-[1250px]">
-          <div className="text-center max-w-2xl mx-auto mb-14">
+          <Reveal className="text-center max-w-2xl mx-auto mb-14">
             <span className="section-label">CORE CAPABILITIES</span>
             <h2 className="mt-2 text-3xl sm:text-4xl font-bold text-slate-900">
               Designed to eliminate manual productivity friction.
@@ -142,11 +145,11 @@ export default function Landing() {
             <p className="mt-3 text-sm text-slate-600 leading-relaxed font-medium">
               Traditional goal apps require manual status logging and rigid checkboxes. Goal Journal lets you speak naturally and uses AI to organize the rest.
             </p>
-          </div>
+          </Reveal>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="panel p-6 shadow-sm">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 mb-4">
+            <Reveal className="panel p-6 shadow-sm hover-lift" delay={40}>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 mb-4 transition-transform duration-300 hover:scale-110">
                 <Mic size={22} />
               </div>
               <h3 className="text-xl font-bold text-slate-900">
@@ -155,10 +158,10 @@ export default function Landing() {
               <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
                 Speak your stream of consciousness after work or study. Transcribed locally on CPU using INT8 quantization with zero cloud audio fees and full reviewable transcript editing.
               </p>
-            </div>
+            </Reveal>
 
-            <div className="panel p-6 shadow-sm">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 mb-4">
+            <Reveal className="panel p-6 shadow-sm hover-lift" delay={90}>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 mb-4 transition-transform duration-300 hover:scale-110">
                 <Sparkles size={22} />
               </div>
               <h3 className="text-xl font-bold text-slate-900">
@@ -167,10 +170,10 @@ export default function Landing() {
               <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
                 Google Gemini Flash-Lite extracts what you completed today versus what you plan for tomorrow, categorizing blockers (technical, time, distraction) and tracking mood confidence.
               </p>
-            </div>
+            </Reveal>
 
-            <div className="panel p-6 shadow-sm">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 mb-4">
+            <Reveal className="panel p-6 shadow-sm hover-lift" delay={140}>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 mb-4 transition-transform duration-300 hover:scale-110">
                 <Target size={22} />
               </div>
               <h3 className="text-xl font-bold text-slate-900">
@@ -179,10 +182,10 @@ export default function Landing() {
               <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
                 Define milestones with target dates. The system automatically links daily journal activities to your active goals using deterministic matching without cluttering your board.
               </p>
-            </div>
+            </Reveal>
 
-            <div className="panel p-6 shadow-sm">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 mb-4">
+            <Reveal className="panel p-6 shadow-sm hover-lift" delay={190}>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 mb-4 transition-transform duration-300 hover:scale-110">
                 <Trophy size={22} />
               </div>
               <h3 className="text-xl font-bold text-slate-900">
@@ -191,14 +194,14 @@ export default function Landing() {
               <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
                 On-demand weekly reviews that synthesize your week's accomplishments, surface recurring blocker patterns, and provide personalized coaching guidance to unlock your next level.
               </p>
-            </div>
+            </Reveal>
           </div>
         </div>
       </section>
 
       {/* Bottom CTA Banner */}
-      <section className="py-20 px-5 md:px-8">
-        <div className="mx-auto max-w-4xl rounded-2xl p-8 sm:p-12 text-center shadow-lg border border-indigo-200 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white">
+      <section id="how-it-works" className="py-20 px-5 md:px-8">
+        <Reveal className="mx-auto max-w-4xl rounded-2xl p-8 sm:p-12 text-center shadow-lg border border-indigo-200 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white hover-lift">
           <h2 className="text-3xl sm:text-4xl font-bold text-white">
             Ready to turn reflection into real progress?
           </h2>
@@ -220,7 +223,7 @@ export default function Landing() {
               Sign In to Workspace
             </button>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Public Footer */}
