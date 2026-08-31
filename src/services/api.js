@@ -170,3 +170,49 @@ export const progressApi = {
   getGoalProgress: (goalId) => fetchWithAuth(`/progress/goal/${goalId}`),
   getLatestGoalProgress: (goalId) => fetchWithAuth(`/progress/goal/${goalId}/latest`),
 };
+
+/**
+ * Habit Tracker API
+ */
+export const habitApi = {
+  listHabits: () =>
+    fetchWithAuth('/habits'),
+
+  getHabit: (id) =>
+    fetchWithAuth(`/habits/${id}`),
+
+  createHabit: (data) =>
+    fetchWithAuth('/habits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
+  updateHabit: (id, data) =>
+    fetchWithAuth(`/habits/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
+  deleteHabit: (id) =>
+    fetchWithAuth(`/habits/${id}`, {
+      method: 'DELETE',
+    }),
+
+  completeHabit: (id) =>
+    fetchWithAuth(`/habits/${id}/complete`, {
+      method: 'POST',
+    }),
+
+  uncompleteHabit: (id) =>
+    fetchWithAuth(`/habits/${id}/complete`, {
+      method: 'DELETE',
+    }),
+
+  getHabitLogs: (id) =>
+    fetchWithAuth(`/habits/${id}/logs`),
+
+  getHabitStatus: (id) =>
+    fetchWithAuth(`/habits/${id}/status`),
+};

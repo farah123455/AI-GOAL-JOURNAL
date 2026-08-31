@@ -65,3 +65,22 @@ class WeeklySummary:
     mood_trend: str = "stable"  # improving | stable | declining
     coaching_suggestion: str = ""
     created_at: datetime = field(default_factory=datetime.utcnow)
+
+@dataclass
+class Habit:
+    id: str
+    user_id: str
+    name: str
+    description: Optional[str] = None
+    frequency: str = "daily"
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=datetime.utcnow)
+
+
+@dataclass
+class HabitLog:
+    id: str
+    habit_id: str
+    completed_date: datetime
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    
