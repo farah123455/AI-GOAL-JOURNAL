@@ -56,7 +56,7 @@ def health_check():
         "whisper_model": settings.WHISPER_MODEL,
         "whisper_device": settings.WHISPER_DEVICE,
         "gemini_model": settings.GEMINI_MODEL,
-        "persistence": "in-memory",
+        "persistence": "PostgreSQL",
     }
 
 # Mount v1 routers
