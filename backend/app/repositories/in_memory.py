@@ -1,13 +1,14 @@
 import threading
 from datetime import datetime
 from typing import Optional, Any
-from app.models.domain import User, Goal, JournalEntry, WeeklySummary, Progress
+from app.models.domain import User, Goal, JournalEntry, WeeklySummary, Progress, Habit, HabitLog
 from app.repositories.base import (
     AbstractUserRepository,
     AbstractGoalRepository,
     AbstractJournalRepository,
     AbstractSummaryRepository,
     AbstractProgressRepository,
+    AbstractHabitRepository,
 )
 
 class InMemoryUserRepository(AbstractUserRepository):
@@ -244,9 +245,115 @@ class InMemorySummaryRepository(AbstractSummaryRepository):
         with self._lock:
             return self._user_summaries.get(user_id)
 
+
+class InMemoryHabitRepository(AbstractHabitRepository):
+    def __init__(self):
+        self._lock = threading.Lock()
+        # user_id -> dict of habit_id -> Habit
+        self._user_habits: dict[str, dict[str, Habit]] = {}
+        # habit_id -> list of HabitLog
+        self._habit_logs: dict[str, list[HabitLog]] = {}
+
+    def create(self, habit: Habit) -> Habit:
+        with self._lock:
+            if habit.user_id not in self._user_habits:
+                self._user_habits[habit.user_id] = {}
+            self._user_habits[habit.user_id][habit.id] = habit
+            return habit
+
+    def get_by_id(self, user_id: str, habit_id: str) -> Optional[Habit]:
+        with self._lock:
+            user_dict = self._user_habits.get(user_id, {})
+            return user_dict.get(habit_id)
+
+    def get_all_by_user(self, user_id: str) -> list[Habit]:
+        with self._lock:
+            user_dict = self._user_habits.get(user_id, {})
+            habits = list(user_dict.values())
+            return sorted(habits, key=lambda h: h.created_at, reverse=True)
+
+    def update(self, user_id: str, habit_id: str, **kwargs) -> Optional[Habit]:
+        with self._lock:
+            user_dict = self._user_habits.get(user_id, {})
+            habit = user_dict.get(habit_id)
+            if not habit:
+                return None
+            for key, val in kwargs.items():
+                if val is not None and hasattr(habit, key):
+                    setattr(habit, key, val)
+            habit.updated_at = datetime.utcnow()
+            return habit
+
+    def delete(self, user_id: str, habit_id: str) -> bool:
+        with self._lock:
+            user_dict = self._user_habits.get(user_id, {})
+            if habit_id in user_dict:
+                del user_dict[habit_id]
+                if habit_id in self._habit_logs:
+                    del self._habit_logs[habit_id]
+                return True
+            return False
+
+    def add_log(self, user_id: str, habit_id: str, completed_date: datetime) -> Optional[HabitLog]:
+        with self._lock:
+            user_dict = self._user_habits.get(user_id, {})
+            if habit_id not in user_dict:
+                return None
+            if habit_id not in self._habit_logs:
+                self._habit_logs[habit_id] = []
+            
+            # Check if log already exists for date
+            date_str = completed_date.strftime("%Y-%m-%d")
+            existing = [l for l in self._habit_logs[habit_id] if l.completed_date.strftime("%Y-%m-%d") == date_str]
+            if existing:
+                return existing[0]
+
+            log = HabitLog(
+                id=f"log_{len(self._habit_logs[habit_id]) + 1}",
+                habit_id=habit_id,
+                completed_date=completed_date,
+            )
+            self._habit_logs[habit_id].append(log)
+
+            # Update habit current streak
+            habit = user_dict[habit_id]
+            habit.current_streak = (habit.current_streak or 0) + 1
+            if habit.current_streak > (habit.best_streak or 0):
+                habit.best_streak = habit.current_streak
+            habit.updated_at = datetime.utcnow()
+
+            return log
+
+    def remove_log(self, user_id: str, habit_id: str, completed_date: datetime) -> bool:
+        with self._lock:
+            user_dict = self._user_habits.get(user_id, {})
+            if habit_id not in user_dict or habit_id not in self._habit_logs:
+                return False
+            
+            date_str = completed_date.strftime("%Y-%m-%d")
+            initial_len = len(self._habit_logs[habit_id])
+            self._habit_logs[habit_id] = [l for l in self._habit_logs[habit_id] if l.completed_date.strftime("%Y-%m-%d") != date_str]
+            
+            if len(self._habit_logs[habit_id]) < initial_len:
+                habit = user_dict[habit_id]
+                habit.current_streak = max(0, (habit.current_streak or 1) - 1)
+                habit.updated_at = datetime.utcnow()
+                return True
+            return False
+
+    def get_logs(self, user_id: str, habit_id: str) -> list[HabitLog]:
+        with self._lock:
+            user_dict = self._user_habits.get(user_id, {})
+            if habit_id not in user_dict:
+                return []
+            logs = self._habit_logs.get(habit_id, [])
+            return sorted(logs, key=lambda l: l.completed_date, reverse=True)
+
+
 # Singleton instances for in-memory persistence across routes
 user_repo = InMemoryUserRepository()
 goal_repo = InMemoryGoalRepository()
 journal_repo = InMemoryJournalRepository()
 summary_repo = InMemorySummaryRepository()
 progress_repo = InMemoryProgressRepository()
+habit_repo = InMemoryHabitRepository()

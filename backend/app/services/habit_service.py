@@ -3,7 +3,7 @@ import uuid
 from typing import Optional
 
 from app.models.domain import Habit, HabitLog
-from app.repositories.postgres import habit_repo
+from app.repositories.in_memory import habit_repo
 
 
 class HabitService:
