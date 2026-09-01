@@ -1,26 +1,13 @@
 /**
- * Habit Tracker — Frontend/localStorage persistence layer.
+ * Habit Tracker — pure date/streak calculation helpers.
  *
- * NOTE: Intentionally client-side only for the current phase (per roadmap:
- * Habit Tracker → Daily Streak System). No backend/PostgreSQL changes.
- * Data is stored per Firebase user id so different accounts don't clash.
+ * NOTE: Persistence now lives on the backend Habit API (FastAPI). This module
+ * intentionally contains NO localStorage/API code — only the reusable,
+ * deterministic date + streak helpers shared by the frontend.
  *
- * Data shape:
- *   habits: Array<{
- *     id: string,
- *     name: string,
- *     description: string | null,
- *     frequency: 'daily' | 'weekly',
- *     created_at: string (ISO),
- *   }>
- *   completions: Record<habitId, string[]> — array of 'YYYY-MM-DD' dates checked off.
+ * Date shape used by these helpers:
+ *   'YYYY-MM-DD' strings (local-time based, no TZ surprises).
  */
-
-const STORAGE_PREFIX = 'ai-goal-journal:habits';
-
-function storageKey(userId) {
-  return `${STORAGE_PREFIX}:${userId || 'anonymous'}`;
-}
 
 /* ---------- Date helpers (local-time based, no TZ surprises) ---------- */
 
@@ -61,48 +48,6 @@ export function lastNDays(count = 7) {
     days.push(addDaysISO(todayISO(), -i));
   }
   return days;
-}
-
-/* -------------------------- Persistence -------------------------- */
-
-function safeParse(raw, fallback) {
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-export function loadHabits(userId) {
-  if (typeof window === 'undefined' || !window.localStorage) return [];
-  const data = safeParse(window.localStorage.getItem(storageKey(userId)), { habits: [], completions: {} });
-  return Array.isArray(data.habits) ? data.habits : [];
-}
-
-export function loadCompletions(userId) {
-  if (typeof window === 'undefined' || !window.localStorage) return {};
-  const data = safeParse(window.localStorage.getItem(storageKey(userId)), { habits: [], completions: {} });
-  return data.completions && typeof data.completions === 'object' ? data.completions : {};
-}
-
-export function persist(userId, habits, completions) {
-  if (typeof window === 'undefined' || !window.localStorage) return;
-  try {
-    window.localStorage.setItem(storageKey(userId), JSON.stringify({ habits, completions }));
-  } catch (err) {
-    console.error('habitStorage persist error:', err);
-  }
-}
-
-export function makeHabit({ name, description = null, frequency = 'daily' }) {
-  return {
-    id: `habit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name: name.trim(),
-    description: description?.trim() || null,
-    frequency,
-    created_at: new Date().toISOString(),
-  };
 }
 
 /* ----------------------- Streak calculation ----------------------- */

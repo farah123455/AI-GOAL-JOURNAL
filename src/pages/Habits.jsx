@@ -8,22 +8,37 @@ import {
   Pencil,
   CalendarCheck,
   Trophy,
+  AlertCircle,
 } from "lucide-react";
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useState, useMemo, useEffect } from "react";
 import {
-  loadHabits,
-  loadCompletions,
-  persist,
-  makeHabit,
   lastNDays,
   dayLabel,
   todayISO,
-  calculateCurrentStreak,
   calculateBestStreak,
-  habitStats,
 } from "../utils/habitStorage";
+import { habitApi } from "../services/api";
 import { spawnGrowthParticles, popIn, floatLoop } from "../animations/motion";
+
+/**
+ * Convert a backend `completed_date` (ISO datetime) into a local 'YYYY-MM-DD'
+ * string so it can be compared against the 7-day grid's local dates.
+ */
+function dateToISO(iso) {
+  const d = iso ? new Date(iso) : new Date();
+  if (Number.isNaN(d.getTime())) return null;
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+/** Map an array of backend logs into a sorted array of 'YYYY-MM-DD' strings. */
+function logsToDates(logs) {
+  return (logs || [])
+    .map((log) => dateToISO(log.completed_date))
+    .filter((d) => d !== null)
+    .sort();
+}
 
 const FREQUENCIES = [
   { value: "daily", label: "Daily" },
@@ -43,12 +58,16 @@ function StatCard({ icon: Icon, iconClass, value, label }) {
 }
 
 export default function Habits() {
-  const { user } = useAuth();
-  const userId = user?.uid;
+  const [habits, setHabits] = useState([]);
+  const [completions, setCompletions] = useState({});
+  const [statusMap, setStatusMap] = useState({});
 
-  const [habits, setHabits] = useState(() => loadHabits(userId));
-  const [completions, setCompletions] = useState(() => loadCompletions(userId));
+  // Page async state
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
+  // Modal state
   const [showFormModal, setShowFormModal] = useState(false);
   const [editingHabit, setEditingHabit] = useState(null);
   const [deletingHabit, setDeletingHabit] = useState(null);
@@ -58,15 +77,86 @@ export default function Habits() {
   const [description, setDescription] = useState("");
   const [frequency, setFrequency] = useState("daily");
   const [formError, setFormError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Action error state (delete / complete / uncomplete)
+  const [actionError, setActionError] = useState("");
 
   const week = useMemo(() => lastNDays(7), []);
-  const stats = useMemo(() => habitStats(habits, completions), [habits, completions]);
+  const stats = useMemo(() => {
+    const totalHabits = habits.length;
+    const dueToday = habits.filter((h) => h.frequency !== "weekly").length;
+    const doneToday = habits.filter(
+      (h) => h.frequency !== "weekly" && statusMap[h.id]?.completed_today
+    ).length;
 
-  function saveToStorage(nextHabits, nextCompletions) {
-    setHabits(nextHabits);
-    setCompletions(nextCompletions);
-    persist(userId, nextHabits, nextCompletions);
+    let activeStreaks = 0;
+    let bestStreak = 0;
+    habits.forEach((h) => {
+      if ((statusMap[h.id]?.current_streak ?? 0) > 0) activeStreaks += 1;
+      bestStreak = Math.max(bestStreak, calculateBestStreak(completions[h.id] || []));
+    });
+
+    return { totalHabits, dueToday, doneToday, activeStreaks, bestStreak };
+  }, [habits, statusMap, completions]);
+
+  /**
+   * Refresh backend status (completed_today/current_streak) and completion
+   * logs for a single habit and update both frontend maps.
+   */
+  async function refreshHabitData(habitId) {
+    const [status, logs] = await Promise.all([
+      habitApi.getHabitStatus(habitId).catch(() => null),
+      habitApi.getHabitLogs(habitId).catch(() => null),
+    ]);
+    if (status) setStatusMap((m) => ({ ...m, [habitId]: status }));
+    if (logs) setCompletions((m) => ({ ...m, [habitId]: logsToDates(logs) }));
   }
+
+  // Initial load: fetch habits + per-habit status and completion logs.
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setLoadError("");
+      try {
+        const habitList = await habitApi.listHabits();
+        if (cancelled) return;
+
+        const enriched = await Promise.all(
+          (habitList || []).map(async (h) => {
+            const [status, logs] = await Promise.all([
+              habitApi.getHabitStatus(h.id).catch(() => null),
+              habitApi.getHabitLogs(h.id).catch(() => null),
+            ]);
+            return { habit: h, status, logs: logsToDates(logs) };
+          })
+        );
+        if (cancelled) return;
+
+        const nextStatus = {};
+        const nextCompletions = {};
+        enriched.forEach(({ habit, status, logs }) => {
+          if (status) nextStatus[habit.id] = status;
+          if (logs) nextCompletions[habit.id] = logs;
+        });
+
+        setHabits(habitList);
+        setStatusMap(nextStatus);
+        setCompletions(nextCompletions);
+      } catch (err) {
+        if (!cancelled) {
+          setLoadError(err?.message || "Failed to load habits. Please try again.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
 
   function resetForm() {
     setName("");
@@ -74,6 +164,7 @@ export default function Habits() {
     setFrequency("daily");
     setEditingHabit(null);
     setFormError("");
+    setSubmitting(false);
     setShowFormModal(false);
   }
 
@@ -95,53 +186,81 @@ export default function Habits() {
     setShowFormModal(true);
   }
 
-  function handleSave(e) {
+  async function handleSave(e) {
     e.preventDefault();
     if (!name.trim()) {
       setFormError("Habit name is required");
       return;
     }
-    if (editingHabit) {
-      const nextHabits = habits.map((h) =>
-        h.id === editingHabit.id
-          ? {
-              ...h,
-              name: name.trim(),
-              description: description.trim() || null,
-              frequency,
-            }
-          : h
-      );
-      saveToStorage(nextHabits, completions);
-    } else {
-      const habit = makeHabit({ name, description, frequency });
-      saveToStorage([habit, ...habits], completions);
+    setFormError("");
+    setSubmitting(true);
+    try {
+      if (editingHabit) {
+        const updated = await habitApi.updateHabit(editingHabit.id, {
+          name: name.trim(),
+          description: description.trim() || null,
+          frequency,
+        });
+        setHabits((prev) => prev.map((h) => (h.id === updated.id ? updated : h)));
+      } else {
+        const created = await habitApi.createHabit({
+          name: name.trim(),
+          description: description.trim() || null,
+          frequency,
+        });
+        setHabits((prev) => [created, ...prev]);
+        // Seed the newly created habit's status/completions from the backend.
+        await refreshHabitData(created.id);
+      }
+      resetForm();
+    } catch (err) {
+      setFormError(err?.message || "Failed to save habit. Please try again.");
+      setSubmitting(false);
     }
-    resetForm();
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deletingHabit) return;
-    const nextCompletions = { ...completions };
-    delete nextCompletions[deletingHabit.id];
-    saveToStorage(habits.filter((h) => h.id !== deletingHabit.id), nextCompletions);
-    setDeletingHabit(null);
+    setActionError("");
+    try {
+      await habitApi.deleteHabit(deletingHabit.id);
+      setHabits((prev) => prev.filter((h) => h.id !== deletingHabit.id));
+      setCompletions((prev) => {
+        const next = { ...prev };
+        delete next[deletingHabit.id];
+        return next;
+      });
+      setStatusMap((prev) => {
+        const next = { ...prev };
+        delete next[deletingHabit.id];
+        return next;
+      });
+      setDeletingHabit(null);
+    } catch (err) {
+      setActionError(err?.message || "Failed to delete habit. Please try again.");
+    }
   }
 
-  function toggleCheck(habitId, date, btnEl) {
-    const dates = completions[habitId] || [];
-    const isCompleting = !dates.includes(date);
-    const nextDates = isCompleting
-      ? [...dates, date]
-      : dates.filter((d) => d !== date);
-    saveToStorage(habits, { ...completions, [habitId]: nextDates });
+  async function toggleCheck(habitId, date, isCompleting, btnEl) {
+    setActionError("");
+    try {
+      if (isCompleting) {
+        await habitApi.completeHabit(habitId, date);
+      } else {
+        await habitApi.uncompleteHabit(habitId, date);
+      }
+      // Re-sync this habit's status + logs from the backend (source of truth).
+      await refreshHabitData(habitId);
 
-    // Daily rhythm: a completed habit emits a small "growth point" burst
-    // and its streak value springs — momentum the user can feel.
-    if (isCompleting && btnEl) {
-      spawnGrowthParticles(btnEl, { count: 7 });
-      const streakEl = btnEl.closest("[data-habit-card]")?.querySelector("[data-habit-streak]");
-      if (streakEl) popIn(streakEl, { scale: 1.3 });
+      // Daily rhythm: a completed habit emits a small "growth point" burst
+      // and its streak value springs — momentum the user can feel.
+      if (isCompleting && btnEl) {
+        spawnGrowthParticles(btnEl, { count: 7 });
+        const streakEl = btnEl.closest("[data-habit-card]")?.querySelector("[data-habit-streak]");
+        if (streakEl) popIn(streakEl, { scale: 1.3 });
+      }
+    } catch (err) {
+      setActionError(err?.message || "Failed to update completion. Please try again.");
     }
   }
 
@@ -178,6 +297,50 @@ export default function Habits() {
         </button>
       </header>
 
+      {/* PAGE LOADING STATE */}
+      {loading && (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8" aria-busy="true" aria-label="Loading habits">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm animate-pulse">
+              <div className="h-11 w-11 rounded-xl bg-slate-200" />
+              <div className="mt-4 h-7 w-16 rounded-md bg-slate-200" />
+              <div className="mt-1.5 h-3 w-24 rounded bg-slate-200" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* LOAD ERROR STATE */}
+      {!loading && loadError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center shadow-sm animate-fade-in mb-8">
+          <AlertCircle size={28} className="mx-auto text-red-500 mb-3" />
+          <p className="text-sm font-semibold text-red-700">{loadError}</p>
+          <p className="mt-1 text-xs text-red-500 font-medium">
+            Make sure the backend is running and you are authenticated.
+          </p>
+          <button
+            type="button"
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 active:scale-[0.98]"
+          >
+            <Repeat size={16} />
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* ACTION ERROR (delete / complete / uncomplete) */}
+      {!loading && !loadError && actionError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 mb-6 animate-fade-in">
+          <p className="text-sm font-semibold text-red-700 flex items-center gap-2">
+            <AlertCircle size={16} />
+            {actionError}
+          </p>
+        </div>
+      )}
+
+      {!loading && !loadError && (
+        <>
       {/* STATS */}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         <StatCard
@@ -232,9 +395,10 @@ export default function Habits() {
         <div className="grid gap-5 lg:grid-cols-2">
           {habits.map((habit) => {
             const dates = completions[habit.id] || [];
-            const currentStreak = calculateCurrentStreak(dates, habit.frequency);
+            const status = statusMap[habit.id];
+            const currentStreak = status?.current_streak ?? 0;
             const bestStreak = calculateBestStreak(dates);
-            const doneToday = dates.includes(today);
+            const doneToday = status?.completed_today ?? dates.includes(today);
 
             return (
               <div
@@ -291,7 +455,7 @@ export default function Habits() {
                 {habit.frequency !== "weekly" && (
                   <button
                     type="button"
-                    onClick={(e) => toggleCheck(habit.id, today, e.currentTarget)}
+                    onClick={(e) => toggleCheck(habit.id, today, !doneToday, e.currentTarget)}
                     aria-pressed={doneToday}
                     className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold border transition active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                       doneToday
@@ -317,7 +481,7 @@ export default function Habits() {
                         <button
                           key={date}
                           type="button"
-                          onClick={() => toggleCheck(habit.id, date)}
+                          onClick={() => toggleCheck(habit.id, date, !checked)}
                           aria-pressed={checked}
                           aria-label={`${checked ? "Uncheck" : "Check off"} ${habit.name} on ${date}`}
                           title={date}
@@ -363,6 +527,9 @@ export default function Habits() {
             );
           })}
         </div>
+      )}
+
+      </>
       )}
 
       {/* ADD / EDIT MODAL */}
@@ -458,15 +625,19 @@ export default function Habits() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 active:scale-[0.98]"
+                disabled={submitting}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                disabled={submitting}
+                className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
               >
-                {editingHabit ? "Save Changes" : "Add Habit"}
+                {submitting
+                  ? (editingHabit ? "Saving..." : "Adding...")
+                  : (editingHabit ? "Save Changes" : "Add Habit")}
               </button>
             </div>
           </form>
@@ -495,6 +666,11 @@ export default function Habits() {
               "{deletingHabit.name}" and all of its check-off history will be permanently
               removed. This cannot be undone.
             </p>
+            {actionError && (
+              <p className="mt-3 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2" role="alert">
+                {actionError}
+              </p>
+            )}
             <div className="mt-6 flex items-center justify-center gap-2.5">
               <button
                 type="button"

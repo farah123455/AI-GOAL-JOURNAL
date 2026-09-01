@@ -156,3 +156,58 @@ export const summaryApi = {
       method: 'POST',
     }),
 };
+
+/**
+ * Habit Tracker API
+ *
+ * Backend contract (FastAPI, `/api/v1/habits`):
+ *   GET    /habits                      -> list[Habit]        {id, user_id, name, description, frequency, created_at, updated_at}
+ *   GET    /habits/{id}                 -> Habit
+ *   POST   /habits                      -> 201 Habit          body {name, description, frequency}
+ *   PUT    /habits/{id}                 -> Habit              body {name?, description?, frequency?}
+ *   DELETE /habits/{id}                 -> 204 no content
+ *   POST   /habits/{id}/complete        -> 201 HabitLog       optional ?completed_date=YYYY-MM-DD
+ *   DELETE /habits/{id}/complete        -> 204 no content     optional ?completed_date=YYYY-MM-DD
+ *   GET    /habits/{id}/logs            -> list[HabitLog]     {id, habit_id, completed_date, created_at}
+ *   GET    /habits/{id}/status          -> {habit_id, completed_today, current_streak}
+ *
+ * All requests are authenticated with the current Firebase ID token via fetchWithAuth.
+ */
+export const habitApi = {
+  listHabits: () => fetchWithAuth('/habits'),
+  getHabit: (id) => fetchWithAuth(`/habits/${id}`),
+  createHabit: (data) =>
+    fetchWithAuth('/habits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  updateHabit: (id, data) =>
+    fetchWithAuth(`/habits/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  deleteHabit: (id) =>
+    fetchWithAuth(`/habits/${id}`, {
+      method: 'DELETE',
+    }),
+  completeHabit: (id, completedDate) => {
+    const query = completedDate
+      ? `?completed_date=${encodeURIComponent(completedDate)}`
+      : '';
+    return fetchWithAuth(`/habits/${id}/complete${query}`, {
+      method: 'POST',
+    });
+  },
+  uncompleteHabit: (id, completedDate) => {
+    const query = completedDate
+      ? `?completed_date=${encodeURIComponent(completedDate)}`
+      : '';
+    return fetchWithAuth(`/habits/${id}/complete${query}`, {
+      method: 'DELETE',
+    });
+  },
+  getHabitLogs: (id) => fetchWithAuth(`/habits/${id}/logs`),
+  getHabitStatus: (id) => fetchWithAuth(`/habits/${id}/status`),
+};
