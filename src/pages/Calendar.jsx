@@ -144,7 +144,8 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in pb-12">
+    <div className="app-page min-h-screen bg-slate-50">
+      <main className="mx-auto max-w-[1400px] px-6 py-8 md:px-10 lg:px-12 space-y-8 animate-fade-in pb-16">
       {/* CELEBRATION MODAL */}
       <GoalCelebration
         completedGoal={recentlyCompletedGoal}
@@ -340,6 +341,7 @@ export default function CalendarPage() {
           </div>
         </div>
       )}
+      </main>
     </div>
   );
 }

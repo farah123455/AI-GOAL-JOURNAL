@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   BookOpen,
   Mic,
@@ -41,21 +41,34 @@ export default function Journal() {
   const [latestAnalysis, setLatestAnalysis] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedJournal, setSelectedJournal] = useState(null);
+  const [showCompose, setShowCompose] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const [acceptedGoalTitles, setAcceptedGoalTitles] = useState(new Set());
   const [acceptingTitle, setAcceptingTitle] = useState(null);
 
+  const resultsRef = useRef(null);
+
   const loadingList = !hasLoadedJournals;
 
   const autoCreatedGoals =
     latestAnalysis?.goals?.filter((g) => g.is_new || g.auto_created_goal_id) || [];
 
-useEffect(() => {
-  // Always fetch fresh journals on component load
-  fetchJournals({ quiet: false });
-}, [fetchJournals]);
+  useEffect(() => {
+    // Always fetch fresh journals on component load
+    fetchJournals({ quiet: false });
+  }, [fetchJournals]);
+
+  // Smooth auto-scroll when an analysis or selected journal is loaded
+  useEffect(() => {
+    if (latestAnalysis || selectedJournal) {
+      const timer = setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [latestAnalysis, selectedJournal]);
 
   // Reset pagination when search query changes
   useEffect(() => {
@@ -84,6 +97,7 @@ useEffect(() => {
       await fetchAllData({ quiet: true });
       setLatestAnalysis(result.ai_analysis);
       setSelectedJournal(result);
+      setShowCompose(false);
       if (source === "text") {
         setEntryText("");
       }
@@ -104,9 +118,9 @@ useEffect(() => {
 
   async function handleDeleteJournal(id) {
     const confirmed = await confirm({
-      title: "Delete Journal Entry",
-      message: "Are you sure you want to delete this journal entry? This action cannot be undone.",
-      confirmText: "Delete Entry",
+      title: "Delete AI Journal Entry",
+      message: "Are you sure you want to delete this AI Journal entry? This action cannot be undone.",
+      confirmText: "Delete AI Journal Entry",
       cancelText: "Cancel",
       variant: "danger",
     });
@@ -118,7 +132,7 @@ useEffect(() => {
       if (selectedJournal?.id === id) {
         setSelectedJournal(null);
       }
-      toast.success("Journal entry deleted successfully.");
+      toast.success("AI Journal entry deleted successfully.");
     } catch (err) {
       toast.error("Failed to delete entry: " + err.message);
     }
@@ -201,95 +215,129 @@ useEffect(() => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* LEFT MAIN WORKSPACE COLUMN ("TODAY'S ENTRY") */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-7 min-w-0">
-            <section className="panel p-7 sm:p-9 shadow-sm bg-white border border-slate-200 rounded-3xl animate-rise">
-              {/* Top Sub-Header Bar inside Card */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-5 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                    TODAY'S ENTRY
+            {/* 1. WRITE REFLECTION PANEL (WHEN COMPOSE MODE IS ACTIVE) */}
+            {showCompose && (
+              <section className="panel p-7 sm:p-9 shadow-sm bg-white border border-slate-200 rounded-3xl animate-rise">
+                {/* Top Sub-Header Bar inside Card */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-5 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                      TODAY'S AI JOURNAL ENTRY
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                      ☁ Autosaved
+                    </span>
+                  </div>
+
+                  {/* Mode Switcher Pills */}
+                  <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 p-1 self-start sm:self-auto">
+                    <button
+                      onClick={() => setActiveTab("text")}
+                      className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+                        activeTab === "text"
+                          ? "bg-indigo-600 text-white shadow-sm font-bold"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <FileText size={16} />
+                      Text Mode
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("voice")}
+                      className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+                        activeTab === "voice"
+                          ? "bg-indigo-600 text-white shadow-sm font-bold"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <Mic size={16} />
+                      Voice Mode (Whisper)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Main Headline Date */}
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4 tracking-tight">
+                  Writing {todayFormatted}
+                </h2>
+
+                {/* Reflection Workspace Content */}
+                {activeTab === "voice" ? (
+                  <div className="mb-6">
+                    <VoiceRecorder
+                      onTranscriptReady={handleVoiceTranscriptReady}
+                      onDirectSubmit={(text) => handleSave(text, "voice")}
+                      isSubmitting={submitting}
+                    />
+                  </div>
+                ) : (
+                  <div className="mb-6">
+                    <textarea
+                      rows={7}
+                      value={entryText}
+                      onChange={(e) => setEntryText(e.target.value)}
+                      className="w-full p-5 text-base text-slate-800 placeholder:text-slate-400 leading-relaxed bg-white border border-slate-200 rounded-2xl outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                      placeholder="Today I managed to build... Mention specific hours, goal progress, or task blockers."
+                    />
+                  </div>
+                )}
+
+                {/* Image 2 Tip Banner */}
+                <div className="rounded-2xl bg-purple-50/70 border border-purple-100 p-4 mb-6 text-sm text-purple-800 flex items-center gap-3 font-medium">
+                  <Sparkles size={18} className="text-purple-600 shrink-0 animate-pulse" />
+                  <span>
+                    <strong>Tip:</strong> Mention specific hours and task blocker details for more detailed AI Coaching feedback.
                   </span>
-                  <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
-                    ☁ Autosaved
-                  </span>
                 </div>
 
-                {/* Mode Switcher Pills */}
-                <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 p-1 self-start sm:self-auto">
+                {/* Bottom Action Footer matching Image 2 */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-100">
+                  <div className="text-sm text-slate-400 font-medium font-mono">
+                    {charCount} characters • {wordCount} words
+                  </div>
+
                   <button
-                    onClick={() => setActiveTab("text")}
-                    className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 ${
-                      activeTab === "text"
-                        ? "bg-indigo-600 text-white shadow-sm font-bold"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
+                    onClick={() => handleSave(entryText, "text")}
+                    disabled={submitting || !entryText.trim()}
+                    className="primary-button px-6 py-3.5 text-sm font-bold shadow-md hover:shadow-indigo-200"
                   >
-                    <FileText size={16} />
-                    Text Mode
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("voice")}
-                    className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 ${
-                      activeTab === "voice"
-                        ? "bg-indigo-600 text-white shadow-sm font-bold"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    <Mic size={16} />
-                    Voice Mode (Whisper)
+                    <Sparkles size={17} />
+                    {submitting ? "Analyzing with Gemini..." : "Analyze Entry ✨"}
                   </button>
                 </div>
-              </div>
+              </section>
+            )}
 
-              {/* Main Headline Date */}
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4 tracking-tight">
-                Writing {todayFormatted}
-              </h2>
-
-              {/* Reflection Workspace Content */}
-              {activeTab === "voice" ? (
-                <div className="mb-6">
-                  <VoiceRecorder
-                    onTranscriptReady={handleVoiceTranscriptReady}
-                    onDirectSubmit={(text) => handleSave(text, "voice")}
-                    isSubmitting={submitting}
-                  />
+            {/* 2. IN-PLACE TRANSITION BANNER (WHEN REVIEWING AN ENTRY'S EXTRACTION) */}
+            {!showCompose && (latestAnalysis || selectedJournal?.ai_analysis) && (
+              <div className="panel p-6 bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-indigo-50/90 border border-indigo-100 rounded-3xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                      <Sparkles size={15} className="text-indigo-600" /> Active Reflection Analysis
+                    </span>
+                    <span className="text-xs text-slate-400 font-medium">
+                      • {selectedJournal ? new Date(selectedJournal.created_at || selectedJournal.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : todayFormatted}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-slate-700 line-clamp-2 italic leading-relaxed">
+                    "{selectedJournal?.content || "Your journal entry was analyzed and goals/activities tracked."}"
+                  </p>
                 </div>
-              ) : (
-                <div className="mb-6">
-                  <textarea
-                    rows={7}
-                    value={entryText}
-                    onChange={(e) => setEntryText(e.target.value)}
-                    className="w-full p-5 text-base text-slate-800 placeholder:text-slate-400 leading-relaxed bg-white border border-slate-200 rounded-2xl outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
-                    placeholder="Today I managed to build... Mention specific hours, goal progress, or task blockers."
-                  />
-                </div>
-              )}
-
-              {/* Image 2 Tip Banner */}
-              <div className="rounded-2xl bg-purple-50/70 border border-purple-100 p-4 mb-6 text-sm text-purple-800 flex items-center gap-3 font-medium">
-                <Sparkles size={18} className="text-purple-600 shrink-0 animate-pulse" />
-                <span>
-                  <strong>Tip:</strong> Mention specific hours and task blocker details for more detailed AI Coaching feedback.
-                </span>
-              </div>
-
-              {/* Bottom Action Footer matching Image 2 */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-100">
-                <div className="text-sm text-slate-400 font-medium font-mono">
-                  {charCount} characters • {wordCount} words
-                </div>
-
                 <button
-                  onClick={() => handleSave(entryText, "text")}
-                  disabled={submitting || !entryText.trim()}
-                  className="primary-button px-6 py-3.5 text-sm font-bold shadow-md hover:shadow-indigo-200"
+                  type="button"
+                  onClick={() => {
+                    setShowCompose(true);
+                    setLatestAnalysis(null);
+                    setSelectedJournal(null);
+                    setEntryText("");
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 text-xs font-bold transition shadow-sm active:scale-95 shrink-0 self-start sm:self-center"
                 >
-                  <Sparkles size={17} />
-                  {submitting ? "Analyzing with Gemini..." : "Analyze Entry ✨"}
+                  <Plus size={15} /> Write New Reflection
                 </button>
               </div>
-            </section>
+            )}
 
             {/* LATEST AI EXTRACTION BANNER MATCHING SCREENSHOT */}
             {(latestAnalysis || selectedJournal?.ai_analysis) && (() => {
@@ -299,7 +347,7 @@ useEffect(() => {
               const blockersList = currentAi.blockers || [];
 
               return (
-                <section className="rounded-3xl p-7 bg-slate-50 border border-slate-200/90 shadow-sm animate-fade-in space-y-6">
+                <section ref={resultsRef} className="rounded-3xl p-7 bg-slate-50 border border-slate-200/90 shadow-sm animate-fade-in space-y-6">
                   {/* Header */}
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 pb-4">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-2">
@@ -431,24 +479,25 @@ useEffect(() => {
             })()}
           </div>
 
-          {/* RIGHT SIDEBAR COLUMN ("Journal History") MATCHING IMAGE 2 */}
+          {/* RIGHT SIDEBAR COLUMN ("AI Journal History") MATCHING IMAGE 2 */}
           <div className="lg:col-span-5 xl:col-span-4 min-w-0">
             <section className="sticky top-24 panel p-6 sm:p-7 shadow-sm bg-white border border-slate-200 rounded-3xl">
-              <div className="flex items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100">
-                <h2 className="text-xl font-bold text-slate-900 shrink-0">
-                  Journal History ({journals.length})
+              <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                <h2 className="text-lg font-bold text-slate-900">
+                  AI Journal History ({journals.length})
                 </h2>
+              </div>
 
-                <div className="relative">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-32 sm:w-36 rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-900 outline-none focus:border-indigo-500 focus:bg-white transition"
-                  />
-                </div>
+              {/* Full-width responsive search bar */}
+              <div className="relative mb-5">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search AI Journal entries..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs text-slate-900 outline-none focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-100 transition shadow-2xs"
+                />
               </div>
 
               {loadingList ? (
@@ -456,8 +505,8 @@ useEffect(() => {
               ) : hasLoadedJournals && filteredJournals.length === 0 ? (
                 <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
                   <BookOpen size={32} className="mx-auto text-slate-300 mb-2" />
-                  <p className="text-base text-slate-900 font-bold">No journal entries found</p>
-                  <p className="text-xs text-slate-500 mt-1 font-medium">Record your daily reflections above to populate your archive.</p>
+                  <p className="text-base text-slate-900 font-bold">No AI Journal entries found</p>
+                  <p className="text-xs text-slate-500 mt-1 font-medium">Record your daily reflections above to populate your AI Journal archive.</p>
                 </div>
               ) : (
                 <>
@@ -468,7 +517,11 @@ useEffect(() => {
                       return (
                         <div
                           key={j.id}
-                          onClick={() => setSelectedJournal(j)}
+                          onClick={() => {
+                            setSelectedJournal(j);
+                            setLatestAnalysis(j.ai_analysis);
+                            setShowCompose(false);
+                          }}
                           className={`group rounded-2xl p-5 border transition-all duration-200 cursor-pointer ${
                             selectedJournal?.id === j.id
                               ? "border-indigo-500 bg-indigo-50/40 ring-2 ring-indigo-100 shadow-sm"
@@ -514,7 +567,7 @@ useEffect(() => {
                                 handleDeleteJournal(j.id);
                               }}
                               className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                              title="Delete Journal"
+                              title="Delete AI Journal Entry"
                             >
                               <Trash2 size={15} />
                             </button>

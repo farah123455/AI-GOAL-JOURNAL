@@ -9,15 +9,32 @@ from app.services.goal_service import goal_service
 from app.services.gemini_service import gemini_service
 from app.services.progress_service import progress_service
 from app.schemas.progress import ProgressCreate
+from app.core.crypto import crypto_service
 
 logger = logging.getLogger(__name__)
 
 class JournalService:
+    def _decrypt_entry(self, entry: Optional[JournalEntry]) -> Optional[JournalEntry]:
+        if not entry:
+            return None
+        return JournalEntry(
+            id=entry.id,
+            user_id=entry.user_id,
+            content=crypto_service.decrypt(entry.content) or "",
+            source=entry.source,
+            title=entry.title,
+            ai_analysis=entry.ai_analysis,
+            created_at=entry.created_at,
+            updated_at=entry.updated_at,
+        )
+
     def list_journals(self, user_id: str) -> list[JournalEntry]:
-        return journal_repo.get_all_by_user(user_id=user_id)
+        raw_entries = journal_repo.get_all_by_user(user_id=user_id)
+        return [self._decrypt_entry(j) for j in raw_entries if j]
 
     def get_journal(self, user_id: str, journal_id: str) -> Optional[JournalEntry]:
-        return journal_repo.get_by_id(user_id=user_id, journal_id=journal_id)
+        entry = journal_repo.get_by_id(user_id=user_id, journal_id=journal_id)
+        return self._decrypt_entry(entry)
 
     def create_journal(self, user_id: str, data: JournalCreate) -> JournalEntry:
         # 1. Prepare base journal entry
@@ -86,12 +103,43 @@ class JournalService:
                     data=ProgressCreate(progress_value=new_val, note=f"{note} (Progress: {new_val}%)")
                 )
                 # Update goal in repository with new progress & note
-                new_status = "Completed" if new_val >= 100 else existing_goal.status
+                # Auto-transition: 100% -> Completed; Stalled -> Active on forward progress
+                if new_val >= 100:
+                    new_status = "Completed"
+                elif existing_goal.status == "Stalled" and new_val > current_val:
+                    new_status = "Active"
+                else:
+                    new_status = existing_goal.status
+
                 goal_service.update_goal(
                     user_id=user_id,
                     goal_id=matched_id,
                     data=GoalUpdate(progress_value=new_val, status=new_status, latest_progress_note=note)
                 )
+
+        # AI Stalled Goal Detection based on blockers
+        blockers = ai_raw.get("blockers", [])
+        for blk in blockers:
+            b_text = blk.get("text", "") if isinstance(blk, dict) else str(blk)
+            b_hint = blk.get("related_goal_hint") if isinstance(blk, dict) else None
+            m_id, _ = goal_service.match_activity_to_existing_goal(
+                activity_text=b_text, hint=b_hint, existing_goals=existing_goals
+            )
+            if m_id:
+                target_g = goal_service.get_goal(user_id=user_id, goal_id=m_id)
+                if target_g and target_g.status == "Active":
+                    # Check if this goal received progress in this same entry
+                    updated_in_entry = any(
+                        p.get("related_goal_hint") == m_id or target_g.title.lower() in str(p.get("note", "")).lower()
+                        for p in progress_updates
+                    )
+                    if not updated_in_entry:
+                        logger.info("Goal %s marked Stalled due to AI detected blocker: %s", m_id, b_text)
+                        goal_service.update_goal(
+                            user_id=user_id,
+                            goal_id=m_id,
+                            data=GoalUpdate(status="Stalled", latest_progress_note=f"Stalled: {b_text[:120]}")
+                        )
 
         # 7. Deterministic matching on extracted goals
         goals_suggested = ai_raw.get("goals", [])
@@ -105,22 +153,25 @@ class JournalService:
                 g_sug["matched_existing_goal_id"] = matched_id
                 g_sug["matched_existing_goal_title"] = matched_title
 
-        # 8. Assemble and persist JournalEntry
+        # 8. Assemble and persist encrypted JournalEntry
+        encrypted_content = crypto_service.encrypt(content)
         journal_entry = JournalEntry(
             id=entry_id,
             user_id=user_id,
-            content=content,
+            content=encrypted_content,
             source=data.source or "text",
             title=ai_raw.get("title"),
             ai_analysis=ai_raw,
         )
 
         saved = journal_repo.create(journal_entry)
-        logger.info("Saved journal %s for user %s with AI analysis", saved.id, user_id)
-        return saved
+        logger.info("Saved encrypted journal %s for user %s with AI analysis", saved.id, user_id)
+        return self._decrypt_entry(saved)
 
     def update_journal(self, user_id: str, journal_id: str, data: JournalUpdate) -> Optional[JournalEntry]:
-        return journal_repo.update(user_id=user_id, journal_id=journal_id, content=data.content.strip())
+        encrypted_content = crypto_service.encrypt(data.content.strip())
+        updated = journal_repo.update(user_id=user_id, journal_id=journal_id, content=encrypted_content)
+        return self._decrypt_entry(updated)
 
     def delete_journal(self, user_id: str, journal_id: str) -> bool:
         return journal_repo.delete(user_id=user_id, journal_id=journal_id)

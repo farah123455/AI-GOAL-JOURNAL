@@ -7,6 +7,7 @@ import {
   TrendingUp,
   User,
   Settings,
+  Repeat,
   Menu,
   X,
 } from "lucide-react";
@@ -38,7 +39,7 @@ const navigation = [
     label: "Growth",
     items: [
       {
-        name: "Journal",
+        name: "AI Journal",
         path: "/journal",
         icon: BookOpen,
       },
@@ -46,6 +47,11 @@ const navigation = [
         name: "Manual Goal",
         path: "/goals",
         icon: Target,
+      },
+      {
+        name: "Habits",
+        path: "/habits",
+        icon: Repeat,
       },
       {
         name: "AI Coach",
@@ -107,8 +113,8 @@ export default function Sidebar() {
         {/* BRAND (Broader 84px header height) */}
         <div className="flex h-[84px] shrink-0 items-center justify-between border-b border-slate-200 px-6">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-600 shadow-sm animate-float">
-              <Target size={21} className="text-white" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white border border-slate-200 shadow-xs p-1 animate-float overflow-hidden">
+              <img src="/logo.png" alt="AI Journal Logo" className="h-full w-full object-contain rounded-lg" />
             </div>
             <div>
               <p className="text-base font-bold tracking-tight text-slate-900">

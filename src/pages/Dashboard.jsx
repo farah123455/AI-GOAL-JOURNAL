@@ -411,9 +411,22 @@ export default function Dashboard() {
                     >
                       <div>
                         <div className="flex items-center justify-between mb-3.5">
-                          <span className="rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-600 border border-emerald-200">
-                            On Track
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-600 border border-emerald-200">
+                              On Track
+                            </span>
+                            {goal.priority && (
+                              <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase border ${
+                                goal.priority.includes('High')
+                                  ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                  : goal.priority.includes('Low')
+                                  ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}>
+                                {goal.priority}
+                              </span>
+                            )}
+                          </div>
                           {goal.target_date && (
                             <span className="text-xs text-slate-500 font-mono font-semibold">
                               Due {new Date(goal.target_date).toLocaleDateString()}
@@ -423,6 +436,11 @@ export default function Dashboard() {
                         <h3 className="text-xl font-bold text-slate-900 leading-snug">{goal.title}</h3>
                         {goal.description && (
                           <p className="mt-2.5 text-base text-slate-600 line-clamp-2 leading-relaxed font-medium">{goal.description}</p>
+                        )}
+                        {goal.estimated_days_remaining !== null && goal.estimated_days_remaining !== undefined && (
+                          <p className="mt-3 text-xs font-semibold text-indigo-600">
+                            ~{goal.estimated_days_remaining} {goal.estimated_days_remaining === 1 ? 'day' : 'days'} to completion
+                          </p>
                         )}
                       </div>
                     </div>

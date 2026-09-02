@@ -168,7 +168,10 @@ export const progressApi = {
       body: JSON.stringify(data),
     }),
   getGoalProgress: (goalId) => fetchWithAuth(`/progress/goal/${goalId}`),
+  getProgressHistory: (goalId) => fetchWithAuth(`/progress/goal/${goalId}`),
+  getProgressTrend: (goalId) => fetchWithAuth(`/progress/goal/${goalId}/trend`),
   getLatestGoalProgress: (goalId) => fetchWithAuth(`/progress/goal/${goalId}/latest`),
+  getLatestProgress: (goalId) => fetchWithAuth(`/progress/goal/${goalId}/latest`),
 };
 
 /**
@@ -200,19 +203,30 @@ export const habitApi = {
       method: 'DELETE',
     }),
 
-  completeHabit: (id) =>
-    fetchWithAuth(`/habits/${id}/complete`, {
+  completeHabit: (id, completedDate) => {
+    const query = completedDate ? `?completed_date=${encodeURIComponent(completedDate)}` : '';
+    return fetchWithAuth(`/habits/${id}/complete${query}`, {
       method: 'POST',
-    }),
+    });
+  },
 
-  uncompleteHabit: (id) =>
-    fetchWithAuth(`/habits/${id}/complete`, {
+  uncompleteHabit: (id, completedDate) => {
+    const query = completedDate ? `?completed_date=${encodeURIComponent(completedDate)}` : '';
+    return fetchWithAuth(`/habits/${id}/complete${query}`, {
       method: 'DELETE',
-    }),
+    });
+  },
 
   getHabitLogs: (id) =>
     fetchWithAuth(`/habits/${id}/logs`),
 
   getHabitStatus: (id) =>
     fetchWithAuth(`/habits/${id}/status`),
+};
+
+/**
+ * Productivity Score API
+ */
+export const productivityApi = {
+  getProductivityScore: () => fetchWithAuth('/productivity-score'),
 };

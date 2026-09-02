@@ -12,6 +12,57 @@ import math
 from datetime import datetime, timezone
 
 class GoalService:
+    @staticmethod
+    def calculate_goal_priority(goal: Goal) -> str:
+        """
+        Classify goals into High Priority, Medium Priority, or Low Priority.
+        Rules:
+        - Completed goals -> Low Priority (never treated as urgent)
+        - Overdue + incomplete -> High Priority
+        - Approaching deadline (<= 7 days) + low progress (< 50%) -> High Priority
+        - Status Stalled -> High Priority
+        - Deadline within 30 days with moderate progress -> Medium Priority
+        - Distant deadline (> 30 days) or healthy progress -> Low Priority
+        """
+        status = (goal.status or "Active").capitalize()
+        if status == "Completed" or (goal.progress_value and goal.progress_value >= 100):
+            return "Low Priority"
+
+        val = goal.progress_value or 0
+        now = datetime.now(timezone.utc)
+        today = now.date()
+
+        days_until_deadline: Optional[int] = None
+        if goal.target_date:
+            try:
+                t_str = str(goal.target_date).split("T")[0]
+                target_d = datetime.strptime(t_str, "%Y-%m-%d").date()
+                days_until_deadline = (target_d - today).days
+            except Exception:
+                pass
+
+        # 1. Overdue and incomplete
+        if days_until_deadline is not None and days_until_deadline < 0:
+            return "High Priority"
+
+        # 2. Approaching deadline (<= 7 days) and progress < 50%
+        if days_until_deadline is not None and days_until_deadline <= 7 and val < 50:
+            return "High Priority"
+
+        # 3. Goal is explicitly stalled
+        if status == "Stalled":
+            return "High Priority"
+
+        # 4. Approaching deadline (<= 7 days) with decent progress, or 8-30 days with moderate progress
+        if days_until_deadline is not None and days_until_deadline <= 30 and val < 75:
+            return "Medium Priority"
+
+        # 5. Distant deadline or healthy progress
+        if val >= 75 or (days_until_deadline is not None and days_until_deadline > 30):
+            return "Low Priority"
+
+        return "Medium Priority"
+
     def _enrich_goal(self, goal: Optional[Goal]) -> Optional[Goal]:
         if not goal:
             return None
@@ -29,10 +80,12 @@ class GoalService:
         if val >= 100:
             goal.status = "Completed"
             goal.estimated_days_remaining = 0
+            goal.priority = "Low Priority"
             return goal
 
         if goal.status == "Completed":
             goal.estimated_days_remaining = 0
+            goal.priority = "Low Priority"
             return goal
 
         # Active or Stalled goal velocity calculation
@@ -44,6 +97,9 @@ class GoalService:
         velocity = max(val / days_active, 2.0)  # Default min 2% / day
         remaining_percentage = max(0, 100 - val)
         goal.estimated_days_remaining = math.ceil(remaining_percentage / velocity)
+
+        # Smart Goal Prioritization
+        goal.priority = self.calculate_goal_priority(goal)
         return goal
 
     def list_goals(self, user_id: str, status: Optional[str] = None) -> list[Goal]:
@@ -57,6 +113,15 @@ class GoalService:
     def create_goal(self, user_id: str, data: GoalCreate) -> Goal:
         prog_val = data.progress_value or 0
         init_status = "Completed" if prog_val >= 100 else (data.status.value if hasattr(data.status, "value") else str(data.status))
+        temp_g = Goal(
+            id="",
+            user_id=user_id,
+            title=data.title.strip(),
+            status=init_status,
+            target_date=data.target_date,
+            progress_value=prog_val,
+        )
+        init_priority = data.priority or self.calculate_goal_priority(temp_g)
         goal = Goal(
             id=str(uuid.uuid4()),
             user_id=user_id,
@@ -64,6 +129,7 @@ class GoalService:
             description=data.description.strip() if data.description else None,
             category=data.category.strip() if data.category else None,
             status=init_status,
+            priority=init_priority,
             target_date=data.target_date,
             progress_value=prog_val,
         )
@@ -80,14 +146,31 @@ class GoalService:
             updates["category"] = data.category.strip()
         if data.status is not None:
             updates["status"] = data.status.value if hasattr(data.status, "value") else str(data.status)
+        if data.priority is not None:
+            updates["priority"] = data.priority
         if data.target_date is not None:
             updates["target_date"] = data.target_date
         if data.progress_value is not None:
             updates["progress_value"] = data.progress_value
-            if data.progress_value >= 100:
-                updates["status"] = "Completed"
-        if data.latest_progress_note is not None:
-            updates["latest_progress_note"] = data.latest_progress_note.strip()
+        if updates.get("status") == "Completed" or updates.get("progress_value") == 100:
+            updates["status"] = "Completed"
+            updates["progress_value"] = 100
+            note = data.latest_progress_note or "Goal marked as completed (100%)"
+            updates["latest_progress_note"] = note
+            try:
+                from app.repositories.in_memory import progress_repo
+                from app.models.domain import Progress
+                progress_repo.create(
+                    Progress(
+                        id=str(uuid.uuid4()),
+                        goal_id=goal_id,
+                        progress_value=100,
+                        note=note,
+                        created_at=datetime.utcnow(),
+                    )
+                )
+            except Exception as e:
+                logger.warning("Could not auto-create completed progress entry: %s", e)
 
         updated = goal_repo.update(user_id=user_id, goal_id=goal_id, **updates)
         return self._enrich_goal(updated)

@@ -17,7 +17,7 @@ import { useModal, useToast } from "../context/ModalContext";
 import { goalApi } from "../services/api";
 import CircularProgress from "../components/CircularProgress";
 import { GridSkeleton, GoalLoadingState } from "../components/LoadingSkeleton";
-import GoalCelebration from "../components/GoalCelebration";
+import GoalCelebration from "../components/GoalCompletionCelebration";
 import GoalCalendar from "../components/GoalCalendar";
 import Pagination from "../components/Pagination";
 
@@ -52,7 +52,12 @@ export default function Goals() {
   const [formError, setFormError] = useState("");
 
   const filteredGoals = statusFilter
-    ? goals.filter((g) => g.status?.toLowerCase() === statusFilter.toLowerCase())
+    ? goals.filter((g) => {
+        if (statusFilter === "High Priority") {
+          return (g.priority || "").toLowerCase().includes("high");
+        }
+        return g.status?.toLowerCase() === statusFilter.toLowerCase();
+      })
     : goals;
 
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -196,10 +201,12 @@ export default function Goals() {
   return (
     <div className="app-page bg-slate-50 min-h-screen">
       {/* Celebration Modal Overlay for Newly Completed Goals */}
-      <GoalCelebration
-        goal={recentlyCompletedGoal}
-        onClose={clearCompletedGoalTrigger}
-      />
+      {recentlyCompletedGoal && (
+        <GoalCelebration
+          goal={recentlyCompletedGoal}
+          onClose={clearCompletedGoalTrigger}
+        />
+      )}
 
       <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10">
         {/* Status Filter & Action Bar */}
@@ -232,7 +239,7 @@ export default function Goals() {
             {/* Status Filter Pills (For Grid View) */}
             {viewMode === "grid" && (
               <div className="flex flex-wrap items-center gap-1.5">
-                {["", "Active", "Completed", "Stalled"].map((st) => (
+                {["", "Active", "Completed", "Stalled", "High Priority"].map((st) => (
                   <button
                     key={st}
                     onClick={() => setStatusFilter(st)}
@@ -471,6 +478,21 @@ export default function Goals() {
                             {goal.status === "Active" ? "On Track" : goal.status}
                           </span>
 
+                          {/* Smart Priority Badge */}
+                          {goal.priority && goal.status !== "Completed" && (
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                                goal.priority.includes("High")
+                                  ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                  : goal.priority.includes("Low")
+                                  ? "bg-slate-100 text-slate-600 border border-slate-200"
+                                  : "bg-amber-50 text-amber-700 border border-amber-200"
+                              }`}
+                            >
+                              {goal.priority}
+                            </span>
+                          )}
+
                           {goal.category && (
                             <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200">
                               {goal.category}
@@ -527,11 +549,19 @@ export default function Goals() {
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-                      <span className="text-[11px] font-medium">
-                        {goal.target_date
-                          ? `Target: ${new Date(goal.target_date).toLocaleDateString()}`
-                          : `Created: ${new Date(goal.created_at || goal.createdAt).toLocaleDateString()}`}
-                      </span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[11px] font-medium">
+                          {goal.target_date
+                            ? `Target: ${new Date(goal.target_date).toLocaleDateString()}`
+                            : `Created: ${new Date(goal.created_at || goal.createdAt).toLocaleDateString()}`}
+                        </span>
+
+                        {goal.estimated_days_remaining !== null && goal.estimated_days_remaining !== undefined && goal.status !== "Completed" && (
+                          <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                            ~{goal.estimated_days_remaining} {goal.estimated_days_remaining === 1 ? 'day' : 'days'} left
+                          </span>
+                        )}
+                      </div>
 
                       <div className="flex items-center gap-1.5">
                         <span className="text-[11px] font-medium">Status:</span>

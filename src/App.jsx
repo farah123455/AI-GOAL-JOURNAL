@@ -13,6 +13,7 @@ import AiCoach from "./pages/AiCoach";
 import Insights from "./pages/Insights";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import Habits from "./pages/Habits";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { useAuth } from "./context/AuthContext";
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/goals" element={<Goals />} />
+        <Route path="/habits" element={<Habits />} />
         <Route path="/journal" element={<Journal />} />
         <Route path="/coach" element={<AiCoach />} />
         <Route path="/insights" element={<Insights />} />

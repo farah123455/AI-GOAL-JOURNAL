@@ -9,8 +9,8 @@ export default function PublicNavbar() {
       <div className="mx-auto flex max-w-[1350px] w-full items-center justify-between">
         {/* Brand (Enlarged) */}
         <Link to="/" className="flex items-center gap-3.5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 shadow-md">
-            <Target size={22} className="text-white" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-200 shadow-xs p-1 overflow-hidden">
+            <img src="/logo.png" alt="AI Journal Logo" className="h-full w-full object-contain rounded-xl" />
           </div>
           <div>
             <p className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 leading-snug">

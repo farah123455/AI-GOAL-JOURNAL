@@ -9,8 +9,8 @@ export default function PublicFooter() {
           {/* Brand Col */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
-                <Target size={18} className="text-white" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-slate-200 shadow-xs p-1 overflow-hidden">
+                <img src="/logo.png" alt="AI Journal Logo" className="h-full w-full object-contain rounded-lg" />
               </div>
               <div>
                 <p className="text-sm font-bold tracking-tight text-slate-900">

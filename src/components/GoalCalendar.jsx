@@ -537,12 +537,25 @@ export default function GoalCalendar({ goals = [], onQuickStatusChange, onOpenEd
                   return (
                     <div key={goal.id} className="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
                           <span
                             className={`rounded-md px-2 py-0.5 text-[10px] font-bold border ${deadline.color}`}
                           >
                             {deadline.text}
                           </span>
+                          {goal.priority && goal.status !== 'Completed' && (
+                            <span
+                              className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase border ${
+                                goal.priority.includes('High')
+                                  ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                  : goal.priority.includes('Low')
+                                  ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}
+                            >
+                              {goal.priority}
+                            </span>
+                          )}
                           {goal.category && (
                             <span className="text-[10px] text-slate-400 font-semibold truncate">
                               {goal.category}

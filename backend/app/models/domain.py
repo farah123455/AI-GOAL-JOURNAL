@@ -21,6 +21,7 @@ class Goal:
     description: Optional[str] = None
     category: Optional[str] = None
     status: str = "Active"  # Active | Completed | Stalled
+    priority: Optional[str] = "Medium Priority"  # High Priority | Medium Priority | Low Priority
     target_date: Optional[str] = None
     progress_value: int = 0
     latest_progress_note: Optional[str] = None
