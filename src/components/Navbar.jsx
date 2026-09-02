@@ -15,6 +15,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useData } from "../context/DataContext";
+import { useModal } from "../context/ModalContext";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -100,8 +101,18 @@ export default function Navbar() {
     setReadIds(notificationsList.map((n) => n.id));
   }
 
+  const { confirm } = useModal();
+
   async function handleLogout() {
     setShowAccountMenu(false);
+    const confirmed = await confirm({
+      title: "Sign Out",
+      message: "Are you sure you want to sign out of your account?",
+      confirmText: "Sign Out",
+      cancelText: "Cancel",
+      variant: "warning",
+    });
+    if (!confirmed) return;
     await logout();
     navigate("/login");
   }

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useData } from "../context/DataContext";
+import { useModal, useToast } from "../context/ModalContext";
 import { goalApi } from "../services/api";
 import CircularProgress from "../components/CircularProgress";
 import { GridSkeleton, GoalLoadingState } from "../components/LoadingSkeleton";
@@ -148,13 +149,25 @@ export default function Goals() {
     }
   }
 
+  const { confirm } = useModal();
+  const toast = useToast();
+
   async function handleDelete(goalId) {
-    if (!window.confirm("Are you sure you want to delete this goal?")) return;
+    const confirmed = await confirm({
+      title: "Delete Goal",
+      message: "Are you sure you want to delete this goal? This action cannot be undone.",
+      confirmText: "Delete Goal",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+
     try {
       await goalApi.deleteGoal(goalId);
       deleteGoalFromCache(goalId);
+      toast.success("Goal deleted successfully.");
     } catch (err) {
-      alert("Failed to delete goal: " + err.message);
+      toast.error("Failed to delete goal: " + err.message);
     }
   }
 
@@ -176,7 +189,7 @@ export default function Goals() {
         triggerGoalCompletion(updated);
       }
     } catch (err) {
-      alert("Failed to update status: " + err.message);
+      toast.error("Failed to update status: " + err.message);
     }
   }
 

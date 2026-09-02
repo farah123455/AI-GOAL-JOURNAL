@@ -4,15 +4,19 @@ import {
   CheckCircle2,
   CalendarDays,
   Target,
-  BookOpen,
+  Clock,
+  Sparkles,
 } from "lucide-react";
 import { useData } from "../context/DataContext";
 import CircularProgress from "../components/CircularProgress";
 
-function computeStreak(journals) {
-  if (!journals || journals.length === 0) return 0;
+function computeStreak(goals) {
+  if (!goals || goals.length === 0) return 0;
   const dates = new Set(
-    journals.map((j) => new Date(j.created_at || j.createdAt).toDateString())
+    goals
+      .map((g) => g.created_at || g.createdAt || g.updated_at)
+      .filter(Boolean)
+      .map((d) => new Date(d).toDateString())
   );
   let streak = 0;
   const cursor = new Date();
@@ -29,7 +33,7 @@ function computeStreak(journals) {
   return streak;
 }
 
-function computeWeeklyData(journals, goals) {
+function computeWeeklyData(goals) {
   const labels = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -42,8 +46,10 @@ function computeWeeklyData(journals, goals) {
     const day = new Date(monday);
     day.setDate(monday.getDate() + i);
 
-    const count = [...journals, ...goals].filter((item) => {
-      const d = new Date(item.created_at || item.createdAt);
+    const count = goals.filter((g) => {
+      const dateStr = g.created_at || g.createdAt || g.updated_at;
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
       return (
         d.getFullYear() === day.getFullYear() &&
         d.getMonth() === day.getMonth() &&
@@ -59,7 +65,7 @@ function computeWeeklyData(journals, goals) {
   return raw.map((d) => ({
     day: d.day,
     count: d.count,
-    value: d.count > 0 ? Math.max(20, Math.round((d.count / max) * 100)) : 0,
+    value: d.count > 0 ? Math.max(25, Math.round((d.count / max) * 100)) : 0,
   }));
 }
 
@@ -86,61 +92,52 @@ function formatRelativeDate(date) {
 }
 
 export default function Progress() {
-  const { goals = [], journals = [], initialLoading } = useData();
+  const { goals = [], initialLoading } = useData();
 
-  const loading = initialLoading && goals.length === 0 && journals.length === 0;
+  const loading = initialLoading && goals.length === 0;
 
-  const weeklyData = computeWeeklyData(journals, goals);
+  const weeklyData = computeWeeklyData(goals);
   const totalWeeklyActivities = weeklyData.reduce((sum, item) => sum + item.count, 0);
-  const average = Math.round(
-    (totalWeeklyActivities / 7) * 100
-  );
-  const streak = computeStreak(journals);
-  const completedActivities = goals.length + journals.length;
-  
-  const completedGoalsCount = goals.filter((g) => g.status?.toLowerCase() === "completed").length;
-  const activeGoalsCount = goals.filter((g) => g.status?.toLowerCase() === "active").length;
+  const streak = computeStreak(goals);
+
+  const completedGoalsCount = goals.filter(
+    (g) => g.status?.toLowerCase() === "completed"
+  ).length;
+  const activeGoalsCount = goals.filter(
+    (g) => g.status?.toLowerCase() === "active" || g.status?.toLowerCase() === "in progress"
+  ).length;
 
   const overallProgress = (() => {
-    if (goals.length > 0) {
-      return Math.min(
-        100,
-        Math.round(((completedGoalsCount * 1.0 + activeGoalsCount * 0.5) / goals.length) * 100)
-      );
-    }
-    if (journals.length > 0) {
-      return Math.min(100, journals.length * 25);
-    }
-    return 0;
+    if (goals.length === 0) return 0;
+    const totalPercentage = goals.reduce((sum, g) => {
+      if (g.status?.toLowerCase() === "completed") return sum + 100;
+      const progress = g.progress_value ?? (g.status?.toLowerCase() === "active" ? 50 : 0);
+      return sum + Number(progress);
+    }, 0);
+    return Math.min(100, Math.round(totalPercentage / goals.length));
   })();
 
-  const recentActivity = [
-    ...journals.map((j) => ({
-      id: `journal-${j.id}`,
-      title: j.title || "Reflection Entry",
-      detail: j.content?.substring(0, 70) || "",
-      time: formatRelativeDate(j.created_at || j.createdAt),
-      sortDate: j.created_at || j.createdAt,
-      type: "journal",
-    })),
-    ...goals.map((g) => ({
+  // Activity Log derived exclusively from Goals section
+  const recentGoalActivity = goals
+    .map((g) => ({
       id: `goal-${g.id}`,
       title: g.title,
-      detail: g.description || "Goal milestone",
-      time: formatRelativeDate(g.created_at || g.createdAt),
-      sortDate: g.created_at || g.createdAt,
-      type: "goal",
-    })),
-  ]
+      description: g.description || (g.target_date ? `Target Date: ${g.target_date}` : "Goal Milestone"),
+      status: g.status || "Active",
+      category: g.category || "General",
+      progress: g.progress_value ?? (g.status?.toLowerCase() === "completed" ? 100 : 0),
+      time: formatRelativeDate(g.created_at || g.createdAt || g.updated_at),
+      sortDate: g.created_at || g.createdAt || g.updated_at || new Date().toISOString(),
+    }))
     .sort((a, b) => new Date(b.sortDate) - new Date(a.sortDate))
-    .slice(0, 5);
+    .slice(0, 10);
 
   return (
     <div className="app-page bg-slate-50 min-h-screen">
       <main className="mx-auto max-w-[1350px] px-6 py-8 md:px-10 lg:px-12">
         {loading ? (
           <section className="panel px-6 py-20 text-center shadow-sm">
-            <p className="text-base font-medium text-slate-500">Loading your performance metrics…</p>
+            <p className="text-base font-medium text-slate-500">Loading your goal performance metrics…</p>
           </section>
         ) : (
           <div className="space-y-8">
@@ -149,23 +146,23 @@ export default function Progress() {
               <StatCard
                 icon={<TrendingUp size={20} className="text-indigo-600" />}
                 iconBg="bg-indigo-50"
-                label="WEEKLY ACTIVITY"
-                value={`${totalWeeklyActivities} logs`}
-                detail="this week"
+                label="WEEKLY GOAL LOGS"
+                value={`${totalWeeklyActivities} goals`}
+                detail="logged this week"
               />
               <StatCard
                 icon={<Flame size={20} className="text-amber-500" />}
                 iconBg="bg-amber-50"
                 label="ACTIVE STREAK"
                 value={`${streak} Days`}
-                detail="consistent momentum"
+                detail="consistent goal momentum"
               />
               <StatCard
                 icon={<CheckCircle2 size={20} className="text-emerald-600" />}
                 iconBg="bg-emerald-50"
-                label="TOTAL ACTIVITIES"
-                value={String(completedActivities)}
-                detail="reflections & goals"
+                label="COMPLETED GOALS"
+                value={`${completedGoalsCount} / ${goals.length}`}
+                detail="goals achieved"
               />
             </div>
 
@@ -173,12 +170,12 @@ export default function Progress() {
             <div className="grid gap-7 lg:grid-cols-[1.6fr_0.9fr]">
               {/* WEEKLY CONSISTENCY BAR CHART */}
               <div className="panel p-7 sm:p-8 shadow-sm bg-white rounded-3xl">
-                <p className="section-label">ACTIVITY OVERVIEW</p>
+                <p className="section-label">GOAL ACTIVITY OVERVIEW</p>
                 <h2 className="mt-2 text-2xl font-bold text-slate-900">
                   Weekly Consistency
                 </h2>
                 <p className="mt-1 text-sm text-slate-500 font-medium">
-                  Reflections and goal milestones logged over the current week.
+                  Goal updates and milestones recorded over the current week.
                 </p>
 
                 <div className="mt-8 flex h-60 items-end gap-3 sm:gap-4 border-b border-slate-100 pb-4">
@@ -237,12 +234,10 @@ export default function Progress() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs text-slate-500 font-semibold">
-                        {goals.length > 0 ? "Active Goals on Track" : "Reflections Logged"}
+                        Active Goals on Track
                       </p>
                       <p className="mt-1 text-xl font-bold text-slate-900">
-                        {goals.length > 0
-                          ? `${activeGoalsCount} / ${goals.length}`
-                          : `${journals.length} entries`}
+                        {activeGoalsCount} / {goals.length}
                       </p>
                     </div>
                     <Target size={22} className="text-indigo-600" />
@@ -251,41 +246,73 @@ export default function Progress() {
               </div>
             </div>
 
-            {/* RECENT ACTIVITY LOG */}
+            {/* RECENT GOAL ACTIVITY LOG */}
             <section className="panel p-7 sm:p-8 shadow-sm bg-white rounded-3xl">
               <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-100">
                 <div>
-                  <p className="section-label">ACTIVITY LOG</p>
-                  <h2 className="mt-1.5 text-2xl font-bold text-slate-900">Recent Progress & Activity</h2>
+                  <p className="section-label">GOALS ACTIVITY LOG</p>
+                  <h2 className="mt-1.5 text-2xl font-bold text-slate-900">Recent Goals & Milestones</h2>
                 </div>
                 <CalendarDays size={22} className="text-indigo-600" />
               </div>
 
               <div className="divide-y divide-slate-100">
-                {recentActivity.length === 0 ? (
-                  <p className="text-sm text-slate-400 italic py-8 text-center font-medium">
-                    No recent activity recorded yet.
-                  </p>
+                {recentGoalActivity.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <Target className="mx-auto h-10 w-10 text-slate-300 mb-2" />
+                    <p className="text-sm text-slate-500 font-medium">No goals recorded yet.</p>
+                    <p className="text-xs text-slate-400 mt-1">Create goals in the Goals section to track your progress here.</p>
+                  </div>
                 ) : (
-                  recentActivity.map((act) => (
-                    <div key={act.id} className="py-4.5 flex items-start justify-between gap-4 first:pt-2 last:pb-2">
-                      <div className="flex items-start gap-3.5 min-w-0">
-                        <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                          act.type === "journal" ? "bg-purple-50 text-purple-600" : "bg-indigo-50 text-indigo-600"
-                        }`}>
-                          {act.type === "journal" ? <BookOpen size={16} /> : <Target size={16} />}
+                  recentGoalActivity.map((act) => {
+                    const isCompleted = act.status?.toLowerCase() === "completed";
+                    return (
+                      <div key={act.id} className="py-4.5 flex items-center justify-between gap-4 first:pt-2 last:pb-2">
+                        <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                          <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                            isCompleted ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-indigo-50 text-indigo-600 border border-indigo-100"
+                          }`}>
+                            {isCompleted ? <CheckCircle2 size={18} /> : <Target size={18} />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="text-base font-bold text-slate-900 leading-snug">{act.title}</h3>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                                isCompleted
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : "bg-indigo-100 text-indigo-800"
+                              }`}>
+                                {act.status}
+                              </span>
+                              {act.category && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                                  {act.category}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-slate-600 mt-1 line-clamp-1 font-medium">{act.description}</p>
+                            
+                            {/* Progress bar pill */}
+                            <div className="mt-2 flex items-center gap-3 max-w-xs">
+                              <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${
+                                    isCompleted ? "bg-emerald-500" : "bg-indigo-600"
+                                  }`}
+                                  style={{ width: `${act.progress}%` }}
+                                />
+                              </div>
+                              <span className="text-xs font-mono font-bold text-slate-600">{act.progress}%</span>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-base font-bold text-slate-900 leading-snug">{act.title}</h3>
-                          <p className="text-sm text-slate-600 mt-1 line-clamp-1 font-medium">{act.detail}</p>
-                        </div>
-                      </div>
 
-                      <span className="shrink-0 text-xs text-slate-400 font-mono font-medium">
-                        {act.time}
-                      </span>
-                    </div>
-                  ))
+                        <span className="shrink-0 text-xs text-slate-400 font-mono font-medium self-start mt-1">
+                          {act.time}
+                        </span>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </section>

@@ -10,19 +10,26 @@ import {
   Send,
   Calendar,
   Search,
+  Flag,
+  Target,
+  Plus,
+  Check,
 } from "lucide-react";
 import VoiceRecorder from "../components/VoiceRecorder";
 import Pagination from "../components/Pagination";
-import { journalApi } from "../services/api";
+import { journalApi, goalApi } from "../services/api";
 import { useData } from "../context/DataContext";
+import { useModal, useToast } from "../context/ModalContext";
 import { GridSkeleton, JournalLoadingState } from "../components/LoadingSkeleton";
 
 export default function Journal() {
   const {
     journals,
+    goals,
     hasLoadedJournals,
     fetchJournals,
     addJournal,
+    addGoal,
     deleteJournalFromCache,
     fetchAllData,
   } = useData();
@@ -36,6 +43,9 @@ export default function Journal() {
   const [selectedJournal, setSelectedJournal] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  const [acceptedGoalTitles, setAcceptedGoalTitles] = useState(new Set());
+  const [acceptingTitle, setAcceptingTitle] = useState(null);
 
   const loadingList = !hasLoadedJournals;
 
@@ -89,8 +99,18 @@ useEffect(() => {
     setActiveTab("text");
   }
 
+  const { confirm } = useModal();
+  const toast = useToast();
+
   async function handleDeleteJournal(id) {
-    if (!window.confirm("Are you sure you want to delete this journal entry?")) return;
+    const confirmed = await confirm({
+      title: "Delete Journal Entry",
+      message: "Are you sure you want to delete this journal entry? This action cannot be undone.",
+      confirmText: "Delete Entry",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       await journalApi.deleteJournal(id);
@@ -98,8 +118,37 @@ useEffect(() => {
       if (selectedJournal?.id === id) {
         setSelectedJournal(null);
       }
+      toast.success("Journal entry deleted successfully.");
     } catch (err) {
-      alert("Failed to delete entry: " + err.message);
+      toast.error("Failed to delete entry: " + err.message);
+    }
+  }
+
+  async function handleAcceptGoal(goalData) {
+    const rawTitle = (goalData.title || goalData.text || "").trim();
+    if (!rawTitle) return;
+
+    setAcceptingTitle(rawTitle);
+    try {
+      const payload = {
+        title: rawTitle,
+        description: goalData.description || `Extracted from journal reflection.`,
+        category: goalData.category || "Learning",
+        status: "Active",
+        target_date: goalData.due_date || goalData.target_date || null,
+        progress_value: 0,
+      };
+
+      const created = await goalApi.createGoal(payload);
+      if (created) {
+        addGoal(created);
+      }
+      setAcceptedGoalTitles((prev) => new Set([...prev, rawTitle.toLowerCase()]));
+      toast.success("Goal created successfully!");
+    } catch (err) {
+      toast.error("Failed to create goal: " + err.message);
+    } finally {
+      setAcceptingTitle(null);
     }
   }
 
@@ -242,82 +291,144 @@ useEffect(() => {
               </div>
             </section>
 
-            {/* LATEST AI EXTRACTION BANNER */}
-            {latestAnalysis && (
-              <section className="rounded-3xl p-7 bg-gradient-to-r from-indigo-50 via-purple-50 to-white border border-indigo-200/90 shadow-md animate-fade-in">
-                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-700 mb-3 flex items-center gap-2">
-                  <Sparkles size={18} className="text-purple-600 animate-pulse" /> AI Structured Journal Extraction
-                </h3>
+            {/* LATEST AI EXTRACTION BANNER MATCHING SCREENSHOT */}
+            {(latestAnalysis || selectedJournal?.ai_analysis) && (() => {
+              const currentAi = latestAnalysis || selectedJournal?.ai_analysis;
+              const goalsExtractedList = currentAi.goalsExtracted || currentAi.goals || [];
+              const completedTasksList = currentAi.completedTasks || currentAi.activities?.filter(a => a.status === "completed").map(a => a.text) || [];
+              const blockersList = currentAi.blockers || [];
 
-                {/* AUTO-CREATED GOAL BADGE */}
-                {autoCreatedGoals.length > 0 && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-200 shadow-xs animate-bounce">
-                      <CheckCircle2 size={14} className="text-emerald-600" />
-                      {autoCreatedGoals.length} New Goal{autoCreatedGoals.length > 1 ? "s" : ""} Auto-Created!
-                    </span>
-                  )}
-                </div>
+              return (
+                <section className="rounded-3xl p-7 bg-slate-50 border border-slate-200/90 shadow-sm animate-fade-in space-y-6">
+                  {/* Header */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 pb-4">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-2">
+                      <Sparkles size={18} className="text-indigo-600" /> AI Structured Journal Extraction
+                    </h3>
 
-                {latestAnalysis.quick_summary && (
-                  <p className="text-lg font-bold text-slate-900 italic mb-4">
-                    "{latestAnalysis.quick_summary}"
-                  </p>
-                )}
-
-                {/* Auto-Created Goal Details List */}
-                {autoCreatedGoals.length > 0 && (
-                  <div className="mb-4 rounded-2xl bg-emerald-50/80 p-4 border border-emerald-200">
-                    <h4 className="text-xs font-bold text-emerald-900 mb-2 flex items-center gap-1.5">
-                      🎯 New Goal Added to Your Board:
-                    </h4>
-                    <ul className="space-y-1 text-xs text-emerald-800 font-semibold">
-                      {autoCreatedGoals.map((g, idx) => (
-                        <li key={idx} className="flex items-center gap-2">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-                          <span>{g.title || g.text}</span>
-                          {g.category && (
-                            <span className="text-[10px] bg-emerald-200/70 text-emerald-900 px-1.5 py-0.5 rounded">
-                              {g.category}
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
+                    {autoCreatedGoals.length > 0 && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-200">
+                        <CheckCircle2 size={14} className="text-emerald-600" />
+                        {autoCreatedGoals.length} Goal{autoCreatedGoals.length > 1 ? "s" : ""} Auto-Created!
+                      </span>
+                    )}
                   </div>
-                )}
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  {latestAnalysis.activities?.length > 0 && (
-                    <div className="rounded-2xl bg-white p-4 border border-indigo-100 shadow-sm">
-                      <h4 className="text-xs font-bold text-slate-900 mb-2">Activities Extracted:</h4>
+                  {currentAi.quick_summary && (
+                    <p className="text-base font-semibold text-slate-800 italic">
+                      "{currentAi.quick_summary}"
+                    </p>
+                  )}
+
+                  {/* 1. GOALS EXTRACTED & TRACKED (SPACIOUS VERTICAL STACK) */}
+                  {goalsExtractedList.length > 0 && (
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900 mb-3.5">
+                        Goals Extracted & Tracked
+                      </h4>
+                      <div className="flex flex-col gap-3.5">
+                        {goalsExtractedList.map((g, idx) => {
+                          const rawConf = g.confidence_pct ?? g.confidence ?? 90;
+                          const conf = typeof rawConf === 'number' && rawConf <= 1.0 ? Math.round(rawConf * 100) : Math.round(Number(rawConf) || 90);
+                          const goalTitle = (g.title || g.text || "").trim();
+                          const normTitle = goalTitle.toLowerCase();
+
+                          const isRegistered = goals.some(ex => ex.title?.toLowerCase().trim() === normTitle) || acceptedGoalTitles.has(normTitle);
+                          const isProcessing = acceptingTitle === goalTitle;
+
+                          return (
+                            <div
+                              key={idx}
+                              className="rounded-2xl bg-white p-5 border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                            >
+                              {/* Left Details */}
+                              <div className="space-y-1.5 min-w-0 flex-1">
+                                <div className="flex items-center gap-2.5 flex-wrap">
+                                  <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
+                                    <Flag size={18} className="text-indigo-600 shrink-0" />
+                                    <span>{goalTitle}</span>
+                                  </div>
+                                  <span className="shrink-0 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-600 border border-indigo-100">
+                                    {conf}% Confidence
+                                  </span>
+                                  {g.category && (
+                                    <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                                      {g.category}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                                  {g.description || (g.due_date ? `Target Date: ${g.due_date}` : "Extracted task from journal analysis.")}
+                                </p>
+                              </div>
+
+                              {/* Right Action Button */}
+                              <div className="shrink-0 flex items-center justify-end sm:self-center">
+                                {isRegistered ? (
+                                  <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200">
+                                    <CheckCircle2 size={14} className="text-emerald-600" />
+                                    Goal Registered
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={isProcessing}
+                                    onClick={() => handleAcceptGoal(g)}
+                                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 disabled:opacity-50 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer"
+                                  >
+                                    {isProcessing ? (
+                                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent shrink-0" />
+                                    ) : (
+                                      <Plus size={15} />
+                                    )}
+                                    Accept Goal
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. DETECTED COMPLETED TASKS (MATCHING SCREENSHOT) */}
+                  {completedTasksList.length > 0 && (
+                    <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-2xs">
+                      <h4 className="text-base font-bold text-slate-900 mb-3">
+                        Detected Completed Tasks
+                      </h4>
                       <ul className="space-y-2 text-xs text-slate-700 font-medium">
-                        {latestAnalysis.activities.map((act, idx) => (
-                          <li key={idx} className="flex items-center gap-2">
-                            <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
-                            <span>{act.text}</span>
+                        {completedTasksList.map((taskText, idx) => (
+                          <li key={idx} className="flex items-start gap-2.5">
+                            <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-slate-700">{taskText}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
 
-                  {latestAnalysis.blockers?.length > 0 && (
-                    <div className="rounded-2xl bg-red-50 p-4 border border-red-100 shadow-sm">
-                      <h4 className="text-xs font-bold text-red-600 mb-2">Active Blockers Detected:</h4>
+                  {/* 3. ACTIVE BLOCKERS DETECTED */}
+                  {blockersList.length > 0 && (
+                    <div className="rounded-2xl bg-red-50/80 p-5 border border-red-200">
+                      <h4 className="text-xs font-bold text-red-700 uppercase tracking-wider mb-2">
+                        Active Blockers Detected
+                      </h4>
                       <ul className="space-y-2 text-xs text-red-700 font-medium">
-                        {latestAnalysis.blockers.map((b, idx) => (
+                        {blockersList.map((b, idx) => (
                           <li key={idx} className="flex items-center gap-2">
                             <AlertTriangle size={15} className="text-red-500 shrink-0" />
-                            <span>{b.text} ({b.category || "other"})</span>
+                            <span>{b.text || b.description}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
-                </div>
-              </section>
-            )}
+                </section>
+              );
+            })()}
           </div>
 
           {/* RIGHT SIDEBAR COLUMN ("Journal History") MATCHING IMAGE 2 */}
