@@ -5,8 +5,13 @@ import {
   CalendarDays,
   Target,
   BookOpen,
+  TrendingDown,
+  Minus,
+  ChevronDown,
 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useData } from "../context/DataContext";
+import { progressApi } from "../services/api";
 import CircularProgress from "../components/CircularProgress";
 
 function computeStreak(journals) {
@@ -85,10 +90,226 @@ function formatRelativeDate(date) {
   });
 }
 
+/** Short date label for the SVG x-axis (e.g. "5 Feb"). */
+function formatChartDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
+
+/** Readable full date + time for the history list. */
+function formatFullDateTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+/** Human-friendly progress change text: "+5%", "-3%", "0%". */
+function formatChange(value) {
+  if (typeof value !== "number") return "0%";
+  if (value > 0) return `+${value}%`;
+  if (value < 0) return `${value}%`;
+  return "0%";
+}
+
+/**
+ * Lightweight, responsive SVG trend chart built from backend progress history.
+ * No chart library — pure SVG/CSS so it stays inside the existing Light UI.
+ */
+function TrendChart({ data }) {
+  const W = 720;
+  const H = 260;
+  const padL = 42;
+  const padR = 16;
+  const padT = 18;
+  const padB = 40;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+  const minV = 0;
+  const maxV = 100;
+  const n = data.length;
+
+  const x = (i) => (n <= 1 ? padL + chartW / 2 : padL + (i / (n - 1)) * chartW);
+  const y = (v) =>
+    padT +
+    chartH -
+    ((Math.max(minV, Math.min(maxV, v)) - minV) / (maxV - minV)) * chartH;
+
+  const yTicks = [0, 25, 50, 75, 100];
+  const labelStep = Math.max(1, Math.ceil(n / 6));
+
+  const last = data[n - 1]?.progress_value;
+  const secondLast = data[n - 2]?.progress_value;
+  const trendColor =
+    n >= 2
+      ? last > secondLast
+        ? "#059669"
+        : last < secondLast
+        ? "#e11d48"
+        : "#94a3b8"
+      : "#6366f1";
+
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="w-full h-auto select-none"
+      role="img"
+      aria-label="Progress trend chart"
+    >
+      {/* Horizontal gridlines + Y-axis labels */}
+      {yTicks.map((tick) => (
+        <g key={tick}>
+          <line
+            x1={padL}
+            y1={y(tick)}
+            x2={W - padR}
+            y2={y(tick)}
+            stroke="#E2E8F0"
+            strokeWidth={1}
+            strokeDasharray={tick === 0 ? "" : "3 4"}
+          />
+          <text
+            x={padL - 8}
+            y={y(tick) + 4}
+            textAnchor="end"
+            fontSize={11}
+            fontWeight={600}
+            fill="#94A3B8"
+          >
+            {tick}%
+          </text>
+        </g>
+      ))}
+
+      {/* Trend line segments — each coloured by increase/decr(e)ase */}
+      {n > 1 &&
+        Array.from({ length: n - 1 }).map((_, i) => {
+          const from = data[i].progress_value;
+          const to = data[i + 1].progress_value;
+          const color = to > from ? "#10b981" : to < from ? "#f43f5e" : "#94a3b8";
+          return (
+            <line
+              key={`${data[i].id}-${i}`}
+              x1={x(i)}
+              y1={y(from)}
+              x2={x(i + 1)}
+              y2={y(to)}
+              stroke={color}
+              strokeWidth={2.5}
+              strokeLinecap="round"
+            />
+          );
+        })}
+
+      {/* Data points for actual backend records */}
+      {data.map((p, i) => (
+        <circle
+          key={p.id || i}
+          cx={x(i)}
+          cy={y(p.progress_value)}
+          r={i === n - 1 ? 6 : 4.5}
+          fill="#ffffff"
+          stroke={i === n - 1 ? trendColor : "#6366f1"}
+          strokeWidth={i === n - 1 ? 3 : 2}
+        />
+      ))}
+
+      {/* X-axis date labels */}
+      {data.map((p, i) =>
+        i % labelStep === 0 || i === n - 1 ? (
+          <text
+            key={`label-${p.id || i}`}
+            x={x(i)}
+            y={H - 14}
+            textAnchor="middle"
+            fontSize={10}
+            fontWeight={600}
+            fill="#94A3B8"
+          >
+            {formatChartDate(p.created_at)}
+          </text>
+        ) : null
+      )}
+    </svg>
+  );
+}
+
 export default function Progress() {
   const { goals = [], journals = [], initialLoading } = useData();
 
   const loading = initialLoading && goals.length === 0 && journals.length === 0;
+
+  // --- Progress History & Trend (backend data) ---
+  const [selectedGoalId, setSelectedGoalId] = useState(null);
+  const [historyByGoal, setHistoryByGoal] = useState({});
+  const [histLoading, setHistLoading] = useState({});
+  const [histError, setHistError] = useState({});
+  const fetchedRef = useRef({});
+
+  // Default to the first available goal.
+  const activeGoalId = goals.some((g) => g.id === selectedGoalId)
+    ? selectedGoalId
+    : goals[0]?.id || null;
+
+  // Fetch real progress history for each goal once per goal id.
+  useEffect(() => {
+    if (!goals || goals.length === 0) return;
+    let cancelled = false;
+
+    goals.forEach((goal) => {
+      if (!goal?.id || fetchedRef.current[goal.id]) return;
+      fetchedRef.current[goal.id] = true;
+      setHistLoading((m) => ({ ...m, [goal.id]: true }));
+
+      progressApi
+        .getProgressHistory(goal.id)
+        .then((history) => {
+          if (cancelled) return;
+          const sorted = (history || [])
+            .slice()
+            .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+          setHistoryByGoal((m) => ({ ...m, [goal.id]: sorted }));
+          setHistError((m) => {
+            const next = { ...m };
+            delete next[goal.id];
+            return next;
+          });
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          setHistError((m) => ({
+            ...m,
+            [goal.id]: err?.message || "Failed to load progress history.",
+          }));
+        })
+        .finally(() => {
+          if (!cancelled) setHistLoading((m) => ({ ...m, [goal.id]: false }));
+        });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [goals]);
+
+  const selectedGoal = goals.find((g) => g.id === activeGoalId) || null;
+  const progressHistory = selectedGoal ? historyByGoal[selectedGoal.id] || [] : [];
+  const isHistoryLoading = selectedGoal ? !!histLoading[selectedGoal.id] : false;
+  const historyError = selectedGoal ? histError[selectedGoal.id] || "" : "";
+  const latest = progressHistory[progressHistory.length - 1] || null;
+  const previous = progressHistory[progressHistory.length - 2] || null;
+  const historyDelta =
+    latest && previous
+      ? latest.progress_value - previous.progress_value
+      : null;
 
   const weeklyData = computeWeeklyData(journals, goals);
   const totalWeeklyActivities = weeklyData.reduce((sum, item) => sum + item.count, 0);
@@ -250,6 +471,174 @@ export default function Progress() {
                 </div>
               </div>
             </div>
+
+            {/* PROGRESS HISTORY & TREND */}
+            <section className="panel p-7 sm:p-8 shadow-sm bg-white rounded-3xl">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5 pb-4 border-b border-slate-100">
+                <div>
+                  <p className="section-label">PROGRESS TREND</p>
+                  <h2 className="mt-1.5 text-2xl font-bold text-slate-900">
+                    Progress History & Trend
+                  </h2>
+                </div>
+
+                {/* Goal selector */}
+                {goals.length > 1 && (
+                  <div className="relative">
+                    <select
+                      value={activeGoalId || ""}
+                      onChange={(e) => setSelectedGoalId(e.target.value)}
+                      className="appearance-none rounded-xl border border-slate-200 bg-white pl-4 pr-9 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      aria-label="Select goal to view progress history"
+                    >
+                      {goals.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.title || "Untitled Goal"}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={16}
+                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {goals.length === 0 ? (
+                <p className="text-sm text-slate-400 italic py-10 text-center font-medium">
+                  Add a goal to start tracking progress history.
+                </p>
+              ) : isHistoryLoading ? (
+                <div className="space-y-4 animate-pulse py-4" aria-busy="true" aria-label="Loading progress history">
+                  <div className="h-16 w-full rounded-xl bg-slate-100" />
+                  <div className="h-56 w-full rounded-xl bg-slate-100" />
+                </div>
+              ) : historyError ? (
+                <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+                  <TrendingDown size={24} className="mx-auto text-red-500 mb-2" />
+                  <p className="text-sm font-semibold text-red-700">
+                    Couldn't load progress history for this goal.
+                  </p>
+                  <p className="mt-1 text-xs text-red-500 font-medium">{historyError}</p>
+                </div>
+              ) : progressHistory.length === 0 ? (
+                <p className="text-sm text-slate-400 italic py-10 text-center font-medium">
+                  No progress updates recorded yet.
+                </p>
+              ) : (
+                <>
+                  {/* Latest / Previous / Change summary */}
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Latest progress
+                      </p>
+                      <p className="mt-1 text-2xl font-bold text-slate-900">
+                        {latest?.progress_value ?? "—"}%
+                      </p>
+                      {latest?.created_at && (
+                        <p className="mt-0.5 text-xs text-slate-500 font-medium">
+                          {formatFullDateTime(latest.created_at)}
+                        </p>
+                      )}
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Previous progress
+                      </p>
+                      <p className="mt-1 text-2xl font-bold text-slate-900">
+                        {previous?.progress_value ?? "—"}%
+                      </p>
+                      {previous?.created_at && (
+                        <p className="mt-0.5 text-xs text-slate-500 font-medium">
+                          {formatFullDateTime(previous.created_at)}
+                        </p>
+                      )}
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Change
+                      </p>
+                      <div className={`mt-1.5 inline-flex items-center gap-2 rounded-lg px-2.5 py-1 text-lg font-bold ${
+                        historyDelta > 0
+                          ? "bg-emerald-50 text-emerald-600"
+                          : historyDelta < 0
+                          ? "bg-rose-50 text-rose-600"
+                          : "bg-slate-100 text-slate-500"
+                      }`}>
+                        {historyDelta > 0 ? (
+                          <TrendingUp size={18} />
+                        ) : historyDelta < 0 ? (
+                          <TrendingDown size={18} />
+                        ) : (
+                          <Minus size={18} />
+                        )}
+                        {formatChange(historyDelta)}
+                      </div>
+                      <p className="mt-1.5 text-xs text-slate-500 font-medium">
+                        vs previous update
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Latest progress note */}
+                  {latest?.note && (
+                    <p className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 px-4 py-3 text-sm text-slate-700 font-medium">
+                      <span className="font-bold text-indigo-700">Note: </span>
+                      {latest.note}
+                    </p>
+                  )}
+
+                  {/* Trend chart */}
+                  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/40 p-4 sm:p-6">
+                    <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Progress over time
+                    </p>
+                    <TrendChart data={progressHistory} />
+                  </div>
+
+                  {/* Full history list */}
+                  <div className="mt-6">
+                    <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      All updates ({progressHistory.length})
+                    </p>
+                    <div className="divide-y divide-slate-100 border-t border-slate-100">
+                      {progressHistory.slice().reverse().map((record, idx, arr) => (
+                        <div key={record.id || idx} className="flex items-start justify-between gap-4 py-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-slate-900">
+                              {record.progress_value}% — {arr[0].id === record.id ? "Latest" : formatRelativeDate(record.created_at)}
+                            </p>
+                            <p className="mt-0.5 text-xs text-slate-500 font-medium">
+                              {formatFullDateTime(record.created_at)}
+                            </p>
+                            {record.note && (
+                              <p className="mt-1 text-sm text-slate-600 font-medium leading-snug">
+                                {record.note}
+                              </p>
+                            )}
+                          </div>
+                          <span
+                            className={`shrink-0 rounded-md px-1.5 py-0.5 text-xs font-bold ${
+                              idx > 0
+                                ? record.progress_value > arr[idx - 1].progress_value
+                                  ? "bg-emerald-50 text-emerald-600"
+                                  : record.progress_value < arr[idx - 1].progress_value
+                                  ? "bg-rose-50 text-rose-600"
+                                  : "bg-slate-100 text-slate-500"
+                                : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            {idx > 0 ? formatChange(record.progress_value - arr[idx - 1].progress_value) : "—"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </section>
 
             {/* RECENT ACTIVITY LOG */}
             <section className="panel p-7 sm:p-8 shadow-sm bg-white rounded-3xl">

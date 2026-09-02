@@ -211,3 +211,21 @@ export const habitApi = {
   getHabitLogs: (id) => fetchWithAuth(`/habits/${id}/logs`),
   getHabitStatus: (id) => fetchWithAuth(`/habits/${id}/status`),
 };
+
+/**
+ * Goal Progress History API
+ *
+ * Backend contract (FastAPI, `/api/v1/progress`):
+ *   GET /progress/goal/{goal_id}           -> list[ProgressResponse]
+ *   GET /progress/goal/{goal_id}/latest    -> ProgressResponse
+ *
+ * ProgressResponse shape:
+ *   { id, goal_id, progress_value (0-100), note (string|null), created_at (datetime) }
+ *
+ * All requests are authenticated with the current Firebase ID token via fetchWithAuth.
+ */
+export const progressApi = {
+  getProgressHistory: (goalId) => fetchWithAuth(`/progress/goal/${goalId}`),
+  getLatestProgress: (goalId) =>
+    fetchWithAuth(`/progress/goal/${goalId}/latest`),
+};
