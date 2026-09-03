@@ -1,9 +1,13 @@
+from unittest.mock import patch
 import pytest
 from app.core.crypto import FieldEncryptionService, crypto_service, ENCRYPTION_PREFIX
 from app.core.key_rotation import KeyRotationManager
 from app.services.journal_service import journal_service
-from app.schemas.journal import JournalCreate
-from app.repositories.in_memory import journal_repo
+from app.schemas.journal import JournalCreate, JournalUpdate
+from app.repositories.in_memory import journal_repo, summary_repo
+from app.services.summary_service import summary_service
+from app.services.encryption_service import EncryptionService, encryption_service
+from app.models.domain import JournalEntry, WeeklySummary
 
 
 def test_field_encryption_and_decryption_roundtrip():
@@ -96,3 +100,289 @@ def test_multi_key_fallback_decryption():
     new_ciphertext = modern_service.encrypt("Fresh journal note from 2026")
     decrypted_new = modern_service.decrypt(new_ciphertext)
     assert decrypted_new == "Fresh journal note from 2026"
+
+
+# ==========================================
+# User Field-Level Encryption Service Tests
+# ==========================================
+
+def test_encryption_decryption_cycle():
+    sample_text = "Today I completed my DAA Assignment and built 3 pages of my React portfolio."
+    
+    # 1. Encrypt text
+    encrypted = encryption_service.encrypt_text(sample_text)
+    assert encrypted != sample_text
+    assert encrypted.startswith("enc_v1:")
+    
+    # 2. Decrypt text
+    decrypted = encryption_service.decrypt_text(encrypted)
+    assert decrypted == sample_text
+
+
+def test_backward_compatibility_plaintext_fallback():
+    plaintext_legacy = "This is a legacy unencrypted journal entry."
+    
+    # Plaintext without 'enc_v1:' prefix should be returned as-is
+    decrypted = encryption_service.decrypt_text(plaintext_legacy)
+    assert decrypted == plaintext_legacy
+
+
+def test_prepare_for_ai_processing():
+    sample_text = "I completed 2 modules of Data Structures."
+    encrypted = encryption_service.encrypt_text(sample_text)
+    
+    # AI processing helper should decrypt transiently in RAM
+    ai_ready_text = encryption_service.prepare_for_ai_processing(encrypted)
+    assert ai_ready_text == sample_text
+
+
+def test_empty_string_handling():
+    assert encryption_service.encrypt_text("") == ""
+    assert encryption_service.decrypt_text("") == ""
+
+
+# =========================================================================
+# Aditya — Encryption Security Testing & Validation Suite (2 Sept 2026)
+# =========================================================================
+
+def test_weekly_summary_storage_is_encrypted_and_decrypted_on_read():
+    """
+    Verify sensitive Weekly Summary coaching suggestion is encrypted in repository
+    and transparently decrypted for the authorized user.
+    """
+    user_id = "test-sec-summary-user"
+    mock_ai_summary = {
+        "headline": "Great Progress on Cryptography",
+        "wins": ["Completed AES-256-GCM integration"],
+        "recurring_blockers": [],
+        "goal_status_changes": [],
+        "mood_trend": "energized",
+        "coaching_suggestion": "Sensitive confidential coaching: Take mindful breaks between coding sprints."
+    }
+
+    with patch("app.services.gemini_service.gemini_service.generate_weekly_summary", return_value=mock_ai_summary):
+        summary = summary_service.generate_weekly_summary(user_id=user_id, user_name="Aditya")
+        
+        # 1. Returned model to caller must be decrypted plaintext
+        assert summary.coaching_suggestion == "Sensitive confidential coaching: Take mindful breaks between coding sprints."
+        
+        # 2. Raw repository storage MUST be encrypted with enc:v1:
+        raw_saved = summary_repo.get_latest_by_user(user_id)
+        assert raw_saved is not None
+        assert raw_saved.coaching_suggestion.startswith(ENCRYPTION_PREFIX)
+        assert "Sensitive confidential coaching" not in raw_saved.coaching_suggestion
+
+        # 3. Reading via service get_latest_summary must return decrypted plaintext
+        retrieved = summary_service.get_latest_summary(user_id)
+        assert retrieved is not None
+        assert retrieved.coaching_suggestion == "Sensitive confidential coaching: Take mindful breaks between coding sprints."
+
+
+def test_cross_user_isolation_prevent_data_leakage():
+    """
+    Verify User A's encrypted journal cannot be accessed or decrypted by User B.
+    """
+    user_a = "user-alice-sec-1"
+    user_b = "user-bob-sec-2"
+    alice_secret = "Alice confidential diary notes: Planning new patent submission."
+
+    mock_analysis = {
+        "title": "Patent Planning",
+        "mood": "focused",
+        "activities": [],
+        "goals": [],
+        "blockers": [],
+        "insights": [],
+        "quick_summary": "Patent planning."
+    }
+
+    with patch("app.services.gemini_service.gemini_service.analyze_journal", return_value=mock_analysis):
+        entry_a = journal_service.create_journal(user_id=user_a, data=JournalCreate(content=alice_secret, source="text"))
+
+    # User B attempts to fetch Alice's journal by ID
+    bob_fetch = journal_service.get_journal(user_id=user_b, journal_id=entry_a.id)
+    assert bob_fetch is None
+
+    # User B lists all journals
+    bob_list = journal_service.list_journals(user_id=user_b)
+    assert not any(j.id == entry_a.id for j in bob_list)
+    assert not any(alice_secret in j.content for j in bob_list)
+
+
+def test_journal_full_crud_lifecycle_with_encryption():
+    """
+    Verify Journal Create, Read, Update, and Delete operate seamlessly with field encryption.
+    """
+    user_id = "test-crud-sec-user"
+    initial_text = "Initial journal entry before update."
+    updated_text = "Updated journal entry with newer insights."
+
+    mock_analysis = {
+        "title": "CRUD Lifecycle",
+        "mood": "productive",
+        "activities": [],
+        "goals": [],
+        "blockers": [],
+        "insights": [],
+        "quick_summary": "CRUD test."
+    }
+
+    with patch("app.services.gemini_service.gemini_service.analyze_journal", return_value=mock_analysis):
+        # 1. Create
+        created = journal_service.create_journal(user_id=user_id, data=JournalCreate(content=initial_text, source="text"))
+        assert created.content == initial_text
+
+        # 2. Read
+        fetched = journal_service.get_journal(user_id=user_id, journal_id=created.id)
+        assert fetched is not None
+        assert fetched.content == initial_text
+
+        # 3. Update
+        updated = journal_service.update_journal(user_id=user_id, journal_id=created.id, data=JournalUpdate(content=updated_text))
+        assert updated is not None
+        assert updated.content == updated_text
+
+        # Verify raw storage is encrypted with updated content
+        raw = journal_repo.get_by_id(user_id=user_id, journal_id=created.id)
+        assert raw is not None
+        assert raw.content.startswith(ENCRYPTION_PREFIX)
+        assert updated_text not in raw.content
+
+        # 4. Delete
+        del_result = journal_service.delete_journal(user_id=user_id, journal_id=created.id)
+        assert del_result is True
+        assert journal_service.get_journal(user_id=user_id, journal_id=created.id) is None
+
+
+def test_gemini_receives_decrypted_plaintext_internally():
+    """
+    Verify Gemini AI receives unencrypted plaintext in RAM during journal analysis
+    and weekly summary generation, never ciphertext.
+    """
+    user_id = "test-gemini-plaintext-user"
+    plain_journal = "Finished 5 chapters of Distributed Systems today."
+
+    # Intercept arguments passed to Gemini analyze_journal
+    captured_content = []
+
+    def mock_analyze(content, existing_goals=None):
+        captured_content.append(content)
+        return {
+            "title": "Study Systems",
+            "mood": "satisfied",
+            "activities": [],
+            "goals": [],
+            "blockers": [],
+            "insights": [],
+            "quick_summary": "Studied distributed systems."
+        }
+
+    with patch("app.services.gemini_service.gemini_service.analyze_journal", side_effect=mock_analyze):
+        journal_service.create_journal(user_id=user_id, data=JournalCreate(content=plain_journal, source="text"))
+
+    assert len(captured_content) == 1
+    assert captured_content[0] == plain_journal
+    assert not captured_content[0].startswith(ENCRYPTION_PREFIX)
+
+    # Now verify summary generation sends decrypted journals
+    captured_summary_journals = []
+
+    def mock_gen_summary(user_name, recent_journals, goals):
+        captured_summary_journals.extend(recent_journals)
+        return {
+            "headline": "Weekly Review",
+            "wins": [],
+            "recurring_blockers": [],
+            "goal_status_changes": [],
+            "mood_trend": "stable",
+            "coaching_suggestion": "Keep up the consistent studying."
+        }
+
+    with patch("app.services.gemini_service.gemini_service.generate_weekly_summary", side_effect=mock_gen_summary):
+        summary_service.generate_weekly_summary(user_id=user_id, user_name="Aditya")
+
+    assert len(captured_summary_journals) >= 1
+    assert captured_summary_journals[0]["content"] == plain_journal
+    assert not captured_summary_journals[0]["content"].startswith(ENCRYPTION_PREFIX)
+
+
+def test_incorrect_key_and_corrupted_payload_fail_safely():
+    """
+    Verify invalid or corrupted ciphertext fails safely with clean ValueError exception.
+    """
+    service_a = FieldEncryptionService(primary_key_str="valid-secret-key-alpha-32bytes!!")
+    service_b = FieldEncryptionService(primary_key_str="completely-different-key-beta-32!")
+
+    ciphertext = service_a.encrypt("Top secret strategy document.")
+
+    # Decrypting with wrong key must raise ValueError
+    with pytest.raises(ValueError) as exc_info:
+        service_b.decrypt(ciphertext)
+    assert "Decryption" in str(exc_info.value) or "corrupted" in str(exc_info.value)
+
+
+def test_legacy_unencrypted_records_seamless_coexistence():
+    """
+    Verify historical unencrypted plaintext records created before encryption was introduced
+    remain readable and can be updated to encrypted format transparently.
+    """
+    user_id = "legacy-user-101"
+    legacy_id = "legacy-journal-id-99"
+    legacy_text = "Legacy unencrypted journal entry from August 2026."
+
+    # Manually insert legacy unencrypted record into repository
+    legacy_entry = JournalEntry(
+        id=legacy_id,
+        user_id=user_id,
+        content=legacy_text,  # Plaintext without 'enc:v1:'
+        source="text",
+        title="Historical Entry"
+    )
+    journal_repo.create(legacy_entry)
+
+    # 1. Reading via journal_service should return plaintext without crash
+    retrieved = journal_service.get_journal(user_id=user_id, journal_id=legacy_id)
+    assert retrieved is not None
+    assert retrieved.content == legacy_text
+
+    # 2. Updating should seamlessly encrypt the entry in storage
+    updated = journal_service.update_journal(user_id=user_id, journal_id=legacy_id, data=JournalUpdate(content="Updated legacy note."))
+    assert updated.content == "Updated legacy note."
+
+    raw_stored = journal_repo.get_by_id(user_id=user_id, journal_id=legacy_id)
+    assert raw_stored.content.startswith(ENCRYPTION_PREFIX)
+
+
+def test_batch_key_rotation_migration_workflow():
+    """
+    Verify key-rotation migration workflow:
+    1. Records encrypted under Key V1
+    2. Rotated in batch using KeyRotationManager to Key V2
+    3. Old Key V1 retired; records successfully decrypted using Key V2 only.
+    """
+    key_v1 = "generation-one-secret-key-32bytes!"
+    key_v2 = "generation-two-secret-key-32bytes!"
+
+    rotator = KeyRotationManager(current_key=key_v1, new_key=key_v2)
+    service_v1 = FieldEncryptionService(primary_key_str=key_v1)
+    service_v2 = FieldEncryptionService(primary_key_str=key_v2)
+
+    original_records = [
+        "Record 1: Weekly reflection on algorithms.",
+        "Record 2: Quarterly goals and habit streak progress.",
+        "Record 3: Mentorship notes and feedback."
+    ]
+
+    # Encrypt all records with V1
+    encrypted_v1_records = [service_v1.encrypt(r) for r in original_records]
+
+    # Rotate all records to V2
+    rotated_v2_records = [rotator.rotate_text(ct) for ct in encrypted_v1_records]
+
+    # Verify all rotated records decrypt cleanly with Key V2
+    for orig, rotated_ct in zip(original_records, rotated_v2_records):
+        assert rotated_ct.startswith(ENCRYPTION_PREFIX)
+        assert service_v2.decrypt(rotated_ct) == orig
+        # And Key V1 alone can no longer decrypt the newly rotated record
+        with pytest.raises(ValueError):
+            service_v1.decrypt(rotated_ct)
