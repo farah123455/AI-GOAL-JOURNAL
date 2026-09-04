@@ -104,7 +104,7 @@ export default function Dashboard() {
       goalCompletionScore = Math.min(100, ratio);
     }
 
-    // 3. Completed Activities (20%) & Consistency (20%) & Blockers (-10%)
+    // 3. Completed Activities (20%) & Consistency (30%) & Blockers (-10%)
     let completedActivitiesCount = 0;
     let blockerCount = 0;
     const journalDays = new Set();
@@ -128,10 +128,10 @@ export default function Dashboard() {
     const blockerPenalty = Math.min(15, blockerCount * 3);
 
     const baseScore =
-      0.3 * goalProgressScore +
-      0.2 * goalCompletionScore +
-      0.2 * completedActivitiesScore +
-      0.2 * journalConsistencyScore;
+      0.30 * goalProgressScore +
+      0.20 * goalCompletionScore +
+      0.20 * completedActivitiesScore +
+      0.30 * journalConsistencyScore;
 
     const finalScore = Math.round(Math.max(0, Math.min(100, baseScore - blockerPenalty)));
 
@@ -512,7 +512,8 @@ export default function Dashboard() {
       {/* AUDITABLE SCORE BREAKDOWN MODAL */}
       {showScoreModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 animate-rise">
+          <div className="relative my-auto w-full max-w-lg rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-200 animate-rise max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white">
@@ -532,7 +533,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between text-sm">
                 <div>
                   <p className="font-semibold text-slate-800">Goal Progress (30%)</p>
-                  <p className="text-xs text-slate-500">Average across {activeGoals.length} active goals</p>
+                  <p className="text-xs text-slate-500">Average across {activeGoals.length} active {activeGoals.length === 1 ? 'goal' : 'goals'}</p>
                 </div>
                 <span className="font-bold text-slate-900">{productivityScoreData.goalProgressScore} / 100</span>
               </div>
@@ -555,8 +556,8 @@ export default function Dashboard() {
 
               <div className="flex items-center justify-between text-sm">
                 <div>
-                  <p className="font-semibold text-slate-800">Journal Consistency (20%)</p>
-                  <p className="text-xs text-slate-500">{productivityScoreData.daysJournaled} active days (Target: 5/wk)</p>
+                  <p className="font-semibold text-slate-800">Journal Consistency (30%)</p>
+                  <p className="text-xs text-slate-500">{productivityScoreData.daysJournaled} active {productivityScoreData.daysJournaled === 1 ? 'day' : 'days'} (Target: 5/wk)</p>
                 </div>
                 <span className="font-bold text-slate-900">{productivityScoreData.journalConsistencyScore} / 100</span>
               </div>
