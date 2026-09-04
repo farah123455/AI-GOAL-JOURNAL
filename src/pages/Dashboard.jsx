@@ -379,6 +379,63 @@ export default function Dashboard() {
               </section>
             </div>
 
+        {/* FOCUS NEXT SPOTLIGHT COMPONENT */}
+        {(() => {
+          const activeList = goals.filter((g) => g.status !== 'Completed' && (g.progress_value || 0) < 100);
+          if (activeList.length === 0) return null;
+
+          // Derive top priority goal dynamically
+          const focusGoal = activeList.sort((a, b) => {
+            const pA = (a.priority || '').includes('High') ? 3 : (a.priority || '').includes('Medium') ? 2 : 1;
+            const pB = (b.priority || '').includes('High') ? 3 : (b.priority || '').includes('Medium') ? 2 : 1;
+            return pB - pA;
+          })[0];
+
+          const diffDays = focusGoal.target_date
+            ? Math.round((new Date(focusGoal.target_date).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24))
+            : null;
+
+          const reason = `${focusGoal.priority || 'High Priority'}${
+            diffDays !== null ? (diffDays < 0 ? `, ${Math.abs(diffDays)}d overdue` : diffDays === 0 ? ', due today' : `, due in ${diffDays}d`) : ''
+          }, currently at ${focusGoal.progress_value || 0}% progress.`;
+
+          const nextAction = (focusGoal.progress_value || 0) < 50
+            ? `Dedicate a 45-minute focus session to push past 50%.`
+            : `Complete final deliverables and wrap up this milestone.`;
+
+          return (
+            <section className="rounded-3xl p-6 sm:p-7 bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white shadow-xl">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-indigo-200 border border-indigo-400/30">
+                  <Zap size={14} className="fill-indigo-300 text-indigo-300" /> Focus Next
+                </span>
+                <span className="text-xs text-indigo-200 font-mono">
+                  {focusGoal.category || 'Milestone'}
+                </span>
+              </div>
+
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-extrabold text-white tracking-tight">{focusGoal.title}</h3>
+                  <p className="text-xs sm:text-sm text-indigo-200">
+                    <strong className="text-indigo-100">Reason:</strong> {reason}
+                  </p>
+                  <div className="rounded-xl bg-white/10 px-3.5 py-2 text-xs sm:text-sm text-emerald-200 border border-emerald-400/20">
+                    <strong>Next Action:</strong> {nextAction}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => navigate('/goals')}
+                  className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-xs sm:text-sm font-bold text-indigo-950 shadow-md hover:bg-indigo-50 transition"
+                >
+                  Open Goal Milestone →
+                </button>
+              </div>
+            </section>
+          );
+        })()}           
+            
             {/* Active Goals Preview */}
             <section>
               <div className="flex items-center justify-between mb-5">
