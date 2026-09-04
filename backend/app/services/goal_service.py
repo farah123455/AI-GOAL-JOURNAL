@@ -9,7 +9,7 @@ from app.schemas.goal import GoalCreate, GoalUpdate
 from app.repositories.in_memory import goal_repo
 
 import math
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 
 class GoalService:
     @staticmethod
@@ -283,5 +283,39 @@ class GoalService:
             logger.info("Auto-created goal '%s' (ID: %s) for user %s", new_goal.title, new_goal.id, user_id)
 
         return created
+
+    @staticmethod
+    def categorize_goal_deadline(goal: Any) -> str:
+        """
+        Categorizes goals into Completed, Overdue, Due Today, Upcoming, or No Target Date.
+        Works with both Pydantic models (Goal) and dictionary objects.
+        """
+        # Safely extract status and completion
+        status = getattr(goal, "status", None) if hasattr(goal, "status") else (goal.get("status") if isinstance(goal, dict) else "")
+        is_completed = getattr(goal, "completed", False) if hasattr(goal, "completed") else (goal.get("completed", False) if isinstance(goal, dict) else False)
+        progress = getattr(goal, "progress_value", 0) if hasattr(goal, "progress_value") else (goal.get("progress_value", 0) if isinstance(goal, dict) else 0)
+
+        if str(status).lower() == "completed" or is_completed or (progress and progress >= 100):
+            return "Completed"
+        
+        target_date = getattr(goal, "target_date", None) if hasattr(goal, "target_date") else (goal.get("target_date") if isinstance(goal, dict) else None)
+        if not target_date:
+            return "No Target Date"
+
+        today = date.today()
+        if isinstance(target_date, str):
+            try:
+                target_date = date.fromisoformat(target_date.split("T")[0])
+            except ValueError:
+                return "Upcoming"
+        elif isinstance(target_date, datetime):
+            target_date = target_date.date()
+
+        if target_date < today:
+            return "Overdue"
+        elif target_date == today:
+            return "Due Today"
+        else:
+            return "Upcoming"
 
 goal_service = GoalService()
