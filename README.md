@@ -69,50 +69,30 @@ All sensitive personal reflections and coaching records are cryptographically pr
 ## System Architecture
 
 ```mermaid
-flowchart TD
-    subgraph Client["Client Layer (React 18 + Vite 5)"]
-        UI["Web Interface (Tailwind Calm Moss Theme)"]
-        AuthCtx["Firebase Auth Context"]
-        DataCtx["Central Data Context"]
-        Chart["SVG Trend & Progress Visualization"]
+flowchart LR
+    subgraph Frontend["Frontend Layer"]
+        UI["React 18 + Vite Web App<br/>(Calm Moss UI + Trend Charts)"]
+        Auth["Firebase Auth"]
     end
 
-    subgraph Gateway["Application Layer (FastAPI)"]
-        API["REST Endpoints (/api/v1)"]
-        AuthGuard["Firebase Token Verification Guard"]
-        Crypto["FieldEncryptionService (AES-256-GCM)"]
+    subgraph Backend["Application Layer"]
+        API["FastAPI REST API<br/>(Uvicorn + Auth Guard)"]
+        Crypto["AES-256-GCM Encryption"]
     end
 
-    subgraph Intelligence["AI & Speech Processing"]
-        Whisper["faster-whisper Engine (CPU INT8)"]
-        Gemini["Google Gemini API (gemini-3.1-flash-lite)"]
+    subgraph AI["AI & Voice Engine"]
+        Whisper["faster-whisper (STT)"]
+        Gemini["Gemini Flash-Lite (LLM)"]
     end
 
-    subgraph Persistence["Persistence & Repository Layer"]
-        Repo["Abstract Repository Interface"]
-        MemStore["Thread-Safe In-Memory Store (RAM)"]
-        SQLStore["PostgreSQL / SQLite ORM (SQLAlchemy)"]
+    subgraph Storage["Storage Layer"]
+        DB["In-Memory Store / PostgreSQL"]
     end
 
-    UI -->|"Bearer ID Token"| API
-    API --> AuthGuard
-    AuthGuard --> AuthCtx
-
-    UI -->|"Multipart Audio"| Whisper
-    Whisper -->|"Plaintext Transcript"| API
-
-    API -->|"Transient Plaintext"| Gemini
-    Gemini -->|"Structured Insights JSON"| API
-
-    API -->|"Encrypt Content"| Crypto
-    Crypto -->|"Ciphertext Envelope (enc:v1:...)"| Repo
-
-    Repo --> MemStore
-    Repo -.-> SQLStore
-
-    Repo -->|"Decrypted on Read"| Crypto
-    Crypto -->|"Decrypted JSON"| UI
-    UI --> Chart
+    Frontend -->|User Requests + Tokens| Backend
+    Backend -->|Audio / Text Reflections| AI
+    AI -->|Transcripts & Insights| Backend
+    Backend -->|Encrypted Records| Storage
 ```
 
 ---
@@ -123,32 +103,27 @@ flowchart TD
 sequenceDiagram
     autonumber
     actor User as User
-    participant Frontend as React Client
-    participant Backend as FastAPI Server
-    participant Whisper as faster-whisper (STT)
-    participant Gemini as Google Gemini
-    participant Crypto as AES-256-GCM
-    participant Store as Repository Store
+    participant App as React Frontend
+    participant API as FastAPI Backend
+    participant AI as AI Engine (Whisper + Gemini)
+    participant Store as Secure Storage (AES-256)
 
-    User->>Frontend: Speaks voice reflection or types text
-    alt Audio Input
-        Frontend->>Backend: POST /journals/voice/transcribe (Audio Blob)
-        Backend->>Whisper: Transcribe audio in memory
-        Whisper-->>Backend: Plaintext transcript
-        Backend-->>Frontend: Return transcript
+    User->>App: Submits voice reflection or text entry
+    opt If Voice Journal
+        App->>API: Upload audio
+        API->>AI: Transcribe speech (Whisper Tiny)
+        AI-->>API: Return text transcript
+        API-->>App: Editable transcript
     end
 
-    User->>Frontend: Submits journal entry
-    Frontend->>Backend: POST /api/v1/journals (Verified Token)
-    Backend->>Gemini: analyze_journal(plaintext, active_goals)
-    Gemini-->>Backend: Structured entities (activities, goals, blockers)
-    Backend->>Crypto: encrypt(content)
-    Crypto-->>Backend: "enc:v1:<nonce+ciphertext+tag>"
-    Backend->>Store: Save encrypted journal & update goal progress
-    Store-->>Backend: Persisted record
-    Backend->>Crypto: decrypt(content) for response
-    Backend-->>Frontend: 201 Created (Decrypted JSON + AI analysis)
-    Frontend->>User: Displays in-place reflection & updates Trend Chart
+    User->>App: Confirms & saves journal
+    App->>API: Send journal content
+    API->>AI: Extract activities, blockers & goal links (Gemini)
+    AI-->>API: Structured analysis (JSON)
+    API->>Store: Save AES-256 encrypted journal
+    Store-->>API: Confirmed
+    API-->>App: Return reflection analysis & updated goals
+    App-->>User: In-place reflection breakdown & updated trend chart
 ```
 
 ---
