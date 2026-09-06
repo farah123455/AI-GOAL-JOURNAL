@@ -158,8 +158,7 @@ class GoalService:
             note = data.latest_progress_note or "Goal marked as completed (100%)"
             updates["latest_progress_note"] = note
             try:
-                from app.repositories.in_memory import progress_repo
-                from app.models.domain import Progress
+                from app.repositories.postgres import progress_repo
                 progress_repo.create(
                     Progress(
                         id=str(uuid.uuid4()),

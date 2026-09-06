@@ -6,7 +6,7 @@ from app.core.auth import get_current_user, AuthenticatedUser
 from app.core.crypto import FieldEncryptionService, crypto_service, ENCRYPTION_PREFIX
 from app.core.key_rotation import KeyRotationManager
 from app.services.encryption_service import encryption_service
-from app.repositories.in_memory import journal_repo, summary_repo
+from app.repositories.postgres import journal_repo, summary_repo
 from app.models.domain import JournalEntry, WeeklySummary
 from app.schemas.journal import JournalCreate, JournalUpdate
 from app.services.journal_service import journal_service
@@ -224,31 +224,43 @@ def test_regression_existing_data_migration_and_double_encryption_prevention():
     legacy_entry = JournalEntry(
         id="legacy_entry_001",
         user_id=user_id,
-        content=legacy_content,  # No prefix
+        content=legacy_content,
         source="text",
         title="Pre-Encryption Entry"
     )
-    journal_repo.create(legacy_entry)
+
+    # PostgreSQL generates the actual journal ID
+    saved_legacy = journal_repo.create(legacy_entry)
+    legacy_id = saved_legacy.id
 
     # 2. Verify crypto_service detects unencrypted state
-    assert not crypto_service.is_encrypted(legacy_entry.content)
+    assert not crypto_service.is_encrypted(saved_legacy.content)
 
     # 3. Simulate migration step: Encrypt legacy record
-    migrated_content = crypto_service.encrypt(legacy_entry.content)
+    migrated_content = crypto_service.encrypt(saved_legacy.content)
+
     assert crypto_service.is_encrypted(migrated_content)
     assert migrated_content.startswith(ENCRYPTION_PREFIX)
     assert crypto_service.decrypt(migrated_content) == legacy_content
 
-    # Update record in storage
-    journal_repo.update(user_id=user_id, journal_id="legacy_entry_001", content=migrated_content)
+    # Update the actual PostgreSQL record
+    journal_repo.update(
+        user_id=user_id,
+        journal_id=legacy_id,
+        content=migrated_content
+    )
 
-    # 4. Double-Encryption Prevention: Running migration a second time on the same record
+    # 4. Double-Encryption Prevention:
+    # Running migration a second time on the same record
     second_pass_content = crypto_service.encrypt(migrated_content)
-    # The output MUST be identical; it must NOT re-wrap as 'enc:v1:enc:v1:...'
-    assert second_pass_content == migrated_content
-    assert not second_pass_content.startswith(f"{ENCRYPTION_PREFIX}{ENCRYPTION_PREFIX}")
-    assert crypto_service.decrypt(second_pass_content) == legacy_content
 
+    # The output MUST be identical;
+    # it must NOT re-wrap as 'enc:v1:enc:v1:...'
+    assert second_pass_content == migrated_content
+    assert not second_pass_content.startswith(
+        f"{ENCRYPTION_PREFIX}{ENCRYPTION_PREFIX}"
+    )
+    assert crypto_service.decrypt(second_pass_content) == legacy_content
 
 # =========================================================================
 # 5. Wrong / Missing Encryption Key Safety
