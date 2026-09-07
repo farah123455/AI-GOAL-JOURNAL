@@ -151,44 +151,86 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* 3D Roadmap / How It Works Animated Scroll Section */}
-      <section id="how-it-works" className="py-16 md:py-20 px-5 md:px-8 bg-white border-t border-[#E2E9DF]">
+      {/* How Your AI Coach Works Section */}
+      <section id="how-it-works" className="py-16 md:py-24 px-5 md:px-8 bg-white border-t border-[#E2E9DF]">
         <div className="mx-auto max-w-[1150px]">
-          <Reveal className="text-center max-w-xl mx-auto mb-14">
-            <span className="text-[11px] font-extrabold tracking-widest text-[#4B5D3C] uppercase">YOUR 3-STEP JOURNEY</span>
-            <h2 className="mt-1.5 text-2xl sm:text-3xl font-bold font-serif text-[#26261F]">
-              How it works as you scroll.
+          <Reveal className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-[11px] font-extrabold tracking-widest text-[#4B5D3C] uppercase bg-[#4B5D3C]/10 px-3 py-1 rounded-full">
+              FOUR-STEP SYSTEM
+            </span>
+            <h2 className="mt-3 text-3xl sm:text-4xl font-bold font-serif text-[#26261F]">
+              How Your AI Coach Works
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-slate-600 font-medium">
-              From natural voice thoughts to structured accountability coaching.
+            <p className="mt-3 text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
+              Write naturally. Let AI understand what happened, track your goals, and keep you accountable every step of the way.
             </p>
           </Reveal>
 
+          {/* Landing Page Visual Process Diagram */}
+          <Reveal className="mb-16">
+            <div className="bg-[#FAF9F5] border border-[#E2E9DF] rounded-3xl p-6 sm:p-8 shadow-xs">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 relative">
+                {/* Process Step 01 */}
+                <div className="flex flex-col items-center text-center p-4 bg-white rounded-2xl border border-[#E2E9DF] shadow-xs relative">
+                  <span className="text-xs font-mono font-bold text-[#4B5D3C] mb-1">01</span>
+                  <div className="text-2xl mb-1">✍️</div>
+                  <span className="text-xs font-black tracking-wider text-[#26261F] uppercase mb-1">WRITE</span>
+                  <p className="text-[11px] font-medium text-slate-500">Journal your day</p>
+                </div>
+
+                {/* Process Step 02 */}
+                <div className="flex flex-col items-center text-center p-4 bg-white rounded-2xl border border-[#E2E9DF] shadow-xs relative">
+                  <span className="text-xs font-mono font-bold text-[#C1622C] mb-1">02</span>
+                  <div className="text-2xl mb-1">🧠</div>
+                  <span className="text-xs font-black tracking-wider text-[#26261F] uppercase mb-1">ANALYZE</span>
+                  <p className="text-[11px] font-medium text-slate-500">Gemini understands everything</p>
+                </div>
+
+                {/* Process Step 03 */}
+                <div className="flex flex-col items-center text-center p-4 bg-white rounded-2xl border border-[#E2E9DF] shadow-xs relative">
+                  <span className="text-xs font-mono font-bold text-[#4B5D3C] mb-1">03</span>
+                  <div className="text-2xl mb-1">🎯</div>
+                  <span className="text-xs font-black tracking-wider text-[#26261F] uppercase mb-1">TRACK</span>
+                  <p className="text-[11px] font-medium text-slate-500">Goals update automatically</p>
+                </div>
+
+                {/* Process Step 04 */}
+                <div className="flex flex-col items-center text-center p-4 bg-white rounded-2xl border border-[#E2E9DF] shadow-xs relative">
+                  <span className="text-xs font-mono font-bold text-[#C1622C] mb-1">04</span>
+                  <div className="text-2xl mb-1">🤝</div>
+                  <span className="text-xs font-black tracking-wider text-[#26261F] uppercase mb-1">COACH</span>
+                  <p className="text-[11px] font-medium text-slate-500">Personalized guidance</p>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          {/* Detailed 4-Step Cards */}
           <div className="space-y-16">
             {/* Step 1 */}
             <Reveal className="grid md:grid-cols-12 gap-8 items-center">
               <div className="md:col-span-6 order-2 md:order-1">
                 <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#4B5D3C]/10 text-[11px] font-extrabold text-[#4B5D3C] mb-2">
-                  STEP 01
+                  01 — WRITE
                 </div>
                 <h3 className="text-2xl font-bold font-serif text-[#26261F] mb-3">
-                  Reflect Naturally via Voice or Text
+                  Write Your Journal
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium mb-4">
-                  At the end of your day, dictate or type your stream of consciousness. `faster-whisper` processes speech locally on CPU in seconds with 0 cloud audio fees.
+                  Share what you did, how you felt, what you achieved, or what stopped you today.
                 </p>
                 <div className="flex items-center gap-3 text-xs font-bold text-[#4B5D3C]">
                   <span className="flex items-center gap-1.5 bg-[#F4F1E8] px-3 py-1.5 rounded-full border border-[#E2E9DF] text-[11px]">
-                    <Mic size={13} /> 100% Offline Audio Transcription
+                    <Mic size={13} /> Voice & Text Reflection
                   </span>
                 </div>
               </div>
               <div className="md:col-span-6 order-1 md:order-2 flex justify-center">
-                <div className="w-full max-w-[420px] rounded-[24px] p-2 bg-[#F4F1E8] border border-[#E2E9DF] shadow-sm overflow-hidden hover-lift">
+                <div className="w-full max-w-[440px] rounded-[24px] p-2.5 bg-[#F4F1E8] border border-[#E2E9DF] shadow-sm overflow-hidden hover-lift">
                   <img
-                    src="/step_reflection.jpg"
-                    alt="Step 1 Reflection"
-                    className="w-full h-56 sm:h-64 object-contain rounded-[18px] bg-[#FAF9F5]"
+                    src="/step_write_journal.jpg"
+                    alt="01 Write Your Journal"
+                    className="w-full h-60 sm:h-68 object-cover rounded-[18px]"
                   />
                 </div>
               </div>
@@ -197,23 +239,23 @@ export default function Landing() {
             {/* Step 2 */}
             <Reveal className="grid md:grid-cols-12 gap-8 items-center" delay={100}>
               <div className="md:col-span-6 flex justify-center">
-                <div className="w-full max-w-[420px] rounded-[24px] p-2 bg-[#F4F1E8] border border-[#E2E9DF] shadow-sm overflow-hidden hover-lift">
+                <div className="w-full max-w-[440px] rounded-[24px] p-2.5 bg-[#F4F1E8] border border-[#E2E9DF] shadow-sm overflow-hidden hover-lift">
                   <img
-                    src="/step_ai.jpg"
-                    alt="Step 2 AI Extraction"
-                    className="w-full h-56 sm:h-64 object-contain rounded-[18px] bg-[#FAF9F5]"
+                    src="/step_gemini_analyze.jpg"
+                    alt="02 Gemini Understands You"
+                    className="w-full h-60 sm:h-68 object-cover rounded-[18px]"
                   />
                 </div>
               </div>
               <div className="md:col-span-6">
                 <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#C1622C]/10 text-[11px] font-extrabold text-[#C1622C] mb-2">
-                  STEP 02
+                  02 — ANALYZE
                 </div>
                 <h3 className="text-2xl font-bold font-serif text-[#26261F] mb-3">
-                  Gemini Extracts Accomplishments & Blockers
+                  Gemini Understands You
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium mb-4">
-                  Our structured AI engine automatically categorizes completed activities, planned tasks, active blockers (technical, distraction, time), and updates goal progress.
+                  AI analyzes your journal to identify goals, completed tasks, emotions, habits, blockers, progress, and important patterns.
                 </p>
                 <div className="flex items-center gap-3 text-xs font-bold text-[#C1622C]">
                   <span className="flex items-center gap-1.5 bg-[#F4F1E8] px-3 py-1.5 rounded-full border border-[#E2E9DF] text-[11px]">
@@ -227,27 +269,56 @@ export default function Landing() {
             <Reveal className="grid md:grid-cols-12 gap-8 items-center" delay={150}>
               <div className="md:col-span-6 order-2 md:order-1">
                 <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#4B5D3C]/10 text-[11px] font-extrabold text-[#4B5D3C] mb-2">
-                  STEP 03
+                  03 — TRACK
                 </div>
                 <h3 className="text-2xl font-bold font-serif text-[#26261F] mb-3">
-                  Reach Your Summit with Weekly Coaching
+                  Your Progress Updates Automatically
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium mb-4">
-                  Receive personalized weekly accountability reviews. Track your 0–100 productivity velocity score and celebrate completed milestone streaks.
+                  Goals are automatically marked as Completed, In Progress, Missed, or Blocked based on what you write.
                 </p>
                 <div className="flex items-center gap-3 text-xs font-bold text-[#4B5D3C]">
                   <span className="flex items-center gap-1.5 bg-[#F4F1E8] px-3 py-1.5 rounded-full border border-[#E2E9DF] text-[11px]">
-                    <Trophy size={13} /> Deterministic Productivity Score
+                    <Target size={13} /> Automatic Status & Milestone Sync
                   </span>
                 </div>
               </div>
               <div className="md:col-span-6 order-1 md:order-2 flex justify-center">
-                <div className="w-full max-w-[420px] rounded-[24px] p-2 bg-[#F4F1E8] border border-[#E2E9DF] shadow-sm overflow-hidden hover-lift">
+                <div className="w-full max-w-[440px] rounded-[24px] p-2.5 bg-[#F4F1E8] border border-[#E2E9DF] shadow-sm overflow-hidden hover-lift">
                   <img
-                    src="/step_trophy.jpg"
-                    alt="Step 3 Achievement"
-                    className="w-full h-56 sm:h-64 object-contain rounded-[18px] bg-[#FAF9F5]"
+                    src="/step_track_goals.jpg"
+                    alt="03 Progress Updates Automatically"
+                    className="w-full h-60 sm:h-68 object-cover rounded-[18px]"
                   />
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Step 4 */}
+            <Reveal className="grid md:grid-cols-12 gap-8 items-center" delay={200}>
+              <div className="md:col-span-6 flex justify-center">
+                <div className="w-full max-w-[440px] rounded-[24px] p-2.5 bg-[#F4F1E8] border border-[#E2E9DF] shadow-sm overflow-hidden hover-lift">
+                  <img
+                    src="/step_ai_coach.jpg"
+                    alt="04 Get Personalized Accountability"
+                    className="w-full h-60 sm:h-68 object-cover rounded-[18px]"
+                  />
+                </div>
+              </div>
+              <div className="md:col-span-6">
+                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#C1622C]/10 text-[11px] font-extrabold text-[#C1622C] mb-2">
+                  04 — COACH
+                </div>
+                <h3 className="text-2xl font-bold font-serif text-[#26261F] mb-3">
+                  Get Personalized Accountability
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium mb-4">
+                  Your AI Coach gives you insights, next actions, motivation, reminders, and accountability based on your actual progress.
+                </p>
+                <div className="flex items-center gap-3 text-xs font-bold text-[#C1622C]">
+                  <span className="flex items-center gap-1.5 bg-[#F4F1E8] px-3 py-1.5 rounded-full border border-[#E2E9DF] text-[11px]">
+                    <Trophy size={13} /> Weekly AI Coach Reviews & Insights
+                  </span>
                 </div>
               </div>
             </Reveal>
