@@ -30,8 +30,8 @@ export default function AiCoach() {
   }
 
   return (
-    <div className="app-page bg-slate-50 min-h-screen">
-      <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10 animate-rise">
+    <div className="app-page bg-[#EEF3EC] min-h-screen">
+      <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8 animate-rise">
         <div className="mb-6 flex justify-end">
           <button
             onClick={handleGenerateFresh}
@@ -53,9 +53,9 @@ export default function AiCoach() {
         ) : summary ? (
           <div className="flex flex-col gap-6">
             {/* Executive Headline & Coaching Advice Banner */}
-            <section className="rounded-2xl p-6 md:p-8 bg-gradient-to-r from-indigo-50 via-purple-50 to-white border border-indigo-200 shadow-sm">
+            <section className="rounded-2xl p-6 md:p-8 bg-gradient-to-r from-[#E2E9DF]/80 via-[#FAF8F5] to-white border border-[#E2E9DF] shadow-sm">
               <div className="flex items-center justify-between gap-2 mb-4">
-                <span className="rounded-full bg-indigo-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-700 border border-indigo-200">
+                <span className="rounded-full bg-[#E2E9DF] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#3A492E] border border-[#E2E9DF]">
                   Weekly Evaluation
                 </span>
 
@@ -74,13 +74,13 @@ export default function AiCoach() {
                 )}
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 leading-snug">
+              <h2 className="text-xl sm:text-2xl font-bold text-[#26261F] mb-4 leading-snug">
                 "{summary.headline}"
               </h2>
 
               {summary.coaching_suggestion && (
-                <div className="rounded-xl bg-white p-4 border border-indigo-100 shadow-sm text-sm text-slate-800 leading-relaxed">
-                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-purple-600 mb-2">
+                <div className="rounded-xl bg-white p-4 border border-[#E2E9DF] shadow-sm text-sm text-slate-800 leading-relaxed">
+                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#4B5D3C] mb-2">
                     <Sparkles size={14} /> Coach Recommendation
                   </div>
                   <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
@@ -140,7 +140,7 @@ export default function AiCoach() {
             {/* Goal Status Evolutions */}
             {summary.goal_status_changes && summary.goal_status_changes.length > 0 && (
               <section className="panel p-6 shadow-sm">
-                <h3 className="section-label mb-3 flex items-center gap-2 text-indigo-600">
+                <h3 className="section-label mb-3 flex items-center gap-2 text-[#4B5D3C]">
                   <Target size={16} /> Goal Milestones Evolution
                 </h3>
                 <div className="grid gap-3 sm:grid-cols-2">

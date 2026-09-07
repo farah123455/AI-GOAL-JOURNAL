@@ -234,3 +234,32 @@ export const habitApi = {
 export const productivityApi = {
   getProductivityScore: () => fetchWithAuth('/productivity-score'),
 };
+
+/**
+ * Google Calendar Integration API
+ */
+export const calendarApi = {
+  getAuthUrl: () => fetchWithAuth('/calendar/auth-url'),
+  getStatus: () => fetchWithAuth('/calendar/status'),
+  connect: (email) =>
+    fetchWithAuth('/calendar/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    }),
+  syncGoal: (goalId, options = {}) =>
+    fetchWithAuth('/calendar/sync-goal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        goal_id: goalId,
+        target_date: options.target_date,
+        start_time: options.start_time,
+        duration_minutes: options.duration_minutes || 60,
+      }),
+    }),
+  disconnect: () =>
+    fetchWithAuth('/calendar/disconnect', {
+      method: 'DELETE',
+    }),
+};

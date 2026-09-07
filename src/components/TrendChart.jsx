@@ -55,11 +55,11 @@ export default function TrendChart({ data = [] }) {
   const trendColor =
     n >= 2
       ? last > secondLast
-        ? "#059669"
+        ? "#4B5D3C"
         : last < secondLast
-        ? "#e11d48"
-        : "#94a3b8"
-      : "#6366f1";
+        ? "#C1622C"
+        : "#7A9672"
+      : "#4B5D3C";
 
   return (
     <svg
@@ -76,7 +76,7 @@ export default function TrendChart({ data = [] }) {
             y1={y(tick)}
             x2={W - padR}
             y2={y(tick)}
-            stroke="#E2E8F0"
+            stroke="#E2E9DF"
             strokeWidth={1}
             strokeDasharray={tick === 0 ? "" : "3 4"}
           />
@@ -86,7 +86,7 @@ export default function TrendChart({ data = [] }) {
             textAnchor="end"
             fontSize={11}
             fontWeight={600}
-            fill="#94A3B8"
+            fill="#64748B"
           >
             {tick}%
           </text>
@@ -98,7 +98,7 @@ export default function TrendChart({ data = [] }) {
         Array.from({ length: n - 1 }).map((_, i) => {
           const from = data[i].progress_value;
           const to = data[i + 1].progress_value;
-          const color = to > from ? "#10b981" : to < from ? "#f43f5e" : "#94a3b8";
+          const color = to > from ? "#4B5D3C" : to < from ? "#C1622C" : "#7A9672";
           return (
             <line
               key={`${data[i].id || i}-${i}`}
@@ -121,7 +121,7 @@ export default function TrendChart({ data = [] }) {
             cy={y(p.progress_value)}
             r={i === n - 1 ? 6 : 4.5}
             fill="#ffffff"
-            stroke={i === n - 1 ? trendColor : "#6366f1"}
+            stroke={i === n - 1 ? trendColor : "#4B5D3C"}
             strokeWidth={i === n - 1 ? 3 : 2}
             className="transition-transform duration-200 hover:scale-125"
           />

@@ -484,6 +484,9 @@ class PostgresGoalRepository(AbstractGoalRepository):
             progress_value=getattr(row, "progress_value", 0) or 0,
             latest_progress_note=getattr(row, "latest_progress_note", None),
             target_date=row.target_date,
+            google_event_id=getattr(row, "google_event_id", None),
+            google_event_link=getattr(row, "google_event_link", None),
+            calendar_synced=bool(getattr(row, "calendar_synced", False)),
             created_at=row.created_at,
             updated_at=row.updated_at,
         )
@@ -515,6 +518,9 @@ class PostgresGoalRepository(AbstractGoalRepository):
                 category=goal.category,
                 status=goal.status,
                 target_date=goal.target_date,
+                google_event_id=goal.google_event_id,
+                google_event_link=goal.google_event_link,
+                calendar_synced=bool(goal.calendar_synced),
                 created_at=goal.created_at,
                 updated_at=goal.updated_at,
             )
@@ -643,6 +649,9 @@ class PostgresGoalRepository(AbstractGoalRepository):
                 "category",
                 "status",
                 "target_date",
+                "google_event_id",
+                "google_event_link",
+                "calendar_synced",
             }
 
             for key, value in kwargs.items():

@@ -26,15 +26,11 @@ class Goal:
     progress_value: int = 0
     latest_progress_note: Optional[str] = None
     estimated_days_remaining: Optional[int] = None
+    google_event_id: Optional[str] = None
+    google_event_link: Optional[str] = None
+    calendar_synced: bool = False
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
-@dataclass
-class Progress:
-    id: str
-    goal_id: str
-    progress_value: int
-    note: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
 
 @dataclass
 class Progress:
@@ -84,4 +80,14 @@ class HabitLog:
     habit_id: str
     completed_date: datetime
     created_at: datetime = field(default_factory=datetime.utcnow)
+
+@dataclass
+class GoogleCalendarToken:
+    user_id: str
+    encrypted_access_token: str
+    encrypted_refresh_token: str
+    token_expiry: Optional[datetime] = None
+    google_email: Optional[str] = None
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=datetime.utcnow)
     

@@ -39,7 +39,7 @@ export default function GoalCelebration({ goal, onClose }) {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-amber-400/20 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/3 right-1/4 w-40 h-40 bg-emerald-400/20 rounded-full blur-3xl animate-pulse delay-300" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/15 rounded-full blur-3xl animate-pulse delay-500" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#4B5D3C]/15 rounded-full blur-3xl animate-pulse delay-500" />
         {["#4F46E5", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444"].flatMap((color, ci) =>
           [0, 1, 2, 3, 4].map((n) => (
             <span
@@ -58,7 +58,7 @@ export default function GoalCelebration({ goal, onClose }) {
 
       <div className="relative panel w-full max-w-md p-7 shadow-2xl border border-emerald-200/80 bg-white rounded-3xl text-center overflow-hidden animate-scale-up">
         {/* Top Banner Accent */}
-        <div className="absolute top-0 left-0 right-0 h-2.5 bg-gradient-to-r from-amber-400 via-emerald-500 to-indigo-600" />
+        <div className="absolute top-0 left-0 right-0 h-2.5 bg-gradient-to-r from-amber-400 via-emerald-500 to-[#4B5D3C]" />
 
         {/* Close Button */}
         <button
@@ -114,7 +114,7 @@ export default function GoalCelebration({ goal, onClose }) {
 
         <button
           onClick={handleClose}
-          className="mt-6 primary-button w-full py-3 text-sm font-bold shadow-md hover:shadow-emerald-200 bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-700 hover:to-indigo-700 text-white rounded-xl flex items-center justify-center gap-2"
+          className="mt-6 primary-button w-full py-3 text-sm font-bold shadow-md hover:shadow-emerald-200 bg-[#4B5D3C] hover:bg-[#3A492E] text-white rounded-xl flex items-center justify-center gap-2"
         >
           Keep Crushing Goals <ArrowRight size={16} />
         </button>

@@ -1,15 +1,18 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { PencilLoader } from './LoadingSkeleton';
 
 export default function ProtectedRoute({ children }) {
   const { user, checkingAuth } = useAuth();
 
   if (checkingAuth) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-paper">
-        <div className="text-center">
-          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-moss-200 border-t-moss-600" />
-          <p className="text-sm text-ink/60">Loading...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#E2E9DF] p-6 text-slate-900 font-sans">
+        <div className="flex flex-col items-center justify-center text-center">
+          <PencilLoader />
+          <p className="mt-2 text-sm font-semibold text-slate-700 tracking-wide animate-pulse">
+            Loading...
+          </p>
         </div>
       </div>
     );

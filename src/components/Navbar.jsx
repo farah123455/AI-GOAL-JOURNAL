@@ -125,12 +125,12 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-[84px] shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-6 backdrop-blur-md md:px-9">
+    <header className="sticky top-0 z-30 flex h-[84px] shrink-0 items-center justify-between border-b border-[#E2E9DF] bg-[#EEF3EC]/90 px-6 backdrop-blur-md md:px-9">
       {/* LEFT: Dynamic Page Title */}
       <div className="flex items-center gap-2 pl-12 lg:pl-0">
         <h1
           key={currentTitle}
-          className="animate-title text-xl sm:text-2xl font-bold tracking-tight text-slate-900 truncate"
+          className="animate-title text-xl sm:text-2xl font-bold tracking-tight text-[#26261F] font-serif truncate"
         >
           {currentTitle}
         </h1>
@@ -146,16 +146,16 @@ export default function Navbar() {
             placeholder="Search journals, goals..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-56 lg:w-72 rounded-xl border border-slate-200 bg-slate-50/90 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+            className="w-56 lg:w-72 rounded-full border border-[#E2E9DF] bg-white py-2.5 pl-10 pr-4 text-sm text-[#26261F] placeholder:text-slate-400 outline-none transition focus:border-[#4B5D3C] focus:ring-2 focus:ring-[#4B5D3C]/20 shadow-xs"
           />
         </form>
 
         {/* Coach Active Pill Badge */}
         <button
           onClick={() => navigate("/coach")}
-          className="hidden sm:inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-1.5 text-xs font-bold text-purple-700 border border-purple-200 hover:bg-purple-100 transition shadow-sm"
+          className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[#E2E9DF] px-4 py-1.5 text-xs font-bold text-[#4B5D3C] border border-[#4B5D3C]/20 hover:bg-[#4B5D3C]/10 transition shadow-xs"
         >
-          <Sparkles size={14} className="text-purple-600 animate-pulse" />
+          <Sparkles size={14} className="text-[#4B5D3C] animate-pulse" />
           Coach Active
         </button>
 
@@ -164,24 +164,24 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setShowNotifications((prev) => !prev)}
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:scale-105 shadow-sm"
+            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#E2E9DF] bg-white text-[#26261F] transition hover:border-[#4B5D3C] hover:text-[#4B5D3C] hover:scale-105 shadow-xs"
             title="Notifications"
           >
             <Bell size={18} />
             {unreadCount > 0 && (
-              <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-[#4B5D3C] animate-pulse" />
             )}
           </button>
 
           {/* NOTIFICATIONS POPOVER DROPDOWN */}
           {showNotifications && (
-            <div className="popover-enter absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white shadow-lg z-50 p-4">
+            <div className="popover-enter absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-[#E2E9DF] bg-white shadow-lg z-50 p-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                 <div className="flex items-center gap-2">
-                  <Bell size={17} className="text-indigo-600" />
-                  <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
+                  <Bell size={17} className="text-[#4B5D3C]" />
+                  <h3 className="text-sm font-bold text-[#26261F]">Notifications</h3>
                   {unreadCount > 0 && (
-                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600 border border-indigo-100">
+                    <span className="rounded-full bg-[#E2E9DF] px-2 py-0.5 text-[10px] font-bold text-[#4B5D3C]">
                       {unreadCount} new
                     </span>
                   )}
@@ -190,7 +190,7 @@ export default function Navbar() {
                   {unreadCount > 0 && (
                     <button
                       onClick={markAllRead}
-                      className="text-[11px] text-slate-500 hover:text-indigo-600 transition flex items-center gap-1 font-medium"
+                      className="text-[11px] text-slate-500 hover:text-[#4B5D3C] transition flex items-center gap-1 font-medium"
                     >
                       <Check size={12} /> Mark read
                     </button>
@@ -219,15 +219,15 @@ export default function Navbar() {
                       className={`p-3 rounded-xl border transition cursor-pointer flex items-start gap-3 ${
                         isRead
                           ? "bg-slate-50/50 border-slate-100 opacity-70"
-                          : "bg-slate-50 border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/30"
+                          : "bg-[#F4F1E8]/60 border-[#E2E9DF] hover:border-[#4B5D3C]/40 hover:bg-[#E2E9DF]/40"
                       }`}
                     >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 mt-0.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E2E9DF] text-[#4B5D3C] mt-0.5">
                         <Icon size={15} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="text-xs font-bold text-slate-900 truncate">{n.title}</p>
+                          <p className="text-xs font-bold text-[#26261F] truncate">{n.title}</p>
                           <span className="text-[10px] text-slate-400 font-mono">{n.time}</span>
                         </div>
                         <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
@@ -247,16 +247,16 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setShowAccountMenu((prev) => !prev)}
-            className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 transition hover:border-indigo-300 shadow-sm"
+            className="flex items-center gap-2.5 rounded-full border border-[#E2E9DF] bg-white px-3.5 py-1.5 transition hover:border-[#4B5D3C] shadow-xs"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#4B5D3C] text-xs font-bold text-white shadow-xs">
               {initial}
             </div>
             <div className="hidden sm:block text-left">
-              <p className="max-w-[120px] truncate text-xs font-bold text-slate-900 leading-tight">
+              <p className="max-w-[120px] truncate text-xs font-bold text-[#26261F] leading-tight">
                 {email}
               </p>
-              <p className="text-[10px] text-slate-500 font-medium">
+              <p className="text-[10px] text-[#4B5D3C] font-semibold">
                 Account
               </p>
             </div>
@@ -265,10 +265,10 @@ export default function Navbar() {
 
           {/* ACCOUNT DROPDOWN MENU */}
           {showAccountMenu && (
-            <div className="popover-enter absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white shadow-lg z-50 p-2">
+            <div className="popover-enter absolute right-0 mt-2 w-56 rounded-2xl border border-[#E2E9DF] bg-white shadow-lg z-50 p-2">
               <div className="px-3 py-2 border-b border-slate-100 mb-1">
-                <p className="text-xs font-bold text-slate-900 truncate">{email}</p>
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mt-0.5">Personal Workspace</p>
+                <p className="text-xs font-bold text-[#26261F] truncate">{email}</p>
+                <p className="text-[10px] text-[#4B5D3C] uppercase tracking-wider font-semibold mt-0.5">Personal Workspace</p>
               </div>
 
               <button
@@ -276,7 +276,7 @@ export default function Navbar() {
                   setShowAccountMenu(false);
                   navigate("/profile");
                 }}
-                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition"
+                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#26261F] hover:bg-[#E2E9DF]/60 hover:text-[#4B5D3C] transition"
               >
                 <User size={15} className="text-slate-400" />
                 <span>Profile</span>
@@ -287,7 +287,7 @@ export default function Navbar() {
                   setShowAccountMenu(false);
                   navigate("/settings");
                 }}
-                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition"
+                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#26261F] hover:bg-[#E2E9DF]/60 hover:text-[#4B5D3C] transition"
               >
                 <Settings size={15} className="text-slate-400" />
                 <span>Settings</span>

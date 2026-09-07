@@ -14,8 +14,7 @@ import Insights from "./pages/Insights";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Habits from "./pages/Habits";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Auth from "./pages/Auth";
 import { useAuth } from "./context/AuthContext";
 import { FullscreenLoadingScreen } from "./components/LoadingSkeleton";
 
@@ -44,7 +43,7 @@ export default function App() {
         path="/login"
         element={
           <PublicRoute>
-            <Login />
+            <Auth />
           </PublicRoute>
         }
       />
@@ -52,7 +51,7 @@ export default function App() {
         path="/register"
         element={
           <PublicRoute>
-            <Register />
+            <Auth />
           </PublicRoute>
         }
       />

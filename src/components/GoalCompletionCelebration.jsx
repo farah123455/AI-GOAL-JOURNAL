@@ -172,7 +172,7 @@ function GoalCompletionModal({ goal, onClose }) {
             <h2 className="flex items-center justify-center gap-2 text-3xl font-bold text-slate-900">
               🎉 Goal Completed!
             </h2>
-            <p className="break-words rounded-lg bg-indigo-50 px-3 py-1.5 text-lg font-semibold text-indigo-700 border border-indigo-100">
+            <p className="break-words rounded-lg bg-[#E2E9DF]/60 px-3 py-1.5 text-lg font-semibold text-[#3A492E] border border-[#E2E9DF]">
               {title}
             </p>
           </div>

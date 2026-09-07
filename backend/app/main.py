@@ -9,6 +9,7 @@ from app.api.v1.summaries import router as summaries_router
 from app.api.v1.progress import router as progress_router
 from app.api.v1.habits import router as habits_router
 from app.api.v1.productivity import router as productivity_router
+from app.api.v1.calendar import router as calendar_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -69,3 +70,4 @@ app.include_router(summaries_router, prefix=settings.API_V1_PREFIX)
 app.include_router(progress_router, prefix=settings.API_V1_PREFIX)
 app.include_router(habits_router, prefix=settings.API_V1_PREFIX)
 app.include_router(productivity_router, prefix=settings.API_V1_PREFIX)
+app.include_router(calendar_router, prefix=settings.API_V1_PREFIX)

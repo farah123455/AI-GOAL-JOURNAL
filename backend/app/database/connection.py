@@ -13,12 +13,15 @@ load_dotenv(ENV_FILE)
 
 DATABASE_URL = os.getenv("DATABASE_URL") or "sqlite:///./app.db"
 
-# If PostgreSQL is requested, check if driver is available; otherwise fallback to SQLite
+# If PostgreSQL is requested, verify server is actually reachable; otherwise fallback to SQLite
 if DATABASE_URL.startswith("postgresql"):
     try:
-        import psycopg2  # noqa: F401
+        import psycopg2
+        test_conn = psycopg2.connect(DATABASE_URL, connect_timeout=1)
+        test_conn.close()
         connect_args = {}
-    except ImportError:
+    except Exception as exc:
+        print(f"[DB] PostgreSQL unreachable ({exc}). Falling back to local SQLite database.")
         DATABASE_URL = "sqlite:///./app.db"
         connect_args = {"check_same_thread": False}
 else:

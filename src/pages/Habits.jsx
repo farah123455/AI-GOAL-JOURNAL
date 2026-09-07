@@ -342,12 +342,12 @@ export default function Habits() {
 
 
   return (
-    <div className="app-page min-h-screen bg-slate-50 relative" data-particle-scope>
-      <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10 animate-rise">
+    <div className="app-page min-h-screen bg-[#EEF3EC] relative" data-particle-scope>
+      <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8 animate-rise">
         {/* PAGE HEADER */}
         <header className="flex flex-wrap items-center justify-between gap-4 mb-7">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-2xl font-bold text-[#26261F] tracking-tight">
             Habit Tracker
           </h1>
           <p className="text-sm text-slate-500 font-medium mt-1">
@@ -357,7 +357,7 @@ export default function Habits() {
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#4B5D3C] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3A492E] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4B5D3C] focus-visible:ring-offset-2"
         >
           <Plus size={17} />
           Add Habit
@@ -412,7 +412,7 @@ export default function Habits() {
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         <StatCard
           icon={Repeat}
-          iconClass="bg-indigo-50 border-indigo-100 text-indigo-600"
+          iconClass="bg-[#E2E9DF]/60 border-[#E2E9DF] text-[#3A492E]"
           value={stats.totalHabits}
           label="Total Habits"
         />
@@ -424,7 +424,7 @@ export default function Habits() {
         />
         <StatCard
           icon={Flame}
-          iconClass="bg-orange-50 border-orange-100 text-orange-600"
+          iconClass="bg-amber-50 border-amber-100 text-amber-600"
           value={stats.activeStreaks}
           label="Active Streaks"
         />
@@ -439,10 +439,10 @@ export default function Habits() {
       {/* HABIT LIST */}
       {habits.length === 0 ? (
         <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm animate-fade-in">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-indigo-50 border border-indigo-100 shadow-sm mb-5">
-            <Repeat size={34} className="text-indigo-600" data-empty-float />
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-[#E2E9DF]/60 border border-[#E2E9DF] shadow-sm mb-5">
+            <Repeat size={34} className="text-[#4B5D3C]" data-empty-float />
           </div>
-          <h3 className="text-lg font-bold text-slate-900">No Habits Tracked Yet</h3>
+          <h3 className="text-lg font-bold text-[#26261F]">No Habits Tracked Yet</h3>
           <p className="mt-1.5 text-xs text-slate-500 max-w-md mx-auto leading-relaxed font-medium">
             Add your first recurring habit — like reading, exercising, or journaling —
             then check it off each day to grow your streak.
@@ -451,7 +451,7 @@ export default function Habits() {
             <button
               type="button"
               onClick={openCreate}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#4B5D3C] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3A492E] active:scale-[0.98]"
             >
               <Plus size={16} />
               Create Your First Habit
@@ -482,8 +482,8 @@ export default function Habits() {
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
                           habit.frequency === "weekly"
-                            ? "bg-purple-50 text-purple-600"
-                            : "bg-indigo-50 text-indigo-600"
+                            ? "bg-[#E2E9DF] text-[#3A492E]"
+                            : "bg-[#E2E9DF]/60 text-[#4B5D3C]"
                         }`}
                       >
                         {habit.frequency}
@@ -500,7 +500,7 @@ export default function Habits() {
                     <button
                       type="button"
                       onClick={() => openEdit(habit)}
-                      className="p-1.5 text-slate-400 hover:text-indigo-600 transition rounded-lg hover:bg-slate-100"
+                      className="p-1.5 text-slate-400 hover:text-[#4B5D3C] transition rounded-lg hover:bg-slate-100"
                       title="Edit Habit"
                       aria-label={`Edit ${habit.name}`}
                     >
@@ -526,8 +526,8 @@ export default function Habits() {
                     aria-pressed={doneToday}
                     className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold border transition active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                       doneToday
-                        ? "bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600 focus-visible:ring-emerald-500"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-emerald-300 hover:text-emerald-600 focus-visible:ring-emerald-400"
+                        ? "bg-[#4B5D3C] border-[#4B5D3C] text-white hover:bg-[#3A492E] focus-visible:ring-[#4B5D3C]"
+                        : "bg-white border-slate-200 text-slate-700 hover:border-[#4B5D3C]/40 hover:text-[#4B5D3C] focus-visible:ring-[#4B5D3C]"
                     }`}
                   >
                     <Check size={16} strokeWidth={3} />
@@ -545,7 +545,7 @@ export default function Habits() {
                       <button
                         type="button"
                         onClick={() => setWeekOffset((w) => w - 1)}
-                        className="p-1 text-slate-400 hover:text-indigo-600 rounded-md hover:bg-slate-100 transition"
+                        className="p-1 text-slate-400 hover:text-[#4B5D3C] rounded-md hover:bg-slate-100 transition"
                         title="Previous Week"
                         aria-label="Previous Week"
                       >
@@ -555,7 +555,7 @@ export default function Habits() {
                         <button
                           type="button"
                           onClick={() => setWeekOffset(0)}
-                          className="px-1.5 py-0.5 rounded text-[10px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition"
+                          className="px-1.5 py-0.5 rounded text-[10px] font-bold text-[#4B5D3C] bg-[#E2E9DF]/60 hover:bg-[#E2E9DF] transition"
                         >
                           Today
                         </button>
@@ -563,7 +563,7 @@ export default function Habits() {
                       <button
                         type="button"
                         onClick={() => setWeekOffset((w) => w + 1)}
-                        className="p-1 text-slate-400 hover:text-indigo-600 rounded-md hover:bg-slate-100 transition"
+                        className="p-1 text-slate-400 hover:text-[#4B5D3C] rounded-md hover:bg-slate-100 transition"
                         title="Next Week"
                         aria-label="Next Week"
                       >
@@ -584,19 +584,19 @@ export default function Habits() {
                           aria-pressed={checked}
                           aria-label={`${checked ? "Uncheck" : "Check off"} ${habit.name} on ${date}`}
                           title={date}
-                          className={`flex flex-1 flex-col items-center gap-1 rounded-xl border py-2 transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                          className={`flex flex-1 flex-col items-center gap-1 rounded-xl border py-2 transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4B5D3C] ${
                             checked
-                              ? "border-emerald-400 bg-emerald-50 text-emerald-700"
-                              : "border-slate-200 bg-slate-50 text-slate-400 hover:border-indigo-300 hover:text-indigo-500"
-                          } ${isToday ? "ring-2 ring-indigo-300 shadow-2xs" : ""}`}
+                              ? "border-[#4B5D3C] bg-[#E2E9DF]/60 text-[#3A492E]"
+                              : "border-slate-200 bg-slate-50 text-slate-400 hover:border-[#4B5D3C]/40 hover:text-[#4B5D3C]"
+                          } ${isToday ? "ring-2 ring-[#4B5D3C]/40 shadow-2xs" : ""}`}
                         >
                           <span className="text-[10px] font-bold">{dayLabel(date)}</span>
-                          <span className={`text-[11px] font-extrabold ${checked ? "text-emerald-800" : isToday ? "text-indigo-700 font-black" : "text-slate-700"}`}>
+                          <span className={`text-[11px] font-extrabold ${checked ? "text-[#3A492E]" : isToday ? "text-[#4B5D3C] font-black" : "text-slate-700"}`}>
                             {formatDayNumberWithOrdinal(date)}
                           </span>
                           <span
                             className={`flex h-5 w-5 items-center justify-center rounded-full mt-0.5 ${
-                              checked ? "bg-emerald-500 text-white" : "bg-white border border-slate-200"
+                              checked ? "bg-[#4B5D3C] text-white" : "bg-white border border-slate-200"
                             }`}
                           >
                             {checked && <Check size={12} strokeWidth={3.5} />}
@@ -676,7 +676,7 @@ export default function Habits() {
                   placeholder="e.g. Read 20 minutes"
                   maxLength={80}
                   aria-invalid={!!formError}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 transition-all duration-150 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 focus:outline-none"
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 transition-all duration-150 focus:border-[#4B5D3C] focus:ring-4 focus:ring-[#E2E9DF] focus:outline-none"
                 />
               </div>
 
@@ -691,7 +691,7 @@ export default function Habits() {
                   placeholder="Why does this habit matter? (optional)"
                   rows={3}
                   maxLength={300}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-150 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 focus:outline-none resize-none"
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-150 focus:border-[#4B5D3C] focus:ring-4 focus:ring-[#E2E9DF] focus:outline-none resize-none"
                 />
               </div>
 
@@ -704,10 +704,10 @@ export default function Habits() {
                       type="button"
                       onClick={() => setFrequency(freq.value)}
                       aria-pressed={frequency === freq.value}
-                      className={`flex-1 rounded-xl border px-4 py-2.5 text-sm font-semibold transition active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                      className={`flex-1 rounded-xl border px-4 py-2.5 text-sm font-semibold transition active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4B5D3C] ${
                         frequency === freq.value
-                          ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-indigo-300"
+                          ? "border-[#4B5D3C] bg-[#E2E9DF]/60 text-[#3A492E]"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-[#4B5D3C]/40"
                       }`}
                     >
                       {freq.label}
@@ -735,7 +735,7 @@ export default function Habits() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                className="rounded-xl bg-[#4B5D3C] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3A492E] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4B5D3C] focus-visible:ring-offset-2"
               >
                 {submitting
                   ? (editingHabit ? "Saving..." : "Adding...")

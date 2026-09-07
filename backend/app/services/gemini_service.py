@@ -23,7 +23,7 @@ def _clean_json_response(raw_text: str) -> str:
     return text
 
 def parse_due_date_from_text(text: str) -> Optional[str]:
-    """Parse relative date expressions (tomorrow, tommorow, 1st of oct, next Friday, in 3 days) into YYYY-MM-DD ISO string."""
+    """Parse relative date expressions (tomorrow, tommorow, 1st of oct, next Friday, in 3 days, 12th of this month, on 12th) into YYYY-MM-DD ISO string."""
     if not text:
         return None
     lower = text.lower()
@@ -49,6 +49,51 @@ def parse_due_date_from_text(text: str) -> Optional[str]:
             if days_ahead <= 0:
                 days_ahead += 7
             return (now + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
+
+    # Match "12th of this month", "12th of current month", "12th this month"
+    match_this_month = re.search(r"(\d+)(?:st|nd|rd|th)?\s+(?:of\s+)?(?:this|current)\s+month", lower)
+    if match_this_month:
+        day_val = int(match_this_month.group(1))
+        if 1 <= day_val <= 31:
+            try:
+                target_date = datetime(now.year, now.month, day_val, tzinfo=timezone.utc)
+                return target_date.strftime("%Y-%m-%d")
+            except ValueError:
+                pass
+
+    # Match "12th of next month", "12th next month"
+    match_next_month = re.search(r"(\d+)(?:st|nd|rd|th)?\s+(?:of\s+)?next\s+month", lower)
+    if match_next_month:
+        day_val = int(match_next_month.group(1))
+        if 1 <= day_val <= 31:
+            next_month = now.month + 1
+            year_val = now.year
+            if next_month > 12:
+                next_month = 1
+                year_val += 1
+            try:
+                target_date = datetime(year_val, next_month, day_val, tzinfo=timezone.utc)
+                return target_date.strftime("%Y-%m-%d")
+            except ValueError:
+                pass
+
+    # Match "on 12th", "on the 12th", "by 12th", "by the 12th", "due 12th", "until 12th", "complete on 12th", "submit on 12th"
+    match_ordinal_day = re.search(r"(?:on|by|due|until|before|complete\s+on|submit\s+on)\s+(?:the\s+)?(\d+)(?:st|nd|rd|th)?\b", lower)
+    if match_ordinal_day:
+        day_val = int(match_ordinal_day.group(1))
+        if 1 <= day_val <= 31:
+            month_val = now.month
+            year_val = now.year
+            if day_val < now.day:
+                month_val += 1
+                if month_val > 12:
+                    month_val = 1
+                    year_val += 1
+            try:
+                target_date = datetime(year_val, month_val, day_val, tzinfo=timezone.utc)
+                return target_date.strftime("%Y-%m-%d")
+            except ValueError:
+                pass
 
     month_names = {
         "jan": 1, "january": 1, "feb": 2, "february": 2, "mar": 3, "march": 3,
@@ -93,19 +138,39 @@ def clean_title(text_snippet: str) -> str:
         return "New Goal"
     s = text_snippet.strip()
 
-    # Check for specific course assignment pattern (e.g. 'new ES assignment' -> 'Submit ES Assignment')
-    match_assign = re.search(r"(?:new\s+)?([a-zA-Z0-9_-]+\s+assignment)", s, re.IGNORECASE)
+    # 1. Direct course subject + assignment detection (e.g. 'today maths faculty gave us assighnment' -> 'Submit Maths Assignment')
+    course_match = re.search(
+        r"\b(maths?|es|dsa|daa|os|dbms|cs|it|physics|chemistry|biology|english|coding|programming|web\s+dev(?:elopment)?)\b.*?\b(assignment|assighnment|assignement|homework|project|lab|task)\b",
+        s,
+        re.IGNORECASE
+    )
+    if course_match:
+        subj = course_match.group(1).title()
+        subj = preserve_acronyms(subj)
+        noun = course_match.group(2).lower()
+        noun_clean = "Assignment" if "assign" in noun or "homework" in noun else noun.title()
+        return f"Submit {subj} {noun_clean}"
+
+    # 2. General '[course] assignment' matching
+    match_assign = re.search(r"(?:new\s+)?([a-zA-Z0-9_-]+\s+(?:assignment|assighnment|assignement))", s, re.IGNORECASE)
     if match_assign:
         course = match_assign.group(1).title()
+        course = re.sub(r"\b(Us|Me|A|The|New)\s+", "", course, flags=re.IGNORECASE).strip()
         course = preserve_acronyms(course)
-        if "submit" in s.lower() or "have to" in s.lower() or "need to" in s.lower():
+        if "submit" in s.lower() or "have to" in s.lower() or "need to" in s.lower() or "gave" in s.lower():
             return f"Submit {course}"
         return course
 
     # Strip trailing date or submission suffixes
     date_patterns = [
+        r"\s+(?:and\s+)?i\s+have\s+to\s+complete.*",
+        r"\s+(?:and\s+)?i\s+need\s+to\s+complete.*",
         r"\s+which\s+i\s+have\s+to\s+submit.*",
         r"\s+which\s+i\s+need\s+to\s+submit.*",
+        r"\s+on\s+\d+(?:st|nd|rd|th)?\s+of\s+(?:this|current|next)\s+month.*",
+        r"\s+by\s+\d+(?:st|nd|rd|th)?\s+of\s+(?:this|current|next)\s+month.*",
+        r"\s+on\s+(?:the\s+)?\d+(?:st|nd|rd|th)?\b.*",
+        r"\s+by\s+(?:the\s+)?\d+(?:st|nd|rd|th)?\b.*",
         r"\s+by\s+next\s+month\s+on\s+\d+(?:st|nd|rd|th)?\s+of\s+[a-z]+",
         r"\s+by\s+next\s+month",
         r"\s+by\s+\d+(?:st|nd|rd|th)?\s+of\s+[a-z]+",
@@ -119,10 +184,22 @@ def clean_title(text_snippet: str) -> str:
         s = re.sub(pattern, "", s, flags=re.IGNORECASE).strip()
 
     prefixes = [
+        "today maths faculty gave us new",
+        "today maths faculty gave us",
+        "today faculty gave us new",
+        "today faculty gave us",
+        "today my faculty gave us new",
+        "today my faculty gave us",
+        "today teacher gave us new",
+        "today teacher gave us",
+        "today professor gave us new",
+        "today professor gave us",
         "my faculty or teacher gave me new",
         "my faculty or teacher gave me",
         "my faculty gave me new",
         "my faculty gave me",
+        "my faculty gave us new",
+        "my faculty gave us",
         "my teacher gave me new",
         "my teacher gave me",
         "my professor gave me new",
@@ -131,12 +208,18 @@ def clean_title(text_snippet: str) -> str:
         "teacher gave me",
         "faculty gave me new",
         "faculty gave me",
+        "faculty gave us new",
+        "faculty gave us",
         "professor gave me new",
         "professor gave me",
         "gave me new",
         "gave me",
+        "gave us new",
+        "gave us",
         "assigned me new",
         "assigned me",
+        "assigned us new",
+        "assigned us",
         "also i have to do",
         "also i have to complete",
         "also i have to",
@@ -210,6 +293,7 @@ class GeminiService:
         Analyzes a daily journal entry using Gemini Flash-Lite and extracts structured
         mood, activities (completed vs ongoing vs planned), blockers, and goal linkages.
         """
+        current_today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         goals_context = ""
         if existing_goals:
             goals_list_str = "\n".join(
@@ -218,7 +302,7 @@ class GeminiService:
             goals_context = f"\nUser's Current Active Goals:\n{goals_list_str}\n"
 
         prompt = f"""You are an expert AI Goal Journal & Accountability Coach analyzing a user's daily journal entry.
-Today's Date: {today_str}
+Today's Date: {current_today_str}
 
 ATTENTION MECHANISM & FOCUS RULES:
 - RULE 1 (BACKSTAGING vs ACTIVE TODAY): Separate historical commitments or background context ("backstaging") from concrete actions executed today. Pay primary attention to what the user actively worked on today.
@@ -228,11 +312,11 @@ ATTENTION MECHANISM & FOCUS RULES:
    - 'planned': Intentions for the future ("will study tomorrow").
    Do NOT mark planned tasks as completed!
 - RULE 3 (AUTOMATIC GOAL DETECTION & DEDUPLICATION):
-   Identify explicit or strong implicit commitments to new medium/long-term objectives, including teacher/faculty assignments ("I want to learn Docker", "Aiming to run 5k", "Planning to launch portfolio", "Faculty gave me new ES assignment to submit by tomorrow").
-   When user mentions faculty/teacher assignments, clean title (e.g. "Submit ES Assignment"), set category to 'Learning', and extract exact target date.
+   Identify explicit or strong implicit commitments to new medium/long-term objectives, including teacher/faculty assignments ("I want to learn Docker", "Aiming to run 5k", "Planning to launch portfolio", "Faculty gave me new ES assignment to submit by tomorrow", "Maths faculty gave assignment due on 12th of this month").
+   When user mentions faculty/teacher assignments, clean title (e.g. "Submit Maths Assignment"), set category to 'Learning', and extract exact target date.
    If the intention already corresponds to an existing goal from the context below, set "is_new": false and provide "matched_existing_goal_id".
    Assign a confidence score (0.0 to 1.0) and suggest a category ('Career', 'Learning', 'Health', 'Finance', 'Personal', or 'Other').
-   If target date is mentioned (e.g., "by tomorrow" or "by next month"), calculate the exact target date relative to Today's Date ({today_str}). Ensure the year is 2026 or future.
+   If target date is mentioned (e.g., "by tomorrow", "12th of this month", "on 12th", "by 15th"), calculate the exact target date relative to Today's Date ({current_today_str}). Ensure the target date ISO format is YYYY-MM-DD.
 - RULE 4 (QUANTITATIVE & ACCURATE PROGRESS):
    When user mentions goal progress, evaluate quantitative units if present (e.g. "3 out of 10 modules done" -> quantified_completed: 3, quantified_total: 10).
    Categorize effort_level as: 'minor' (+5-10%), 'moderate' (+15-20%), 'major' (+25-35%), or 'completion' (goal 100% finished).

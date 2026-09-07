@@ -225,3 +225,26 @@ def test_progress_tracking_flow(client_with_mock_auth):
     hist_res = client_with_mock_auth.get(f"/api/v1/goals/{goal_id}/progress")
     assert hist_res.status_code == 200
     assert len(hist_res.json()) == 2
+
+# --- Test 5: Date Parsing & Title Cleaning Unit Tests ---
+from app.services.gemini_service import parse_due_date_from_text, clean_title
+
+def test_parse_due_date_ordinal_expressions():
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    expected_12th = f"{now.year}-{now.month:02d}-12"
+
+    # Test "12th of this month"
+    text1 = "today maths faculty gave us assighnment and i have to complete on 12th of this month"
+    date1 = parse_due_date_from_text(text1)
+    assert date1 == expected_12th
+
+    # Test "complete on 12th"
+    text2 = "maths assignment complete on 12th"
+    date2 = parse_due_date_from_text(text2)
+    assert date2 == expected_12th
+
+    # Test clean_title for faculty assignment
+    title1 = clean_title(text1)
+    assert title1 == "Submit Maths Assignment"
+

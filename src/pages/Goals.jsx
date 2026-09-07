@@ -10,6 +10,7 @@ import {
   TrendingUp,
   LayoutGrid,
   CalendarDays,
+  Calendar,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useData } from "../context/DataContext";
@@ -20,6 +21,7 @@ import { GridSkeleton, GoalLoadingState } from "../components/LoadingSkeleton";
 import GoalCelebration from "../components/GoalCompletionCelebration";
 import GoalCalendar from "../components/GoalCalendar";
 import Pagination from "../components/Pagination";
+import SyncGoogleCalendarModal from "../components/SyncGoogleCalendarModal";
 
 export default function Goals() {
   const {
@@ -37,6 +39,7 @@ export default function Goals() {
   const [viewMode, setViewMode] = useState("grid"); // "grid" | "calendar"
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
+  const [syncingGoal, setSyncingGoal] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6);
 
@@ -208,7 +211,7 @@ export default function Goals() {
         />
       )}
 
-      <main className="mx-auto max-w-[1250px] px-5 py-7 md:px-8 lg:px-10">
+      <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
         {/* Status Filter & Action Bar */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -218,7 +221,7 @@ export default function Goals() {
                 onClick={() => setViewMode("grid")}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                   viewMode === "grid"
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "bg-[#4B5D3C] text-white shadow-sm"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
@@ -228,7 +231,7 @@ export default function Goals() {
                 onClick={() => setViewMode("calendar")}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                   viewMode === "calendar"
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "bg-[#4B5D3C] text-white shadow-sm"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
@@ -245,7 +248,7 @@ export default function Goals() {
                     onClick={() => setStatusFilter(st)}
                     className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
                       statusFilter === st
-                        ? "bg-indigo-600 text-white shadow-sm font-bold"
+                        ? "bg-[#4B5D3C] text-white shadow-sm font-bold"
                         : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900"
                     }`}
                   >
@@ -279,8 +282,8 @@ export default function Goals() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
             <div className="panel w-full max-w-xl p-6 shadow-xl border border-slate-200 bg-white max-h-[90vh] overflow-y-auto rounded-2xl animate-scale-up">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Target size={18} className="text-indigo-600" />
+                <h3 className="text-lg font-bold text-[#26261F] flex items-center gap-2">
+                  <Target size={18} className="text-[#4B5D3C]" />
                   {editingGoal ? "Edit Goal" : "Create New Goal"}
                 </h3>
                 <button onClick={resetForm} className="text-slate-400 hover:text-slate-700">
@@ -374,7 +377,7 @@ export default function Goals() {
                           setStatus("Completed");
                         }
                       }}
-                      className="w-full accent-indigo-600"
+                      className="w-full accent-[#4B5D3C]"
                     />
                   </div>
 
@@ -405,18 +408,35 @@ export default function Goals() {
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    disabled={saving}
-                    className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" disabled={saving} className="primary-button text-xs">
-                    {saving ? "Saving…" : editingGoal ? "Update Goal" : "Create Goal"}
-                  </button>
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100">
+                  <div>
+                    {editingGoal && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCreateModal(false);
+                          setSyncingGoal(editingGoal);
+                        }}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                      >
+                        <Calendar size={13} />
+                        {editingGoal.calendar_synced ? "Update in Google Calendar" : "Schedule in Google Calendar"}
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      disabled={saving}
+                      className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" disabled={saving} className="primary-button text-xs">
+                      {saving ? "Saving…" : editingGoal ? "Update Goal" : "Create Goal"}
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
@@ -431,6 +451,7 @@ export default function Goals() {
             goals={goals}
             onQuickStatusChange={handleQuickStatusChange}
             onOpenEdit={openEdit}
+            onSyncGoal={(goal) => setSyncingGoal(goal)}
           />
         ) : filteredGoals.length === 0 ? (
           <section className="panel px-6 py-16 text-center shadow-sm">
@@ -461,7 +482,7 @@ export default function Goals() {
                 return (
                   <div
                     key={goal.id}
-                    className="panel p-6 shadow-sm flex flex-col justify-between border-slate-200 hover:border-indigo-300 hover-lift"
+                    className="panel p-6 shadow-sm flex flex-col justify-between border-slate-200 hover:border-[#4B5D3C]/40 hover-lift"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-3 mb-3">
@@ -472,7 +493,7 @@ export default function Goals() {
                                 ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
                                 : goal.status === "Stalled"
                                 ? "bg-red-50 text-red-600 border border-red-200"
-                                : "bg-indigo-50 text-indigo-600 border border-indigo-200"
+                                : "bg-[#E2E9DF] text-[#3A492E] border border-[#E2E9DF]"
                             }`}
                           >
                             {goal.status === "Active" ? "On Track" : goal.status}
@@ -498,12 +519,35 @@ export default function Goals() {
                               {goal.category}
                             </span>
                           )}
+
+                          {goal.calendar_synced && (
+                            <a
+                              href={goal.google_event_link || "https://calendar.google.com"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-semibold text-blue-700 border border-blue-200 hover:bg-blue-100 transition"
+                              title="Open event in Google Calendar"
+                            >
+                              <Calendar size={11} /> Synced
+                            </a>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-1">
                           <button
+                            onClick={() => setSyncingGoal(goal)}
+                            className={`p-1.5 transition rounded-lg hover:bg-slate-100 ${
+                              goal.calendar_synced
+                                ? "text-blue-600 hover:text-blue-700 bg-blue-50/70"
+                                : "text-slate-400 hover:text-blue-600"
+                            }`}
+                            title={goal.calendar_synced ? "Synced to Google Calendar (Click to reschedule)" : "Sync to Google Calendar"}
+                          >
+                            <Calendar size={15} />
+                          </button>
+                          <button
                             onClick={() => openEdit(goal)}
-                            className="p-1.5 text-slate-400 hover:text-indigo-600 transition rounded-lg hover:bg-slate-100"
+                            className="p-1.5 text-slate-400 hover:text-[#4B5D3C] transition rounded-lg hover:bg-slate-100"
                             title="Edit Goal"
                           >
                             <Pencil size={15} />
@@ -524,12 +568,12 @@ export default function Goals() {
                             value={prog}
                             className="w-16 h-16"
                             trackClass="stroke-slate-200"
-                            fillClass={goal.status === "Completed" ? "stroke-emerald-500" : "stroke-indigo-600"}
+                            fillClass={goal.status === "Completed" ? "stroke-emerald-500" : "stroke-[#4B5D3C]"}
                           />
                         </div>
 
                         <div className="flex-1">
-                          <h3 className="text-base font-bold text-slate-900 leading-snug">
+                          <h3 className="text-base font-bold text-[#26261F] leading-snug">
                             {goal.title}
                           </h3>
 
@@ -557,7 +601,7 @@ export default function Goals() {
                         </span>
 
                         {goal.estimated_days_remaining !== null && goal.estimated_days_remaining !== undefined && goal.status !== "Completed" && (
-                          <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                          <span className="text-[10px] font-semibold text-[#3A492E] bg-[#E2E9DF]/60 px-2 py-0.5 rounded-md border border-[#E2E9DF]">
                             ~{goal.estimated_days_remaining} {goal.estimated_days_remaining === 1 ? 'day' : 'days'} left
                           </span>
                         )}
@@ -593,6 +637,17 @@ export default function Goals() {
               itemsPerPageOptions={[6, 12, 24]}
             />
           </div>
+        )}
+
+        {/* Google Calendar Sync Modal */}
+        {syncingGoal && (
+          <SyncGoogleCalendarModal
+            goal={syncingGoal}
+            onClose={() => setSyncingGoal(null)}
+            onSynced={(updatedGoal) => {
+              updateGoalInCache(updatedGoal);
+            }}
+          />
         )}
       </main>
     </div>

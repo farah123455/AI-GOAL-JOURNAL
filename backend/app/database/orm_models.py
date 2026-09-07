@@ -8,6 +8,7 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     JSON,
+    Boolean,
 )
 
 from app.database.connection import Base
@@ -116,6 +117,21 @@ class GoalORM(Base):
     target_date = Column(
         String,
         nullable=True
+    )
+
+    google_event_id = Column(
+        String,
+        nullable=True
+    )
+
+    google_event_link = Column(
+        String,
+        nullable=True
+    )
+
+    calendar_synced = Column(
+        Boolean,
+        default=False
     )
 
     created_at = Column(

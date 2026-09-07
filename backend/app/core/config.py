@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     ENCRYPTION_OLD_KEYS: str = ""  # Comma-separated list of previous keys for seamless rotation
     JOURNAL_ENCRYPTION_KEY: str = ""
 
+    # Google Calendar Integration
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = "http://127.0.0.1:8000/api/v1/calendar/callback"
+    GOOGLE_CALENDAR_SCOPE: str = "https://www.googleapis.com/auth/calendar.events"
+    FRONTEND_URL: str = "http://localhost:5173"
+
     # API / Server
     API_V1_PREFIX: str = "/api/v1"
     PROJECT_NAME: str = "AI Goal Journal & Accountability Coach"
