@@ -188,7 +188,7 @@ export default function Landing() {
                   <img
                     src="/step_reflection.jpg"
                     alt="Step 1 Reflection"
-                    className="w-full h-56 sm:h-64 object-cover rounded-[18px]"
+                    className="w-full h-56 sm:h-64 object-contain rounded-[18px] bg-[#FAF9F5]"
                   />
                 </div>
               </div>
@@ -201,7 +201,7 @@ export default function Landing() {
                   <img
                     src="/step_ai.jpg"
                     alt="Step 2 AI Extraction"
-                    className="w-full h-56 sm:h-64 object-cover rounded-[18px]"
+                    className="w-full h-56 sm:h-64 object-contain rounded-[18px] bg-[#FAF9F5]"
                   />
                 </div>
               </div>
@@ -246,7 +246,7 @@ export default function Landing() {
                   <img
                     src="/step_trophy.jpg"
                     alt="Step 3 Achievement"
-                    className="w-full h-56 sm:h-64 object-cover rounded-[18px]"
+                    className="w-full h-56 sm:h-64 object-contain rounded-[18px] bg-[#FAF9F5]"
                   />
                 </div>
               </div>
