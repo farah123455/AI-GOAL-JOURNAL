@@ -18,8 +18,8 @@ export default function PublicNavbar() {
         setIsScrolled(false);
       }
 
-      // Track active section for highlight
-      const sections = ['features', 'how-it-works', 'journey'];
+      // Track active section for highlight in page order
+      const sections = ['how-it-works', 'journey', 'features'];
       const scrollPos = window.scrollY + 120;
 
       for (const sectionId of sections) {
@@ -92,19 +92,8 @@ export default function PublicNavbar() {
           </div>
         </Link>
 
-        {/* DESKTOP NAVIGATION LINKS */}
+        {/* DESKTOP NAVIGATION LINKS (In Page Order: How It Works -> Goal Journey -> Features) */}
         <nav className="hidden md:flex items-center gap-1.5 rounded-full bg-white/70 backdrop-blur-md p-1.5 border border-[#E2E9DF] shadow-xs">
-          <a
-            href="#features"
-            onClick={(e) => handleNavClick(e, 'features')}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all duration-200 ${
-              activeSection === 'features'
-                ? 'bg-[#4B5D3C] text-white shadow-xs'
-                : 'text-[#26261F] hover:text-[#4B5D3C] hover:bg-[#E2E9DF]/50'
-            }`}
-          >
-            <Layers size={14} /> Features
-          </a>
           <a
             href="#how-it-works"
             onClick={(e) => handleNavClick(e, 'how-it-works')}
@@ -126,6 +115,17 @@ export default function PublicNavbar() {
             }`}
           >
             <Flag size={14} /> Goal Journey
+          </a>
+          <a
+            href="#features"
+            onClick={(e) => handleNavClick(e, 'features')}
+            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all duration-200 ${
+              activeSection === 'features'
+                ? 'bg-[#4B5D3C] text-white shadow-xs'
+                : 'text-[#26261F] hover:text-[#4B5D3C] hover:bg-[#E2E9DF]/50'
+            }`}
+          >
+            <Layers size={14} /> Features
           </a>
         </nav>
 
@@ -164,16 +164,6 @@ export default function PublicNavbar() {
         <div className="animate-fade-in border-b border-[#E2E9DF] bg-[#EEF3EC] px-6 py-6 shadow-xl md:hidden">
           <nav className="flex flex-col gap-3">
             <a
-              href="#features"
-              onClick={(e) => handleNavClick(e, 'features')}
-              className="flex items-center gap-3 rounded-xl bg-white p-3 text-sm font-bold text-[#26261F] border border-[#E2E9DF] hover:border-[#4B5D3C] transition"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E2E9DF]/60 text-[#3A492E]">
-                <Layers size={16} />
-              </div>
-              <span>Features Overview</span>
-            </a>
-            <a
               href="#how-it-works"
               onClick={(e) => handleNavClick(e, 'how-it-works')}
               className="flex items-center gap-3 rounded-xl bg-white p-3 text-sm font-bold text-[#26261F] border border-[#E2E9DF] hover:border-[#4B5D3C] transition"
@@ -192,6 +182,16 @@ export default function PublicNavbar() {
                 <Flag size={16} />
               </div>
               <span>Milestone Goal Journey</span>
+            </a>
+            <a
+              href="#features"
+              onClick={(e) => handleNavClick(e, 'features')}
+              className="flex items-center gap-3 rounded-xl bg-white p-3 text-sm font-bold text-[#26261F] border border-[#E2E9DF] hover:border-[#4B5D3C] transition"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E2E9DF]/60 text-[#3A492E]">
+                <Layers size={16} />
+              </div>
+              <span>Features Overview</span>
             </a>
 
             <div className="mt-4 pt-4 border-t border-[#E2E9DF] flex flex-col gap-2.5">
