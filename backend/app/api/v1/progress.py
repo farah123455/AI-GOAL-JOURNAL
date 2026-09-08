@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 
 from app.core.auth import get_current_user, AuthenticatedUser
 from app.schemas.progress import (
@@ -72,13 +72,21 @@ def get_progress_history(
 )
 def get_progress_trend(
     goal_id: str,
+    days: int = Query(
+        7,
+        ge=1,
+        le=365,
+        description="Number of days used for recent progress analytics",
+    ),
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     try:
         return progress_service.get_progress_trend(
             user_id=current_user.uid,
             goal_id=goal_id,
+            period_days=days,
         )
+
     except LookupError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
