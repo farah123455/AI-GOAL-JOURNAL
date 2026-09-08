@@ -3,7 +3,30 @@ from datetime import datetime, timezone, timedelta
 from app.services.progress_service import progress_service
 from app.services.goal_service import goal_service
 from app.schemas.goal import GoalCreate, GoalUpdate
-from app.models.domain import Goal
+from app.models.domain import Goal, Progress
+from app.repositories.postgres import progress_repo
+
+
+def _insert_progress(user_id, goal_id, values_with_ages):
+    """Insert progress records with controlled creation dates.
+
+    `values_with_ages` is a list of (progress_value, age_days) tuples where
+    age_days is how many days ago the record should appear to be created.
+    """
+    now = datetime.utcnow()
+    inserted = []
+    for value, age_days in values_with_ages:
+        record = progress_repo.create(
+            Progress(
+                id="",
+                goal_id=str(goal_id),
+                progress_value=value,
+                note=f"checkpoint {value}%",
+                created_at=now - timedelta(days=age_days, minutes=5),
+            )
+        )
+        inserted.append(record)
+    return inserted
 
 
 def test_progress_history_and_trend_deltas():
@@ -92,3 +115,109 @@ def test_smart_goal_prioritization_rules():
         progress_value=85, target_date=(today + timedelta(days=60)).isoformat()
     )
     assert goal_service.calculate_goal_priority(healthy_goal) == "Low Priority"
+
+
+# --- Added analytics: average progress change, stagnant updates, period-based gain ---
+
+
+def test_average_progress_change():
+    user_id = "test-avg-user-1"
+    goal = goal_service.create_goal(
+        user_id=user_id,
+        data=GoalCreate(title="Average Change Goal"),
+    )
+
+    # 20 -> 30 -> 50  => changes: +10, +20  => average = 15
+    _insert_progress(user_id, goal.id, [(20, 3), (30, 2), (50, 1)])
+
+    trend = progress_service.get_progress_trend(user_id=user_id, goal_id=goal.id)
+
+    assert trend.average_progress_change == 15.0
+    assert trend.current_progress == 50
+    assert trend.initial_progress == 20
+    assert trend.net_change == 30
+    assert trend.total_updates == 3
+
+
+def test_average_progress_change_no_history_is_zero():
+    user_id = "test-avg-no-history-user-1"
+    goal = goal_service.create_goal(
+        user_id=user_id,
+        data=GoalCreate(title="Empty History Goal"),
+    )
+    # No explicit progress records -> baseline only, no deltas.
+    trend = progress_service.get_progress_trend(user_id=user_id, goal_id=goal.id)
+    assert trend.average_progress_change == 0.0
+    assert trend.stagnant_updates == 0
+
+
+def test_stagnant_updates():
+    user_id = "test-stagnant-user-1"
+    goal = goal_service.create_goal(
+        user_id=user_id,
+        data=GoalCreate(title="Stagnant Updates Goal"),
+    )
+
+    # 20 -> 20 -> 30 -> 30  => stagnant updates = 2 (baseline 20 excluded)
+    _insert_progress(user_id, goal.id, [(20, 4), (20, 3), (30, 2), (30, 1)])
+
+    trend = progress_service.get_progress_trend(user_id=user_id, goal_id=goal.id)
+
+    assert trend.stagnant_updates == 2
+    assert trend.total_updates == 4
+    assert trend.current_progress == 30
+    assert trend.initial_progress == 20
+    # Net still improved by 10, so the direction is not stagnant overall.
+    assert trend.net_change == 10
+    assert trend.trend_direction == "improving"
+
+
+def test_period_based_progress_gain_seven_days():
+    user_id = "test-period-user-1"
+    goal = goal_service.create_goal(
+        user_id=user_id,
+        data=GoalCreate(title="Period Gain Goal"),
+    )
+
+    # 20 (10 days ago) -> 25 (5 days ago) -> 40 (2 days ago)
+    _insert_progress(user_id, goal.id, [(20, 10), (25, 5), (40, 2)])
+
+    trend = progress_service.get_progress_trend(user_id=user_id, goal_id=goal.id, days=7)
+
+    # Base at/before start of 7-day window is 20; latest in-window is 40; gain = +20.
+    assert trend.period_days == 7
+    assert trend.period_progress_gain == 20
+
+
+def test_period_based_progress_gain_no_updates_in_period():
+    user_id = "test-period-empty-user-1"
+    goal = goal_service.create_goal(
+        user_id=user_id,
+        data=GoalCreate(title="Period Empty Goal"),
+    )
+
+    # Both records are older than the 7-day window.
+    _insert_progress(user_id, goal.id, [(20, 15), (30, 12)])
+
+    trend = progress_service.get_progress_trend(user_id=user_id, goal_id=goal.id, days=7)
+
+    assert trend.period_days == 7
+    assert trend.period_progress_gain == 0
+
+
+def test_progress_trend_ownership_isolation():
+    owner_user = "test-owner-user-1"
+    other_user = "test-other-user-1"
+    goal = goal_service.create_goal(
+        user_id=owner_user,
+        data=GoalCreate(title="Owned Goal"),
+    )
+    _insert_progress(owner_user, goal.id, [(30, 2), (50, 1)])
+
+    # Owner can read the trend.
+    trend = progress_service.get_progress_trend(user_id=owner_user, goal_id=goal.id)
+    assert trend.goal_id == goal.id
+
+    # Another user must not be able to read the owner's goal trend.
+    with pytest.raises(LookupError):
+        progress_service.get_progress_trend(user_id=other_user, goal_id=goal.id)

@@ -135,6 +135,9 @@ export default function Progress() {
   const [histLoading, setHistLoading] = useState({});
   const [histError, setHistError] = useState({});
 
+  // Analytics period ("all" | "7" | "30" | "90") used to request period-based progress gain.
+  const [periodDays, setPeriodDays] = useState("all");
+
   // Default to the first available goal.
   const activeGoalId = goals.some((g) => g.id === selectedGoalId)
     ? selectedGoalId
@@ -147,8 +150,10 @@ export default function Progress() {
     let isMounted = true;
     setHistLoading((m) => ({ ...m, [activeGoalId]: true }));
 
+    const daysParam = periodDays === "all" ? undefined : parseInt(periodDays, 10);
+
     progressApi
-      .getProgressTrend(activeGoalId)
+      .getProgressTrend(activeGoalId, daysParam)
       .then((trendData) => {
         if (!isMounted) return;
         const sorted = (trendData?.history || [])
@@ -192,7 +197,7 @@ export default function Progress() {
     return () => {
       isMounted = false;
     };
-  }, [activeGoalId]);
+  }, [activeGoalId, periodDays]);
 
   const selectedGoal = goals.find((g) => g.id === activeGoalId) || null;
   const progressHistory = selectedGoal ? historyByGoal[selectedGoal.id] || [] : [];
@@ -478,6 +483,50 @@ export default function Progress() {
                               {currentTrend?.total_updates ?? progressHistory.length}
                             </span>
                             <span className="text-[10px] text-slate-400 font-medium">Checkpoints saved</span>
+                          </div>
+                        </div>
+
+                        {/* ANALYTICS STRIP — real values from the Progress Trend API */}
+                        <div className="grid gap-3 sm:grid-cols-3 my-4">
+                          <div className="rounded-xl bg-white p-3 border border-[#E2E9DF] flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Avg Progress Change</span>
+                            <span className="text-base font-extrabold text-[#4B5D3C]">
+                              {typeof currentTrend?.average_progress_change === "number"
+                                ? currentTrend.average_progress_change.toFixed(2)
+                                : "—"}
+                            </span>
+                          </div>
+
+                          <div className="rounded-xl bg-white p-3 border border-[#E2E9DF] flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Stagnant Updates</span>
+                            <span className="text-base font-extrabold text-[#26261F]">
+                              {currentTrend?.stagnant_updates ?? 0}
+                            </span>
+                          </div>
+
+                          <div className="rounded-xl bg-white p-3 border border-[#E2E9DF]">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Period Progress Gain</span>
+                              <select
+                                aria-label="Select progress analytics period"
+                                value={periodDays}
+                                onChange={(e) => setPeriodDays(e.target.value)}
+                                className="rounded-lg border border-[#E2E9DF] bg-white px-2 py-1 text-[11px] font-semibold text-[#26261F]"
+                              >
+                                <option value="7">7 days</option>
+                                <option value="30">30 days</option>
+                                <option value="90">90 days</option>
+                                <option value="all">All time</option>
+                              </select>
+                            </div>
+                            <div className="mt-1 flex items-baseline gap-2">
+                              <span className="text-base font-extrabold text-[#26261F]">
+                                {currentTrend?.period_progress_gain != null ? formatChange(currentTrend.period_progress_gain) : "—"}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                {currentTrend?.period_days ? `last ${currentTrend.period_days}d` : "all time"}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
