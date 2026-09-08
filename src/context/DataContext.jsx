@@ -206,6 +206,7 @@ export function DataProvider({ children }) {
         hasLoadedJournals,
         hasLoadedSummary,
         initialLoading,
+        loading: initialLoading || !hasLoadedGoals,
         fetchProfile,
         fetchGoals,
         fetchJournals,

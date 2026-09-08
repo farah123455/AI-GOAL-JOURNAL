@@ -10,9 +10,13 @@ import {
   Repeat,
   Menu,
   X,
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const navigation = [
   {
@@ -84,6 +88,17 @@ const navigation = [
 
 export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem("sidebar_collapsed") === "true";
+  });
+
+  const toggleCollapse = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("sidebar_collapsed", String(next));
+      return next;
+    });
+  };
 
   return (
     <>
@@ -104,28 +119,31 @@ export default function Sidebar() {
         />
       )}
 
-      {/* STATIC SIDEBAR (Broader 285px width) */}
+      {/* STATIC SIDEBAR (Collapsible: 285px expanded / 80px contracted) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[285px] shrink-0 flex-col border-r border-[#E2E9DF] bg-white transition-transform duration-300 ease-out lg:static lg:translate-x-0 ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen shrink-0 flex-col border-r border-[#E2E9DF] bg-white transition-all duration-300 ease-out lg:static lg:translate-x-0 ${
+          isCollapsed ? "w-[80px]" : "w-[285px]"
+        } ${mobileOpen ? "translate-x-0 w-[285px]" : "-translate-x-full"}`}
       >
-        {/* BRAND (Broader 84px header height) */}
-        <div className="flex h-[84px] shrink-0 items-center justify-between border-b border-[#E2E9DF] px-6">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white border border-[#E2E9DF] shadow-xs p-1 animate-float overflow-hidden">
+        {/* BRAND HEADER */}
+        <div className={`flex h-[84px] shrink-0 items-center justify-between border-b border-[#E2E9DF] ${isCollapsed ? "px-3 justify-center" : "px-6"}`}>
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white border border-[#E2E9DF] shadow-xs p-1 animate-float overflow-hidden">
               <img src="/logo.png" alt="AI Journal Logo" className="h-full w-full object-contain rounded-lg" />
             </div>
-            <div>
-              <p className="text-base font-bold tracking-tight text-[#26261F] font-serif">
-                AI JOURNAL
-              </p>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[#4B5D3C] font-extrabold">
-                Growth workspace
-              </p>
-            </div>
+            {!isCollapsed && (
+              <div className="min-w-0">
+                <p className="text-base font-bold tracking-tight text-[#26261F] font-serif truncate">
+                  AI JOURNAL
+                </p>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[#4B5D3C] font-extrabold truncate">
+                  Growth workspace
+                </p>
+              </div>
+            )}
           </div>
 
+          {/* Mobile Close Button Only */}
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
@@ -136,12 +154,16 @@ export default function Sidebar() {
         </div>
 
         {/* NAVIGATION */}
-        <div className="flex-1 px-4 py-6 overflow-y-auto space-y-7">
+        <div className={`flex-1 py-6 overflow-y-auto space-y-6 ${isCollapsed ? "px-2" : "px-4"}`}>
           {navigation.map((section) => (
             <div key={section.label}>
-              <p className="mb-2.5 px-3 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#4B5D3C]">
-                {section.label}
-              </p>
+              {!isCollapsed ? (
+                <p className="mb-2.5 px-3 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#4B5D3C]">
+                  {section.label}
+                </p>
+              ) : (
+                <div className="my-2 border-t border-[#E2E9DF]/80 mx-2" />
+              )}
               <div className="space-y-1.5">
                 {section.items.map((item) => {
                   const Icon = item.icon;
@@ -150,18 +172,23 @@ export default function Sidebar() {
                       key={item.path}
                       to={item.path}
                       onClick={() => setMobileOpen(false)}
+                      title={isCollapsed ? item.name : undefined}
                       className={({ isActive }) =>
-                        `group relative flex items-center gap-3.5 rounded-xl px-3.5 py-3 text-[14px] font-medium transition-all duration-200 ${
+                        `group relative flex items-center rounded-xl transition-all duration-200 ${
+                          isCollapsed
+                            ? "justify-center h-11 w-11 mx-auto"
+                            : "gap-3.5 px-3.5 py-3 text-[14px] font-medium"
+                        } ${
                           isActive
                             ? "bg-[#E2E9DF]/70 text-[#4B5D3C] shadow-xs font-bold"
-                            : "text-[#26261F] hover:bg-[#F4F1E8] hover:text-[#4B5D3C] hover:translate-x-0.5"
+                            : "text-[#26261F] hover:bg-[#F4F1E8] hover:text-[#4B5D3C]"
                         }`
                       }
                     >
                       {({ isActive }) => (
                         <>
                           {isActive && (
-                            <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-[#4B5D3C]" />
+                            <span className={`absolute top-1/2 -translate-y-1/2 rounded-r-full bg-[#4B5D3C] ${isCollapsed ? "left-0 h-5 w-1" : "left-0 h-6 w-1"}`} />
                           )}
                           <Icon
                             size={19}
@@ -172,7 +199,14 @@ export default function Sidebar() {
                                 : "text-slate-400 group-hover:text-[#4B5D3C] transition-colors"
                             }
                           />
-                          <span>{item.name}</span>
+                          {!isCollapsed && <span>{item.name}</span>}
+
+                          {/* Hover Tooltip when sidebar is contracted */}
+                          {isCollapsed && (
+                            <div className="pointer-events-none absolute left-full ml-3 hidden rounded-lg bg-[#26261F] px-2.5 py-1 text-xs font-bold text-white shadow-md group-hover:block z-50 whitespace-nowrap animate-fade-in">
+                              {item.name}
+                            </div>
+                          )}
                         </>
                       )}
                     </NavLink>
@@ -181,6 +215,33 @@ export default function Sidebar() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* BOTTOM QUICK TOGGLE FOOTER */}
+        <div className={`p-3 border-t border-[#E2E9DF] flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
+          {!isCollapsed && (
+            <span className="text-[11px] font-semibold text-slate-500 pl-2">
+              Sidebar View
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={toggleCollapse}
+            title={isCollapsed ? "Expand Sidebar" : "Contract Sidebar"}
+            className={`flex items-center gap-2 rounded-xl transition-all duration-200 ${
+              isCollapsed
+                ? "h-10 w-10 justify-center bg-[#F4F1E8] text-[#4B5D3C] hover:bg-[#E2E9DF] border border-[#E2E9DF]"
+                : "px-3 py-2 text-xs font-bold text-[#4B5D3C] bg-[#F4F1E8] hover:bg-[#E2E9DF] border border-[#E2E9DF]"
+            }`}
+          >
+            {isCollapsed ? (
+              <ChevronRight size={18} />
+            ) : (
+              <>
+                <ChevronLeft size={16} /> Contract Sidebar
+              </>
+            )}
+          </button>
         </div>
       </aside>
     </>

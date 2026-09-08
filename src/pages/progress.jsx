@@ -438,60 +438,70 @@ export default function Progress() {
                 </div>
               ) : (
                 <>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 my-4">
-                    <div className="rounded-xl bg-[#F4F1E8]/70 p-3.5 border border-[#E2E9DF] flex flex-col justify-between">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Current Progress</span>
-                      <span className="mt-1 text-2xl font-extrabold text-[#26261F]">
-                        {currentTrend?.current_progress ?? (selectedGoal?.progress_value || 0)}%
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium">Target completion level</span>
-                    </div>
+                  {(() => {
+                    const currentProgressValue = currentTrend?.current_progress ?? (selectedGoal?.progress_value || 0);
+                    const latestEntry = progressHistory && progressHistory.length > 0 ? progressHistory[progressHistory.length - 1] : null;
+                    const latestNote = latestEntry?.note || selectedGoal?.latest_progress_note;
 
-                    <div className="rounded-xl bg-[#F4F1E8]/70 p-3.5 border border-[#E2E9DF] flex flex-col justify-between">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Recent Velocity</span>
-                      <span className="mt-1 text-lg font-bold text-[#26261F] capitalize">
-                        {currentTrend?.trend_direction || "Stagnant"}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium">Direction vector</span>
-                    </div>
+                    return (
+                      <>
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 my-4">
+                          <div className="rounded-xl bg-[#F4F1E8]/70 p-3.5 border border-[#E2E9DF] flex flex-col justify-between">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Current Progress</span>
+                            <span className="mt-1 text-2xl font-extrabold text-[#26261F]">
+                              {currentProgressValue}%
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">Target completion level</span>
+                          </div>
 
-                    <div className="rounded-xl bg-[#F4F1E8]/70 p-3.5 border border-[#E2E9DF] flex flex-col justify-between">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Net Milestone Gain</span>
-                      <span className={`mt-1 text-2xl font-extrabold ${
-                        (currentTrend?.net_change || 0) > 0 ? "text-[#4B5D3C]" : (currentTrend?.net_change || 0) < 0 ? "text-[#C1622C]" : "text-slate-700"
-                      }`}>
-                        {formatChange(currentTrend?.net_change || 0)}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium">Total progress delta</span>
-                    </div>
+                          <div className="rounded-xl bg-[#F4F1E8]/70 p-3.5 border border-[#E2E9DF] flex flex-col justify-between">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Recent Velocity</span>
+                            <span className="mt-1 text-lg font-bold text-[#26261F] capitalize">
+                              {currentTrend?.trend_direction || "Stagnant"}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">Direction vector</span>
+                          </div>
 
-                    <div className="rounded-xl bg-[#F4F1E8]/70 p-3.5 border border-[#E2E9DF] flex flex-col justify-between">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Updates Logged</span>
-                      <span className="mt-1 text-2xl font-extrabold text-[#26261F]">
-                        {currentTrend?.total_updates ?? progressHistory.length}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium">Checkpoints saved</span>
-                    </div>
-                  </div>
+                          <div className="rounded-xl bg-[#F4F1E8]/70 p-3.5 border border-[#E2E9DF] flex flex-col justify-between">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Net Milestone Gain</span>
+                            <span className={`mt-1 text-2xl font-extrabold ${
+                              (currentTrend?.net_change || 0) > 0 ? "text-[#4B5D3C]" : (currentTrend?.net_change || 0) < 0 ? "text-[#C1622C]" : "text-slate-700"
+                            }`}>
+                              {formatChange(currentTrend?.net_change || 0)}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">Total progress delta</span>
+                          </div>
 
-                  {latestProgress >= 100 && (
-                    <div className="mt-4 rounded-xl border border-[#4B5D3C]/30 bg-[#E2E9DF] p-3.5 text-[#26261F] flex items-center justify-between gap-3 font-semibold text-xs animate-fade-in shadow-2xs">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 size={16} className="text-[#4B5D3C] shrink-0" />
-                        <span>This goal was marked as completed (100% Milestone Achieved).</span>
-                      </div>
-                      <span className="text-xs font-bold text-[#4B5D3C] bg-white px-2.5 py-0.5 rounded-md border border-[#4B5D3C]/20 shadow-2xs shrink-0">
-                        🎉 100%
-                      </span>
-                    </div>
-                  )}
+                          <div className="rounded-xl bg-[#F4F1E8]/70 p-3.5 border border-[#E2E9DF] flex flex-col justify-between">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Updates Logged</span>
+                            <span className="mt-1 text-2xl font-extrabold text-[#26261F]">
+                              {currentTrend?.total_updates ?? progressHistory.length}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">Checkpoints saved</span>
+                          </div>
+                        </div>
 
-                  {latest?.note && (
-                    <p className="mt-3 rounded-xl border border-[#E2E9DF] bg-[#F4F1E8]/80 px-3.5 py-2.5 text-xs text-[#26261F] font-medium">
-                      <span className="font-bold text-[#4B5D3C]">Note: </span>
-                      {latest.note}
-                    </p>
-                  )}
+                        {currentProgressValue >= 100 && (
+                          <div className="mt-4 rounded-xl border border-[#4B5D3C]/30 bg-[#E2E9DF] p-3.5 text-[#26261F] flex items-center justify-between gap-3 font-semibold text-xs animate-fade-in shadow-2xs">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 size={16} className="text-[#4B5D3C] shrink-0" />
+                              <span>This goal was marked as completed (100% Milestone Achieved).</span>
+                            </div>
+                            <span className="text-xs font-bold text-[#4B5D3C] bg-white px-2.5 py-0.5 rounded-md border border-[#4B5D3C]/20 shadow-2xs shrink-0">
+                              🎉 100%
+                            </span>
+                          </div>
+                        )}
+
+                        {latestNote && (
+                          <p className="mt-3 rounded-xl border border-[#E2E9DF] bg-[#F4F1E8]/80 px-3.5 py-2.5 text-xs text-[#26261F] font-medium">
+                            <span className="font-bold text-[#4B5D3C]">Note: </span>
+                            {latestNote}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   <div className="mt-5 rounded-xl border border-[#E2E9DF] bg-white p-4">
                     <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">

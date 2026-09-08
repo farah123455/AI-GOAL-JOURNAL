@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import VoiceRecorder from "../components/VoiceRecorder";
 import Pagination from "../components/Pagination";
+import GoalCelebration from "../components/GoalCelebration";
 import { journalApi, goalApi } from "../services/api";
 import { useData } from "../context/DataContext";
 import { useModal, useToast } from "../context/ModalContext";
@@ -32,6 +33,9 @@ export default function Journal() {
     addGoal,
     deleteJournalFromCache,
     fetchAllData,
+    recentlyCompletedGoal,
+    triggerGoalCompletion,
+    clearCompletedGoalTrigger,
   } = useData();
 
   const [activeTab, setActiveTab] = useState("text"); // 'text' | 'voice'
@@ -86,6 +90,7 @@ export default function Journal() {
 
     setSubmitting(true);
     setLatestAnalysis(null);
+    const prevGoals = goals || [];
 
     try {
       const result = await journalApi.createJournal({
@@ -94,7 +99,39 @@ export default function Journal() {
       });
 
       addJournal(result);
+
+      // Fetch refreshed goals updated by AI analysis & progress increments
+      const updatedGoals = await goalApi.listGoals();
       await fetchAllData({ quiet: true });
+
+      // Detect any goal that reached 100% or was newly marked Completed
+      const newlyCompletedGoal = updatedGoals.find((ug) => {
+        const is100 = ug.progress_value >= 100 || ug.status === "Completed";
+        const prevGoal = prevGoals.find((g) => g.id === ug.id);
+        const wasNot100 = !prevGoal || (prevGoal.progress_value < 100 && prevGoal.status !== "Completed");
+        return is100 && wasNot100;
+      });
+
+      if (newlyCompletedGoal) {
+        triggerGoalCompletion(newlyCompletedGoal);
+      } else {
+        // Fallback: Check if AI updates indicate completion or user text mentions completion
+        const aiUpdates = result.ai_analysis?.progress_updates || [];
+        const hasCompletionUpdate = aiUpdates.some(
+          (pu) => pu.effort_level === "completion" || (pu.quantified_completed && pu.quantified_total && pu.quantified_completed >= pu.quantified_total)
+        );
+        const hasCompletionText = /goal (was|is)?\s*completed|completed (my|the)?\s*goal/i.test(content);
+
+        if (hasCompletionUpdate || hasCompletionText) {
+          const completedGoal = updatedGoals.find((g) => g.status === "Completed" || g.progress_value >= 100) || {
+            title: result.ai_analysis?.title || "Goal Milestone Accomplished!",
+            status: "Completed",
+            progress_value: 100,
+          };
+          triggerGoalCompletion(completedGoal);
+        }
+      }
+
       setLatestAnalysis(result.ai_analysis);
       setSelectedJournal(result);
       setShowCompose(false);
@@ -204,6 +241,13 @@ export default function Journal() {
 
   return (
     <div className="app-page min-h-screen bg-[#F4F1E8]">
+      {/* Full-Screen Confetti Celebration Overlay when a goal is completed */}
+      {recentlyCompletedGoal && (
+        <GoalCelebration
+          goal={recentlyCompletedGoal}
+          onClose={clearCompletedGoalTrigger}
+        />
+      )}
       <main className="mx-auto max-w-7xl w-full px-5 py-6 md:px-8">
         {error && (
           <div className="mb-5 rounded-xl border border-[#C1622C]/30 bg-[#FBEBE3] px-4 py-3 text-xs text-[#C1622C] font-medium">

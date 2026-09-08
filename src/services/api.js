@@ -77,8 +77,19 @@ export const goalApi = {
     const query = status ? `?status=${encodeURIComponent(status)}` : '';
     return fetchWithAuth(`/goals${query}`);
   },
+  list: (status) => {
+    const query = status ? `?status=${encodeURIComponent(status)}` : '';
+    return fetchWithAuth(`/goals${query}`);
+  },
   getGoal: (id) => fetchWithAuth(`/goals/${id}`),
+  get: (id) => fetchWithAuth(`/goals/${id}`),
   createGoal: (data) =>
+    fetchWithAuth('/goals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  create: (data) =>
     fetchWithAuth('/goals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -90,14 +101,21 @@ export const goalApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
+  update: (id, data) =>
+    fetchWithAuth(`/goals/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
   deleteGoal: (id) =>
     fetchWithAuth(`/goals/${id}`, {
       method: 'DELETE',
     }),
-  getFocusNext: async () => {
-    const res = await api.get('/goals/focus-next'); // or '/api/v1/goals/focus-next'
-    return res.data;
-  },
+  delete: (id) =>
+    fetchWithAuth(`/goals/${id}`, {
+      method: 'DELETE',
+    }),
+  getFocusNext: () => fetchWithAuth('/goals/focus-next'),
 };
 
 /**
@@ -105,8 +123,16 @@ export const goalApi = {
  */
 export const journalApi = {
   listJournals: () => fetchWithAuth('/journals'),
+  list: () => fetchWithAuth('/journals'),
   getJournal: (id) => fetchWithAuth(`/journals/${id}`),
+  get: (id) => fetchWithAuth(`/journals/${id}`),
   createJournal: (data) =>
+    fetchWithAuth('/journals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  create: (data) =>
     fetchWithAuth('/journals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -118,7 +144,17 @@ export const journalApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
+  update: (id, data) =>
+    fetchWithAuth(`/journals/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
   deleteJournal: (id) =>
+    fetchWithAuth(`/journals/${id}`, {
+      method: 'DELETE',
+    }),
+  delete: (id) =>
     fetchWithAuth(`/journals/${id}`, {
       method: 'DELETE',
     }),
@@ -182,13 +218,19 @@ export const progressApi = {
  * Habit Tracker API
  */
 export const habitApi = {
-  listHabits: () =>
-    fetchWithAuth('/habits'),
+  listHabits: () => fetchWithAuth('/habits'),
+  list: () => fetchWithAuth('/habits'),
 
-  getHabit: (id) =>
-    fetchWithAuth(`/habits/${id}`),
+  getHabit: (id) => fetchWithAuth(`/habits/${id}`),
+  get: (id) => fetchWithAuth(`/habits/${id}`),
 
   createHabit: (data) =>
+    fetchWithAuth('/habits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  create: (data) =>
     fetchWithAuth('/habits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -201,8 +243,18 @@ export const habitApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
+  update: (id, data) =>
+    fetchWithAuth(`/habits/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
 
   deleteHabit: (id) =>
+    fetchWithAuth(`/habits/${id}`, {
+      method: 'DELETE',
+    }),
+  delete: (id) =>
     fetchWithAuth(`/habits/${id}`, {
       method: 'DELETE',
     }),
@@ -221,11 +273,9 @@ export const habitApi = {
     });
   },
 
-  getHabitLogs: (id) =>
-    fetchWithAuth(`/habits/${id}/logs`),
+  getHabitLogs: (id) => fetchWithAuth(`/habits/${id}/logs`),
 
-  getHabitStatus: (id) =>
-    fetchWithAuth(`/habits/${id}/status`),
+  getHabitStatus: (id) => fetchWithAuth(`/habits/${id}/status`),
 };
 
 /**

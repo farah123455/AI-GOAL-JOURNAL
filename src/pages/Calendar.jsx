@@ -12,6 +12,7 @@ export default function CalendarPage() {
   const {
     goals,
     hasLoadedGoals,
+    initialLoading,
     addGoal,
     updateGoalInCache,
     recentlyCompletedGoal,
@@ -216,12 +217,16 @@ export default function CalendarPage() {
       <GoogleCalendarBanner />
 
       {/* MAIN CALENDAR COMPONENT */}
-      <GoalCalendar
-        goals={goals}
-        onQuickStatusChange={handleQuickStatusChange}
-        onOpenEdit={openEdit}
-        onSyncGoal={(g) => setSyncingGoal(g)}
-      />
+      {initialLoading || !hasLoadedGoals ? (
+        <GoalLoadingState />
+      ) : (
+        <GoalCalendar
+          goals={goals}
+          onQuickStatusChange={handleQuickStatusChange}
+          onOpenEdit={openEdit}
+          onSyncGoal={(g) => setSyncingGoal(g)}
+        />
+      )}
 
       {/* CREATE / EDIT GOAL MODAL */}
       {showCreateModal && (

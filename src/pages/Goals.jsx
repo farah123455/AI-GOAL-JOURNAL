@@ -27,6 +27,7 @@ export default function Goals() {
   const {
     goals,
     loading,
+    hasLoadedGoals,
     addGoal,
     updateGoalInCache,
     deleteGoalFromCache,
@@ -444,7 +445,7 @@ export default function Goals() {
         )}
 
         {/* View Mode Rendering: Calendar View vs Cards View */}
-        {loading ? (
+        {loading || !hasLoadedGoals ? (
           <GoalLoadingState />
         ) : viewMode === "calendar" ? (
           <GoalCalendar
@@ -596,13 +597,22 @@ export default function Goals() {
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-[11px] font-medium">
                           {goal.target_date
-                            ? `Target: ${new Date(goal.target_date).toLocaleDateString()}`
+                            ? `Target: ${(() => {
+                                const parts = String(goal.target_date).split("T")[0].split("-");
+                                return parts.length === 3 ? `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}/${parts[0]}` : new Date(goal.target_date).toLocaleDateString();
+                              })()}`
                             : `Created: ${new Date(goal.created_at || goal.createdAt).toLocaleDateString()}`}
                         </span>
 
                         {goal.estimated_days_remaining !== null && goal.estimated_days_remaining !== undefined && goal.status !== "Completed" && (
-                          <span className="text-[10px] font-semibold text-[#3A492E] bg-[#E2E9DF]/60 px-2 py-0.5 rounded-md border border-[#E2E9DF]">
-                            ~{goal.estimated_days_remaining} {goal.estimated_days_remaining === 1 ? 'day' : 'days'} left
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${
+                            goal.estimated_days_remaining === 0
+                              ? "text-amber-800 bg-amber-50 border-amber-200"
+                              : "text-[#3A492E] bg-[#E2E9DF]/60 border-[#E2E9DF]"
+                          }`}>
+                            {goal.estimated_days_remaining === 0
+                              ? "Due today"
+                              : `~${goal.estimated_days_remaining} ${goal.estimated_days_remaining === 1 ? 'day' : 'days'} left`}
                           </span>
                         )}
                       </div>
