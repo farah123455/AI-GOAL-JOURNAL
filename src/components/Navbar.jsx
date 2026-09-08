@@ -125,7 +125,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-[84px] shrink-0 items-center justify-between border-b border-[#E2E9DF] bg-[#EEF3EC]/90 px-6 backdrop-blur-md md:px-9">
+    <div className="flex h-[84px] w-full items-center justify-between px-6 md:px-9 bg-white">
       {/* LEFT: Dynamic Page Title */}
       <div className="flex items-center gap-2 pl-12 lg:pl-0">
         <h1
@@ -306,6 +306,6 @@ export default function Navbar() {
           )}
         </div>
       </div>
-    </header>
+    </div>
   );
 }

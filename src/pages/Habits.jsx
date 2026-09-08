@@ -270,6 +270,12 @@ export default function Habits() {
   }
 
   async function toggleCheck(habitId, date, isCompleting, btnEl) {
+    // Only the current day can be marked or modified
+    if (date !== today) {
+      setActionError("Only the current day can be marked as completed.");
+      return;
+    }
+
     const toggleKey = `${habitId}_${date}`;
     if (pendingToggles[toggleKey]) return; // prevent duplicate clicks while pending
 
@@ -576,27 +582,62 @@ export default function Habits() {
                     {week.map((date) => {
                       const checked = dates.includes(date);
                       const isToday = date === today;
+                      const isPast = date < today;
+                      const tooltipTitle = isToday
+                        ? date
+                        : isPast
+                        ? `${date} (Past day - read only)`
+                        : `${date} (Future day - read only)`;
+
                       return (
                         <button
                           key={date}
                           type="button"
-                          onClick={() => toggleCheck(habit.id, date, !checked)}
+                          disabled={!isToday}
+                          onClick={(e) => {
+                            if (!isToday) return;
+                            toggleCheck(habit.id, date, !checked, e.currentTarget);
+                          }}
                           aria-pressed={checked}
-                          aria-label={`${checked ? "Uncheck" : "Check off"} ${habit.name} on ${date}`}
-                          title={date}
-                          className={`flex flex-1 flex-col items-center gap-1 rounded-xl border py-2 transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4B5D3C] ${
-                            checked
-                              ? "border-[#4B5D3C] bg-[#E2E9DF]/60 text-[#3A492E]"
-                              : "border-slate-200 bg-slate-50 text-slate-400 hover:border-[#4B5D3C]/40 hover:text-[#4B5D3C]"
-                          } ${isToday ? "ring-2 ring-[#4B5D3C]/40 shadow-2xs" : ""}`}
+                          aria-label={`${checked ? "Completed" : "Incomplete"} ${habit.name} on ${date}${!isToday ? " (read-only)" : ""}`}
+                          title={tooltipTitle}
+                          className={`flex flex-1 flex-col items-center gap-1 rounded-xl border py-2 transition focus:outline-none ${
+                            isToday
+                              ? `cursor-pointer active:scale-95 ring-2 ring-[#4B5D3C]/40 shadow-2xs ${
+                                  checked
+                                    ? "border-[#4B5D3C] bg-[#E2E9DF]/60 text-[#3A492E]"
+                                    : "border-[#4B5D3C]/40 bg-[#E2E9DF]/20 text-slate-700 hover:border-[#4B5D3C] hover:bg-white"
+                                }`
+                              : `cursor-not-allowed ${
+                                  checked
+                                    ? "border-[#4B5D3C]/30 bg-[#E2E9DF]/40 text-[#3A492E] opacity-80"
+                                    : isPast
+                                    ? "border-slate-200 bg-slate-100/70 text-slate-400 opacity-60"
+                                    : "border-dashed border-slate-200 bg-slate-50/40 text-slate-300 opacity-40"
+                                }`
+                          }`}
                         >
                           <span className="text-[10px] font-bold">{dayLabel(date)}</span>
-                          <span className={`text-[11px] font-extrabold ${checked ? "text-[#3A492E]" : isToday ? "text-[#4B5D3C] font-black" : "text-slate-700"}`}>
+                          <span
+                            className={`text-[11px] font-extrabold ${
+                              checked
+                                ? "text-[#3A492E]"
+                                : isToday
+                                ? "text-[#4B5D3C] font-black"
+                                : "text-slate-600"
+                            }`}
+                          >
                             {formatDayNumberWithOrdinal(date)}
                           </span>
                           <span
-                            className={`flex h-5 w-5 items-center justify-center rounded-full mt-0.5 ${
-                              checked ? "bg-[#4B5D3C] text-white" : "bg-white border border-slate-200"
+                            className={`flex h-5 w-5 items-center justify-center rounded-full mt-0.5 transition ${
+                              checked
+                                ? "bg-[#4B5D3C] text-white shadow-2xs"
+                                : isToday
+                                ? "bg-white border-2 border-[#4B5D3C] hover:border-[#3A492E]"
+                                : isPast
+                                ? "bg-slate-100 border border-slate-300"
+                                : "bg-transparent border border-dashed border-slate-300"
                             }`}
                           >
                             {checked && <Check size={12} strokeWidth={3.5} />}

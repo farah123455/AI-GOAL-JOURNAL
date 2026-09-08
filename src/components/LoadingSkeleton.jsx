@@ -79,11 +79,22 @@ export function PencilLoader({ scale = "scale-75" }) {
 export function FullscreenLoadingScreen() {
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-50/90 backdrop-blur-md p-6 text-slate-900 font-sans animate-fade-in">
-      <div className="flex flex-col items-center justify-center text-center">
-        <PencilLoader />
-        <p className="mt-4 text-sm font-semibold text-slate-700 tracking-wide animate-pulse">
-          Loading AI Journal...
+      <div className="panel p-9 shadow-lg bg-white border border-[#E2E9DF] rounded-3xl text-center max-w-md w-full">
+        <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-white border border-[#E2E9DF] shadow-sm mb-5 p-3.5 animate-float">
+          <img src="/logo.png" alt="AI Journal Logo" className="h-full w-full object-contain rounded-xl" />
+          <Sparkles size={20} className="absolute -top-2 -right-2 text-[#4B5D3C] animate-sparkle-spin" />
+        </div>
+
+        <h2 className="text-2xl font-bold text-[#26261F] tracking-tight font-serif">AI Journal</h2>
+        <p className="mt-2 text-sm text-slate-600 font-medium">
+          Loading daily reflection workspace & goals...
         </p>
+
+        <div className="mt-6 flex items-center justify-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-[#4B5D3C] animate-bounce" style={{ animationDelay: "0ms" }} />
+          <div className="h-2 w-2 rounded-full bg-[#3A492E] animate-bounce" style={{ animationDelay: "150ms" }} />
+          <div className="h-2 w-2 rounded-full bg-[#A3B899] animate-bounce" style={{ animationDelay: "300ms" }} />
+        </div>
       </div>
     </div>
   );

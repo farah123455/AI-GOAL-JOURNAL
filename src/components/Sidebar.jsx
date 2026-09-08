@@ -86,18 +86,31 @@ const navigation = [
   },
 ];
 
-export default function Sidebar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(() => {
+export default function Sidebar({
+  isCollapsed: propIsCollapsed,
+  onToggleCollapse,
+  mobileOpen: propMobileOpen,
+  setMobileOpen: propSetMobileOpen,
+}) {
+  const [internalMobileOpen, setInternalMobileOpen] = useState(false);
+  const mobileOpen = propMobileOpen !== undefined ? propMobileOpen : internalMobileOpen;
+  const setMobileOpen = propSetMobileOpen || setInternalMobileOpen;
+
+  const [internalCollapsed, setInternalCollapsed] = useState(() => {
     return localStorage.getItem("sidebar_collapsed") === "true";
   });
+  const isCollapsed = propIsCollapsed !== undefined ? propIsCollapsed : internalCollapsed;
 
   const toggleCollapse = () => {
-    setIsCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem("sidebar_collapsed", String(next));
-      return next;
-    });
+    if (onToggleCollapse) {
+      onToggleCollapse();
+    } else {
+      setInternalCollapsed((prev) => {
+        const next = !prev;
+        localStorage.setItem("sidebar_collapsed", String(next));
+        return next;
+      });
+    }
   };
 
   return (
@@ -106,7 +119,7 @@ export default function Sidebar() {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="fixed left-4 top-4 z-40 flex h-11 w-11 items-center justify-center rounded-xl border border-[#E2E9DF] bg-white text-[#26261F] shadow-xs transition hover:scale-105 hover:border-[#4B5D3C] lg:hidden"
+        className="fixed left-4 top-4 z-40 flex h-11 w-11 items-center justify-center rounded-xl border border-[#E2E9DF] bg-white text-[#26261F] shadow-xs transition hover:scale-105 hover:border-[#4B5D3C] lg:hidden cursor-pointer"
       >
         <Menu size={20} />
       </button>
@@ -119,52 +132,78 @@ export default function Sidebar() {
         />
       )}
 
-      {/* STATIC SIDEBAR (Collapsible: 285px expanded / 80px contracted) */}
+      {/* STATIC SIDEBAR (Collapsible: 285px expanded / 76px contracted) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-screen shrink-0 flex-col border-r border-[#E2E9DF] bg-white transition-all duration-300 ease-out lg:static lg:translate-x-0 ${
-          isCollapsed ? "w-[80px]" : "w-[285px]"
+        className={`fixed inset-y-0 left-0 z-50 flex h-full shrink-0 flex-col border-r border-[#E2E9DF] bg-white transition-all duration-300 ease-out lg:static lg:translate-x-0 ${
+          isCollapsed ? "w-[76px]" : "w-[285px]"
         } ${mobileOpen ? "translate-x-0 w-[285px]" : "-translate-x-full"}`}
       >
-        {/* BRAND HEADER */}
-        <div className={`flex h-[84px] shrink-0 items-center justify-between border-b border-[#E2E9DF] ${isCollapsed ? "px-3 justify-center" : "px-6"}`}>
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white border border-[#E2E9DF] shadow-xs p-1 animate-float overflow-hidden">
+        {/* MOBILE ONLY BRAND HEADER (Desktop brand is permanently fixed in top header) */}
+        <div className="flex h-[84px] shrink-0 items-center justify-between border-b border-[#E2E9DF] px-6 lg:hidden">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white border border-[#E2E9DF] shadow-xs p-1 animate-float overflow-hidden">
               <img src="/logo.png" alt="AI Journal Logo" className="h-full w-full object-contain rounded-lg" />
             </div>
-            {!isCollapsed && (
-              <div className="min-w-0">
-                <p className="text-base font-bold tracking-tight text-[#26261F] font-serif truncate">
-                  AI JOURNAL
-                </p>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-[#4B5D3C] font-extrabold truncate">
-                  Growth workspace
-                </p>
-              </div>
-            )}
+            <div>
+              <p className="text-base font-bold tracking-tight text-[#26261F] font-serif">
+                AI JOURNAL
+              </p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[#4B5D3C] font-extrabold">
+                Growth workspace
+              </p>
+            </div>
           </div>
 
-          {/* Mobile Close Button Only */}
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="text-slate-500 hover:text-[#26261F] lg:hidden"
+            className="text-slate-500 hover:text-[#26261F] p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+            title="Close navigation"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* NAVIGATION */}
-        <div className={`flex-1 py-6 overflow-y-auto space-y-6 ${isCollapsed ? "px-2" : "px-4"}`}>
-          {navigation.map((section) => (
+        {/* DESKTOP COLLAPSED TOP ARROW: Expand button centered at top of mini rail */}
+        {isCollapsed && (
+          <div className="hidden lg:flex items-center justify-center pt-5 pb-2">
+            <button
+              type="button"
+              onClick={toggleCollapse}
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#E2E9DF] bg-[#F4F1E8] text-[#4B5D3C] hover:bg-[#E2E9DF] transition cursor-pointer shadow-2xs"
+              title="Expand sidebar menu"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* NAVIGATION LINKS CONTAINER WITH SAFE BOTTOM PADDING */}
+        <div className={`flex-1 overflow-y-auto pb-10 ${isCollapsed ? "px-2 py-3 space-y-3" : "px-4 py-6 space-y-6"}`}>
+          {navigation.map((section, sIdx) => (
             <div key={section.label}>
               {!isCollapsed ? (
-                <p className="mb-2.5 px-3 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#4B5D3C]">
-                  {section.label}
-                </p>
+                <div className="flex items-center justify-between px-3 mb-2.5">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#4B5D3C]">
+                    {section.label}
+                  </p>
+                  {/* Arrow collapse button on the Overview line towards the scrollbar */}
+                  {section.label === "Overview" && (
+                    <button
+                      type="button"
+                      onClick={toggleCollapse}
+                      className="hidden lg:flex h-6 w-6 items-center justify-center rounded-md border border-[#E2E9DF] bg-[#F4F1E8] text-[#4B5D3C] hover:bg-[#E2E9DF] transition cursor-pointer shadow-2xs"
+                      title="Collapse sidebar menu"
+                    >
+                      <ChevronLeft size={14} />
+                    </button>
+                  )}
+                </div>
               ) : (
-                <div className="my-2 border-t border-[#E2E9DF]/80 mx-2" />
+                sIdx > 0 && <div className="my-2 border-t border-[#E2E9DF]/80 mx-2" />
               )}
-              <div className="space-y-1.5">
+
+              <div className={`space-y-1.5 ${isCollapsed ? "flex flex-col items-center" : ""}`}>
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -172,23 +211,27 @@ export default function Sidebar() {
                       key={item.path}
                       to={item.path}
                       onClick={() => setMobileOpen(false)}
-                      title={isCollapsed ? item.name : undefined}
+                      title={item.name}
                       className={({ isActive }) =>
-                        `group relative flex items-center rounded-xl transition-all duration-200 ${
+                        `group relative flex items-center transition-all duration-200 ${
                           isCollapsed
-                            ? "justify-center h-11 w-11 mx-auto"
-                            : "gap-3.5 px-3.5 py-3 text-[14px] font-medium"
-                        } ${
-                          isActive
-                            ? "bg-[#E2E9DF]/70 text-[#4B5D3C] shadow-xs font-bold"
-                            : "text-[#26261F] hover:bg-[#F4F1E8] hover:text-[#4B5D3C]"
+                            ? `justify-center h-11 w-11 rounded-xl mx-auto ${
+                                isActive
+                                  ? "bg-[#E2E9DF]/70 text-[#4B5D3C] shadow-xs font-bold"
+                                  : "text-slate-500 hover:bg-[#F4F1E8] hover:text-[#4B5D3C]"
+                              }`
+                            : `gap-3.5 rounded-xl px-3.5 py-3 text-[14px] font-medium ${
+                                isActive
+                                  ? "bg-[#E2E9DF]/70 text-[#4B5D3C] shadow-xs font-bold"
+                                  : "text-[#26261F] hover:bg-[#F4F1E8] hover:text-[#4B5D3C]"
+                              }`
                         }`
                       }
                     >
                       {({ isActive }) => (
                         <>
-                          {isActive && (
-                            <span className={`absolute top-1/2 -translate-y-1/2 rounded-r-full bg-[#4B5D3C] ${isCollapsed ? "left-0 h-5 w-1" : "left-0 h-6 w-1"}`} />
+                          {isActive && !isCollapsed && (
+                            <span className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r-full bg-[#4B5D3C] h-6 w-1" />
                           )}
                           <Icon
                             size={19}
@@ -215,33 +258,6 @@ export default function Sidebar() {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* BOTTOM QUICK TOGGLE FOOTER */}
-        <div className={`p-3 border-t border-[#E2E9DF] flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
-          {!isCollapsed && (
-            <span className="text-[11px] font-semibold text-slate-500 pl-2">
-              Sidebar View
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={toggleCollapse}
-            title={isCollapsed ? "Expand Sidebar" : "Contract Sidebar"}
-            className={`flex items-center gap-2 rounded-xl transition-all duration-200 ${
-              isCollapsed
-                ? "h-10 w-10 justify-center bg-[#F4F1E8] text-[#4B5D3C] hover:bg-[#E2E9DF] border border-[#E2E9DF]"
-                : "px-3 py-2 text-xs font-bold text-[#4B5D3C] bg-[#F4F1E8] hover:bg-[#E2E9DF] border border-[#E2E9DF]"
-            }`}
-          >
-            {isCollapsed ? (
-              <ChevronRight size={18} />
-            ) : (
-              <>
-                <ChevronLeft size={16} /> Contract Sidebar
-              </>
-            )}
-          </button>
         </div>
       </aside>
     </>

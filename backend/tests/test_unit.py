@@ -248,3 +248,30 @@ def test_parse_due_date_ordinal_expressions():
     title1 = clean_title(text1)
     assert title1 == "Submit Maths Assignment"
 
+
+def test_habit_day_completion_restriction(client_with_mock_auth):
+    from datetime import timedelta
+    # 1. Create a habit
+    create_res = client_with_mock_auth.post(
+        "/api/v1/habits",
+        json={"name": "Morning Meditation", "frequency": "daily"}
+    )
+    assert create_res.status_code == 201
+    habit_id = create_res.json()["id"]
+
+    # 2. Complete for today (should succeed)
+    today_res = client_with_mock_auth.post(f"/api/v1/habits/{habit_id}/complete")
+    assert today_res.status_code == 201
+
+    # 3. Attempt to complete for past date (e.g. 5 days ago - should be rejected with 400)
+    past_date = (datetime.utcnow() - timedelta(days=5)).isoformat()
+    past_res = client_with_mock_auth.post(f"/api/v1/habits/{habit_id}/complete?completed_date={past_date}")
+    assert past_res.status_code == 400
+    assert "current day" in past_res.json()["detail"]
+
+    # 4. Attempt to complete for future date (e.g. 3 days ahead - should be rejected with 400)
+    future_date = (datetime.utcnow() + timedelta(days=3)).isoformat()
+    future_res = client_with_mock_auth.post(f"/api/v1/habits/{habit_id}/complete?completed_date={future_date}")
+    assert future_res.status_code == 400
+    assert "current day" in future_res.json()["detail"]
+

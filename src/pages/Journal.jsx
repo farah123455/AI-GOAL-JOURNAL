@@ -135,6 +135,7 @@ export default function Journal() {
       setLatestAnalysis(result.ai_analysis);
       setSelectedJournal(result);
       setShowCompose(false);
+      setCurrentPage(1);
       if (source === "text") {
         setEntryText("");
       }
@@ -260,7 +261,24 @@ export default function Journal() {
           <div className="lg:col-span-7 xl:col-span-8 space-y-6 min-w-0">
             {/* 1. WRITE REFLECTION PANEL */}
             {showCompose && (
-              <section className="panel p-6 sm:p-7 shadow-xs bg-white border border-[#E2E9DF] rounded-2xl animate-rise">
+              <section className="panel p-6 sm:p-7 shadow-xs bg-white border border-[#E2E9DF] rounded-2xl animate-rise relative overflow-hidden">
+                {submitting && (
+                  <div className="absolute inset-0 z-20 bg-white/85 backdrop-blur-[2px] rounded-2xl flex flex-col items-center justify-center p-6 text-center animate-fade-in select-none">
+                    <div className="relative mb-4 flex items-center justify-center">
+                      <div className="h-14 w-14 rounded-full border-4 border-[#E2E9DF] border-t-[#4B5D3C] animate-spin" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Sparkles size={20} className="text-[#4B5D3C] animate-pulse" />
+                      </div>
+                    </div>
+                    <h3 className="text-base font-bold text-[#26261F] mb-1.5 font-serif">
+                      Analyzing reflection with Gemini...
+                    </h3>
+                    <p className="text-xs text-slate-500 max-w-sm font-medium leading-relaxed">
+                      Please wait while we extract your tracked goals, completed activities, and active blockers. Your text has been locked.
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 mb-4 border-b border-[#E2E9DF]">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-[#4B5D3C]">
@@ -275,22 +293,24 @@ export default function Journal() {
                   <div className="flex items-center gap-1 rounded-xl border border-[#E2E9DF] bg-[#F4F1E8] p-1 self-start sm:self-auto">
                     <button
                       onClick={() => setActiveTab("text")}
+                      disabled={submitting}
                       className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
                         activeTab === "text"
                           ? "bg-[#4B5D3C] text-white shadow-2xs font-bold"
                           : "text-slate-600 hover:text-[#26261F]"
-                      }`}
+                      } ${submitting ? "opacity-60 cursor-not-allowed" : ""}`}
                     >
                       <FileText size={15} />
                       Text Mode
                     </button>
                     <button
                       onClick={() => setActiveTab("voice")}
+                      disabled={submitting}
                       className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
                         activeTab === "voice"
                           ? "bg-[#4B5D3C] text-white shadow-2xs font-bold"
                           : "text-slate-600 hover:text-[#26261F]"
-                      }`}
+                      } ${submitting ? "opacity-60 cursor-not-allowed" : ""}`}
                     >
                       <Mic size={15} />
                       Voice Mode (Whisper)
@@ -318,7 +338,9 @@ export default function Journal() {
                       rows={6}
                       value={entryText}
                       onChange={(e) => setEntryText(e.target.value)}
-                      className="w-full p-4 text-sm text-[#26261F] placeholder:text-slate-400 leading-relaxed bg-white border border-[#E2E9DF] rounded-xl outline-none transition-all duration-200 focus:border-[#4B5D3C] focus:ring-2 focus:ring-[#4B5D3C]/20"
+                      disabled={submitting}
+                      readOnly={submitting}
+                      className="w-full p-4 text-sm text-[#26261F] placeholder:text-slate-400 leading-relaxed bg-white border border-[#E2E9DF] rounded-xl outline-none transition-all duration-200 focus:border-[#4B5D3C] focus:ring-2 focus:ring-[#4B5D3C]/20 disabled:bg-[#F4F1E8]/70 disabled:cursor-not-allowed disabled:text-slate-500 disabled:select-none"
                       placeholder="Today I managed to build... Mention specific hours, goal progress, or task blockers."
                     />
                   </div>
@@ -341,7 +363,7 @@ export default function Journal() {
                   <button
                     onClick={() => handleSave(entryText, "text")}
                     disabled={submitting || !entryText.trim()}
-                    className="primary-button px-5 py-2.5 text-xs sm:text-sm font-bold shadow-xs"
+                    className="primary-button px-5 py-2.5 text-xs sm:text-sm font-bold shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Sparkles size={16} />
                     {submitting ? "Analyzing with Gemini..." : "Analyze Entry ✨"}
@@ -520,7 +542,7 @@ export default function Journal() {
 
           {/* RIGHT SIDEBAR COLUMN ("AI Journal History") */}
           <div className="lg:col-span-5 xl:col-span-4 min-w-0">
-            <section className="sticky top-24 panel p-5 sm:p-6 shadow-xs bg-white border border-[#E2E9DF] rounded-2xl">
+            <section className="sticky top-24 panel p-5 sm:p-6 shadow-xs bg-white border border-[#E2E9DF] rounded-2xl overflow-hidden min-w-0">
               <div className="flex items-center justify-between gap-3 mb-3.5 pb-2.5 border-b border-[#E2E9DF]">
                 <h2 className="text-base font-bold text-[#26261F]">
                   AI Journal History ({journals.length})
