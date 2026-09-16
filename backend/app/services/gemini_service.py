@@ -6,6 +6,8 @@ from typing import Optional, Any
 from google import genai
 from app.core.config import settings
 from datetime import datetime, timezone, timedelta
+from google.genai import types
+from app.schemas.roadmap import RoadmapResponse
 
 logger = logging.getLogger(__name__)
 
@@ -419,6 +421,30 @@ Return ONLY a valid JSON object strictly matching this schema:
         parsed["goalsExtracted"] = goals_extracted
         parsed["completedTasks"] = completed_tasks
         return parsed
+
+    def generate_goal_roadmap(self, goal_title: str, timeline: str = "Self-paced", level: str = "Beginner") -> RoadmapResponse:
+        system_instruction = (
+            "You are an expert curriculum designer and personal achievement coach. "
+            "Your task is to break down any goal into a sequential, practical roadmap.\n"
+            "Constraints:\n"
+            "1. 4 to 8 sequential milestones.\n"
+            "2. Order by logical dependency.\n"
+            "3. Actionable outcomes and concrete capstone checkpoints.\n"
+            "4. Provide realistic estimated durations."
+        )
+
+        user_prompt = f"Generate a structured learning roadmap for: {goal_title} (Pace: {timeline}, Level: {level})"
+
+        response = self.client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json",
+                response_schema=RoadmapResponse,
+            ),
+        )
+        return response.parsed
 
     def _rule_based_fallback(self, content: str, error_note: str = "") -> dict[str, Any]:
         """
