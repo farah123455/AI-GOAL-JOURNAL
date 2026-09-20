@@ -135,8 +135,9 @@ export default function Progress() {
   const [histLoading, setHistLoading] = useState({});
   const [histError, setHistError] = useState({});
 
-  // Analytics period ("all" | "7" | "30" | "90") used to request period-based progress gain.
-  const [periodDays, setPeriodDays] = useState("all");
+  // Analytics period ("7" | "30" | "90" | "all") used to request period-based progress gain.
+  // Defaults to 30 days per the Progress Period requirement.
+  const [periodDays, setPeriodDays] = useState("30");
 
   // Default to the first available goal.
   const activeGoalId = goals.some((g) => g.id === selectedGoalId)
@@ -209,6 +210,17 @@ export default function Progress() {
     latest && previous
       ? latest.progress_value - previous.progress_value
       : null;
+
+  // True when the selected period window contains at least one real progress
+  // update (approximates the backend's `days` cutoff for messaging only —
+  // displayed values always come from the API response, never invented).
+  const hasUpdatesInPeriod =
+    periodDays === "all" ||
+    progressHistory.some(
+      (r) =>
+        Date.now() - new Date(r.created_at).getTime() <=
+        Number(periodDays) * 24 * 60 * 60 * 1000
+    );
 
   const currentTrend = selectedGoal ? trendByGoal[selectedGoal.id]?.trend_direction : null;
 
@@ -403,26 +415,56 @@ export default function Progress() {
                   )}
                 </div>
 
-                {goals.length > 1 && (
-                  <div className="relative">
-                    <select
-                      value={activeGoalId || ""}
-                      onChange={(e) => setSelectedGoalId(e.target.value)}
-                      className="appearance-none rounded-xl border border-[#E2E9DF] bg-white pl-3 pr-8 py-1.5 text-xs font-semibold text-[#26261F] shadow-2xs transition focus:border-[#4B5D3C] focus:ring-1 focus:ring-[#4B5D3C]"
-                      aria-label="Select goal to view history"
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Progress Period selector — always visible */}
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="progress-period"
+                      className="whitespace-nowrap text-xs font-semibold text-slate-500"
                     >
-                      {goals.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {g.title || "Untitled Goal"}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      size={14}
-                      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
+                      Progress Period
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="progress-period"
+                        aria-label="Select progress analytics period"
+                        value={periodDays}
+                        onChange={(e) => setPeriodDays(e.target.value)}
+                        className="appearance-none rounded-xl border border-[#E2E9DF] bg-white pl-3 pr-8 py-1.5 text-xs font-semibold text-[#26261F] shadow-2xs transition focus:border-[#4B5D3C] focus:ring-1 focus:ring-[#4B5D3C]"
+                      >
+                        <option value="7">Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="all">All time</option>
+                      </select>
+                      <ChevronDown
+                        size={14}
+                        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+                    </div>
                   </div>
-                )}
+
+                  {goals.length > 1 && (
+                    <div className="relative">
+                      <select
+                        value={activeGoalId || ""}
+                        onChange={(e) => setSelectedGoalId(e.target.value)}
+                        className="appearance-none rounded-xl border border-[#E2E9DF] bg-white pl-3 pr-8 py-1.5 text-xs font-semibold text-[#26261F] shadow-2xs transition focus:border-[#4B5D3C] focus:ring-1 focus:ring-[#4B5D3C]"
+                        aria-label="Select goal to view history"
+                      >
+                        {goals.map((g) => (
+                          <option key={g.id} value={g.id}>
+                            {g.title || "Untitled Goal"}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        size={14}
+                        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {goals.length === 0 ? (
@@ -507,24 +549,18 @@ export default function Progress() {
                           <div className="rounded-xl bg-white p-3 border border-[#E2E9DF]">
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Period Progress Gain</span>
-                              <select
-                                aria-label="Select progress analytics period"
-                                value={periodDays}
-                                onChange={(e) => setPeriodDays(e.target.value)}
-                                className="rounded-lg border border-[#E2E9DF] bg-white px-2 py-1 text-[11px] font-semibold text-[#26261F]"
-                              >
-                                <option value="7">7 days</option>
-                                <option value="30">30 days</option>
-                                <option value="90">90 days</option>
-                                <option value="all">All time</option>
-                              </select>
+                              {/* Period is selected via the "Progress Period" control in the section header */}
                             </div>
                             <div className="mt-1 flex items-baseline gap-2">
                               <span className="text-base font-extrabold text-[#26261F]">
                                 {currentTrend?.period_progress_gain != null ? formatChange(currentTrend.period_progress_gain) : "—"}
                               </span>
                               <span className="text-[10px] text-slate-400 font-medium">
-                                {currentTrend?.period_days ? `last ${currentTrend.period_days}d` : "all time"}
+                                {periodDays !== "all" && !hasUpdatesInPeriod
+                                  ? "No progress updates found for this period."
+                                  : currentTrend?.period_days
+                                  ? `last ${currentTrend.period_days}d`
+                                  : "all time"}
                               </span>
                             </div>
                           </div>
