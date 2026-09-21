@@ -90,4 +90,17 @@ class GoogleCalendarToken:
     google_email: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
+
+@dataclass
+class Roadmap:
+    id: str
+    goal_id: str
+    user_id: str
+    goal_title: str
+    total_milestones: int
+    estimated_total_duration: str
+    milestones: list[dict[str, Any]] = field(default_factory=list)
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=datetime.utcnow)
+
     

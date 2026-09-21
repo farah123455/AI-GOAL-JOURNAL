@@ -6,6 +6,8 @@ from typing import Optional, Any
 from google import genai
 from app.core.config import settings
 from datetime import datetime, timezone, timedelta
+from google.genai import types
+from app.schemas.roadmap import RoadmapResponse, Milestone
 
 logger = logging.getLogger(__name__)
 
@@ -419,6 +421,93 @@ Return ONLY a valid JSON object strictly matching this schema:
         parsed["goalsExtracted"] = goals_extracted
         parsed["completedTasks"] = completed_tasks
         return parsed
+
+    def generate_goal_roadmap(
+        self, goal_title: str, timeline: str = "Self-paced", level: str = "Beginner", goal_id: Optional[str] = None
+    ) -> RoadmapResponse:
+        """
+        Generates a structured learning roadmap for a given goal title, timeline, and level.
+        Falls back to rule-based roadmap generator if Gemini API key is missing or fails.
+        """
+        system_instruction = (
+            "You are an expert curriculum designer and personal achievement coach. "
+            "Your task is to break down any goal into a sequential, practical roadmap.\n"
+            "Constraints:\n"
+            "1. 4 to 8 sequential milestones.\n"
+            "2. Order by logical dependency.\n"
+            "3. Actionable outcomes and concrete capstone checkpoints.\n"
+            "4. Provide realistic estimated durations."
+        )
+
+        user_prompt = f"Generate a structured learning roadmap for: {goal_title} (Pace: {timeline}, Level: {level})"
+
+        try:
+            client = self._get_client()
+            response = client.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=user_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    response_mime_type="application/json",
+                    response_schema=RoadmapResponse,
+                ),
+            )
+            parsed: RoadmapResponse = response.parsed
+            if parsed and parsed.milestones:
+                parsed.goal_id = goal_id
+                parsed.goal_title = goal_title
+                parsed.total_milestones = len(parsed.milestones)
+                completed_count = sum(1 for m in parsed.milestones if m.completed)
+                parsed.completed_count = completed_count
+                parsed.progress_percentage = int((completed_count / len(parsed.milestones)) * 100) if parsed.milestones else 0
+                return parsed
+        except Exception as e:
+            logger.warning("Gemini roadmap generation fallback triggered: %s", e)
+
+        fallback = self._rule_based_roadmap_fallback(goal_title, timeline, level)
+        fallback.goal_id = goal_id
+        return fallback
+
+    def _rule_based_roadmap_fallback(
+        self, goal_title: str, timeline: str = "Self-paced", level: str = "Beginner"
+    ) -> RoadmapResponse:
+        """Rule-based fallback for generating structured roadmaps when Gemini API is unavailable."""
+        title_lower = goal_title.lower()
+        if "python" in title_lower:
+            milestones = [
+                Milestone(step_number=1, title="Python Fundamentals & Syntax", short_description="Variables, data types, loops, and control flow", estimated_duration="1 week", key_action_item="Write 5 basic Python scripts solving math & text problems", completed=False),
+                Milestone(step_number=2, title="Data Structures & OOP", short_description="Lists, dicts, tuples, classes, and inheritance", estimated_duration="1-2 weeks", key_action_item="Build a CLI-based task manager using classes", completed=False),
+                Milestone(step_number=3, title="Modules & Packages", short_description="Working with PyPI, virtualenvs, pip, and standard library", estimated_duration="1 week", key_action_item="Create a custom module and consume external APIs", completed=False),
+                Milestone(step_number=4, title="Backend API Development", short_description="FastAPI / Flask basics, endpoints, and JSON responses", estimated_duration="2 weeks", key_action_item="Build a RESTful API with CRUD operations", completed=False),
+                Milestone(step_number=5, title="Capstone Project & Testing", short_description="Writing pytest unit tests and deploying the application", estimated_duration="2 weeks", key_action_item="Deploy your Python web service online", completed=False),
+            ]
+        elif "frontend" in title_lower or "web" in title_lower or "html" in title_lower:
+            milestones = [
+                Milestone(step_number=1, title="Semantic HTML5 & Accessible Structure", short_description="Master document structure, semantic tags, forms, and ARIA basics", estimated_duration="1-2 weeks", key_action_item="Build an accessible multi-page product landing page", completed=False),
+                Milestone(step_number=2, title="Modern CSS, Flexbox & Grid", short_description="Box model, responsive design with media queries, Flexbox, and Grid", estimated_duration="2 weeks", key_action_item="Style landing page to be responsive across all devices", completed=False),
+                Milestone(step_number=3, title="JavaScript Fundamentals & DOM", short_description="ES6+ syntax, functions, events, DOM manipulation, and fetch API", estimated_duration="2 weeks", key_action_item="Build an interactive web app with dynamic UI updates", completed=False),
+                Milestone(step_number=4, title="React Fundamentals", short_description="Components, props, state, hooks (useState, useEffect), and routing", estimated_duration="2 weeks", key_action_item="Convert JavaScript app into a component-driven React app", completed=False),
+                Milestone(step_number=5, title="State Management & Production Build", short_description="Context API, state optimization, Vite bundling, and deployment", estimated_duration="1-2 weeks", key_action_item="Deploy React application to Vercel/Netlify", completed=False),
+            ]
+        else:
+            milestones = [
+                Milestone(step_number=1, title=f"Foundation & Core Concepts of {goal_title}", short_description="Understand essential principles, terminology, and setup", estimated_duration="1 week", key_action_item="Complete foundational reading and setup dev environment", completed=False),
+                Milestone(step_number=2, title="Hands-on Practice & Fundamentals", short_description="Practice core skills through small exercises and tutorials", estimated_duration="1-2 weeks", key_action_item="Complete 3 hands-on practical exercises", completed=False),
+                Milestone(step_number=3, title="Intermediate Techniques & Projects", short_description="Combine skills into structured mini-projects", estimated_duration="2 weeks", key_action_item="Build first functional mini-project", completed=False),
+                Milestone(step_number=4, title="Advanced Optimization & Mastery", short_description="Refine skills, address edge cases, and best practices", estimated_duration="2 weeks", key_action_item="Perform peer review / self-audit of your project", completed=False),
+                Milestone(step_number=5, title="Capstone Delivery & Reflection", short_description="Deliver final milestone project and evaluate outcome", estimated_duration="1 week", key_action_item="Publish capstone project and document learnings", completed=False),
+            ]
+
+        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        return RoadmapResponse(
+            goal_title=goal_title,
+            total_milestones=len(milestones),
+            estimated_total_duration=timeline,
+            milestones=milestones,
+            completed_count=0,
+            progress_percentage=0,
+            created_at=now_str,
+        )
 
     def _rule_based_fallback(self, content: str, error_note: str = "") -> dict[str, Any]:
         """
