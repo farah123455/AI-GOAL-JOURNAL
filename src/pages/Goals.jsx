@@ -11,8 +11,10 @@ import {
   LayoutGrid,
   CalendarDays,
   Calendar,
+  Route,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useData } from "../context/DataContext";
 import { useModal, useToast } from "../context/ModalContext";
 import { goalApi } from "../services/api";
@@ -35,6 +37,8 @@ export default function Goals() {
     triggerGoalCompletion,
     clearCompletedGoalTrigger,
   } = useData();
+
+  const navigate = useNavigate();
 
   const [statusFilter, setStatusFilter] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // "grid" | "calendar"
@@ -535,6 +539,14 @@ export default function Goals() {
                         </div>
 
                         <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => navigate(`/goals/${goal.id}/roadmap`)}
+                            className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-bold text-[#4B5D3C] hover:bg-[#E2E9DF]/70 transition"
+                            title="View AI Roadmap"
+                          >
+                            <Route size={15} />
+                            Roadmap
+                          </button>
                           <button
                             onClick={() => setSyncingGoal(goal)}
                             className={`p-1.5 transition rounded-lg hover:bg-slate-100 ${

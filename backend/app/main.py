@@ -14,9 +14,12 @@ from app.api.v1.roadmap import router as roadmap_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import threading
-    from app.services.whisper_service import whisper_service
-    threading.Thread(target=whisper_service.preload, daemon=True).start()
+    # NOTE: Do NOT preload the Whisper model at startup. On this machine the
+    # faster-whisper/ctranslate2 native load inside a background thread
+    # hard-crashes the interpreter (access violation, 0xC0000005), killing
+    # uvicorn seconds after boot. The model is still lazy-loaded exactly once
+    # as a singleton on the first /voice/transcribe call (see
+    # whisper_service._load_model), so voice functionality is unaffected.
     yield
 
 app = FastAPI(
