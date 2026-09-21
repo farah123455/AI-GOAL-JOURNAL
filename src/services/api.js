@@ -1,4 +1,5 @@
 import { auth } from '../firebase';
+import { isDevPreview } from '../config/devPreview'; // DEV PREVIEW ONLY (see config/devPreview.js)
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
 
@@ -8,6 +9,18 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api
 export async function getAuthHeaders() {
   const currentUser = auth.currentUser;
   if (!currentUser) {
+    // =========================================================================
+    // DEVELOPMENT / LOCAL PREVIEW ONLY — when the dev-preview login bypass is
+    // active (VITE_DEV_PREVIEW=true in the dev server), there is no real
+    // Firebase session, so send the backend's accepted mock dev token instead
+    // of no header at all. Never active in production builds
+    // (see config/devPreview.js). Real Firebase auth is untouched otherwise.
+    // =========================================================================
+    if (isDevPreview) {
+      return {
+        Authorization: 'Bearer mock-dev-token-123',
+      };
+    }
     return {};
   }
   const token = await currentUser.getIdToken();

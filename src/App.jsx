@@ -15,6 +15,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Habits from "./pages/Habits";
 import Auth from "./pages/Auth";
+import RoadmapPage from "./pages/Roadmap";
 import { useAuth } from "./context/AuthContext";
 import { FullscreenLoadingScreen } from "./components/LoadingSkeleton";
 
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/goals" element={<Goals />} />
+        <Route path="/goals/:goalId/roadmap" element={<RoadmapPage />} />
         <Route path="/habits" element={<Habits />} />
         <Route path="/journal" element={<Journal />} />
         <Route path="/coach" element={<AiCoach />} />
