@@ -284,3 +284,57 @@ class HabitLogORM(Base):
         DateTime,
         default=datetime.utcnow
     )
+
+
+class RoadmapORM(Base):
+    __tablename__ = "roadmaps"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    goal_id = Column(
+        Integer,
+        ForeignKey("goals.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    goal_title = Column(
+        String,
+        nullable=False
+    )
+
+    total_milestones = Column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+
+    estimated_total_duration = Column(
+        String,
+        nullable=True,
+        default="Self-paced"
+    )
+
+    milestones = Column(
+        JSON,
+        nullable=False,
+        default=list
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
