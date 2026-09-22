@@ -94,10 +94,6 @@ export default function Landing() {
                   Sign In to Workspace
                 </button>
               </div>
-
-              <p className="mt-4 text-[11px] text-slate-500 font-medium">
-                🔒 Privacy First • Local CPU Whisper speech-to-text • Field-level AES-256 encryption
-              </p>
             </div>
 
             {/* Right Column: 3D Mountain Journey Graphic Card (Balanced Proportions) */}
@@ -310,14 +306,14 @@ export default function Landing() {
                   04 — COACH
                 </div>
                 <h3 className="text-2xl font-bold font-serif text-[#26261F] mb-3">
-                  Get Personalized Accountability
+                  Get Personalized Coaching
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium mb-4">
                   Your AI Coach gives you insights, next actions, motivation, reminders, and accountability based on your actual progress.
                 </p>
                 <div className="flex items-center gap-3 text-xs font-bold text-[#C1622C]">
                   <span className="flex items-center gap-1.5 bg-[#F4F1E8] px-3 py-1.5 rounded-full border border-[#E2E9DF] text-[11px]">
-                    <Trophy size={13} /> Weekly AI Coach Reviews & Insights
+                    <Trophy size={13} /> AI Coach Reviews & Weekly Insights
                   </span>
                 </div>
               </div>

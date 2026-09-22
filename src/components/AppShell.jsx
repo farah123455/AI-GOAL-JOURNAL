@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 
 export default function AppShell() {
   const location = useLocation();
+  const mainRef = useRef(null);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     try {
@@ -16,9 +17,13 @@ export default function AppShell() {
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Auto-close mobile drawer on route navigation
+  // Auto-close mobile drawer and scroll workspace to top on route navigation
   useEffect(() => {
     setMobileOpen(false);
+    if (mainRef.current) {
+      mainRef.current.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [location.pathname]);
 
   const toggleSidebar = () => {
@@ -68,7 +73,7 @@ export default function AppShell() {
         />
 
         {/* Main page content area */}
-        <main className="flex-1 min-w-0 overflow-y-auto bg-[#F4F1E8]/30 transition-all duration-300 ease-in-out">
+        <main ref={mainRef} className="flex-1 min-w-0 overflow-y-auto bg-[#F4F1E8]/30 transition-all duration-300 ease-in-out">
           <div key={location.pathname} className="page-enter min-h-full">
             <Outlet />
           </div>

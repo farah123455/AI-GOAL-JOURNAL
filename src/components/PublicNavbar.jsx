@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowRight, Menu, X, Sparkles, Compass, Layers, Flag } from 'lucide-react';
+import { ArrowRight, Menu, X, Compass, Layers, Flag } from 'lucide-react';
 
 export default function PublicNavbar() {
   const navigate = useNavigate();
@@ -78,15 +78,10 @@ export default function PublicNavbar() {
             <span className="absolute inset-0 bg-[#4B5D3C]/5 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <p className="text-lg font-bold tracking-tight text-[#26261F] font-serif leading-none">
-                AI JOURNAL
-              </p>
-              <span className="hidden sm:inline-flex items-center gap-0.5 rounded-full bg-[#E2E9DF] px-2 py-0.5 text-[9px] font-extrabold uppercase text-[#4B5D3C] border border-[#4B5D3C]/20">
-                <Sparkles size={10} /> AI
-              </span>
-            </div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-[#4B5D3C] font-extrabold mt-0.5">
+            <p className="text-lg font-bold tracking-tight text-[#26261F] font-serif leading-none">
+              AI JOURNAL
+            </p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[#4B5D3C] font-extrabold mt-1">
               Growth Workspace
             </p>
           </div>
