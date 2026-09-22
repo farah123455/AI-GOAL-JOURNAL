@@ -1,6 +1,40 @@
 import { auth } from '../firebase';
+import { isDevPreview } from '../config/devPreview'; // DEV PREVIEW ONLY (see config/devPreview.js)
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
+/** Port the FastAPI backend uses when the API endpoint is not explicitly set. */
+const DEFAULT_BACKEND_PORT = 8000;
+
+/**
+ * Resolve the API endpoint for ANY machine — never hard-code 127.0.0.1, which
+ * would silently point every teammate (Farah/Swayam/…) at their own localhost.
+ *
+ *   1. VITE_API_BASE_URL when set  -> deployed / custom backend (see .env.example).
+ *   2. Vite dev server             -> same-origin "/api/v1", proxied to the
+ *                                     backend by vite.config.js. Works on
+ *                                     localhost, 127.0.0.1, a LAN IP, etc. and
+ *                                     needs no CORS configuration.
+ *   3. Production build            -> same host that served the app, backend
+ *                                     port 8000 (unless VITE_API_BASE_URL is set).
+ *
+ * Each developer only has to run the backend next to the frontend; nobody has to
+ * borrow someone else's localhost or edit this file.
+ */
+function resolveApiBase() {
+  const configured = (import.meta.env.VITE_API_BASE_URL || '').trim();
+  if (configured) return configured.replace(/\/+$/, '');
+
+  if (import.meta.env.DEV) return '/api/v1';
+
+  if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+    const { protocol, hostname, port } = window.location;
+    const portSuffix = port === String(DEFAULT_BACKEND_PORT) ? '' : `:${DEFAULT_BACKEND_PORT}`;
+    return `${protocol}//${hostname}${portSuffix}/api/v1`;
+  }
+
+  return '/api/v1';
+}
+
+const API_BASE = resolveApiBase();
 
 /**
  * Retrieves the current Firebase user's ID token and formats Authorization header.
@@ -8,6 +42,18 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api
 export async function getAuthHeaders() {
   const currentUser = auth.currentUser;
   if (!currentUser) {
+    // =========================================================================
+    // DEVELOPMENT / LOCAL PREVIEW ONLY — when the dev-preview login bypass is
+    // active (VITE_DEV_PREVIEW=true in the dev server), there is no real
+    // Firebase session, so send the backend's accepted mock dev token instead
+    // of no header at all. Never active in production builds
+    // (see config/devPreview.js). Real Firebase auth is untouched otherwise.
+    // =========================================================================
+    if (isDevPreview) {
+      return {
+        Authorization: 'Bearer mock-dev-token-123',
+      };
+    }
     return {};
   }
   const token = await currentUser.getIdToken();

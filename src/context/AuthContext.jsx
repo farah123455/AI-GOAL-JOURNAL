@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase';
+import { isDevPreview, devPreviewUser } from '../config/devPreview'; // DEV PREVIEW ONLY (see config/devPreview.js)
 import {
   register as firebaseRegister,
   login as firebaseLogin,
@@ -14,6 +15,17 @@ export function AuthProvider({ children }) {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
+    // =========================================================================
+    // DEVELOPMENT / LOCAL PREVIEW ONLY — bypass Firebase login in dev server.
+    // Real onAuthStateChanged flow is untouched when the flag is off, and the
+    // bypass can never activate in a production build (see config/devPreview.js).
+    // =========================================================================
+    if (isDevPreview) {
+      setUser(devPreviewUser);
+      setCheckingAuth(false);
+      return undefined;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);

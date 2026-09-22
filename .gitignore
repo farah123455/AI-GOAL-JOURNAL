@@ -51,6 +51,13 @@ temp_audio*
 doc_text.txt
 scratch/
 
+# Temporary Diffs, Dumps & Patch Files
+*diff*.txt
+*-diff.txt
+*-roadmap.json
+*backupOf*
+ersDELTA*
+
 # Agent & AI Customizations
 .system_generated/
 .user_uploaded/
