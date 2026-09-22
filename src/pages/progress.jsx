@@ -221,8 +221,14 @@ export default function Progress() {
         Date.now() - new Date(r.created_at).getTime() <=
         Number(periodDays) * 24 * 60 * 60 * 1000
     );
-
-  const currentTrend = selectedGoal ? trendByGoal[selectedGoal.id]?.trend_direction : null;
+    const chartData =
+    periodDays === "all"
+      ? progressHistory
+      : progressHistory.filter((r) => {
+          const cutoffMs = Date.now() - Number(periodDays) * 24 * 60 * 60 * 1000;
+          return new Date(r.created_at).getTime() >= cutoffMs;
+        });
+  const currentTrend = selectedGoal ? trendByGoal[selectedGoal.id] : null;
 
   const weeklyData = computeWeeklyData(journals, goals);
   const totalWeeklyActivities = weeklyData.reduce((sum, item) => sum + item.count, 0);
@@ -592,15 +598,15 @@ export default function Progress() {
                     <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Progress over time
                     </p>
-                    <TrendChart data={progressHistory} />
+                    <TrendChart data={chartData} />
                   </div>
 
-                  <div className="mt-5">
+                                    <div className="mt-5">
                     <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      All updates ({progressHistory.length})
+                      {periodDays === "all" ? "All updates" : `Updates in last ${periodDays} days`} ({chartData.length})
                     </p>
                     <div className="divide-y divide-[#E2E9DF] border-t border-[#E2E9DF]">
-                      {progressHistory.slice().reverse().map((record, idx, arr) => (
+                      {chartData.slice().reverse().map((record, idx, arr) => (
                         <div key={record.id || idx} className="flex items-start justify-between gap-3 py-2.5">
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-[#26261F]">
