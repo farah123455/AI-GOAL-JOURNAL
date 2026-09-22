@@ -316,3 +316,30 @@ export const calendarApi = {
       method: 'DELETE',
     }),
 };
+
+/**
+ * AI Goal Roadmap API
+ */
+export const roadmapApi = {
+  generateRoadmap: (data) =>
+    fetchWithAuth('/roadmap/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  getSampleRoadmap: () => fetchWithAuth('/roadmap/sample'),
+  getGoalRoadmap: (goalId, timeline = 'Self-paced', level = 'Beginner') =>
+    fetchWithAuth(`/goals/${goalId}/roadmap?timeline=${encodeURIComponent(timeline)}&level=${encodeURIComponent(level)}`),
+  generateGoalRoadmap: (goalId, data = {}) =>
+    fetchWithAuth(`/goals/${goalId}/roadmap`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  toggleMilestone: (goalId, stepNumber, completed) => {
+    const query = completed !== undefined && completed !== null ? `?completed=${completed}` : '';
+    return fetchWithAuth(`/goals/${goalId}/roadmap/milestones/${stepNumber}/toggle${query}`, {
+      method: 'POST',
+    });
+  },
+};
