@@ -23,6 +23,7 @@ import { DashboardSkeleton } from "../components/LoadingSkeleton";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { progressApi } from "../services/api";
 import TrendChart, { formatChange } from "../components/TrendChart";
+import MoodBadge, { MOOD_META } from "../components/MoodBadge";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -106,6 +107,18 @@ export default function Dashboard() {
     const blockers = j.ai_analysis?.blockers || [];
     blockers.forEach((b) => recentBlockers.push(b));
   });
+
+  const recentMoods = journals
+    .slice(0, 10)
+    .map((j) => j.detected_mood || j.ai_analysis?.detected_mood)
+    .filter(Boolean);
+
+  const moodCounts = {};
+  recentMoods.forEach((m) => {
+    moodCounts[m] = (moodCounts[m] || 0) + 1;
+  });
+
+  const dominantMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || latestJournal?.detected_mood || null;
 
   const streak = (() => {
     if (!journals.length) return 0;
@@ -340,8 +353,8 @@ export default function Dashboard() {
               </section>
             )}
 
-            {/* Middle Row: AI Coach Summary & Active Blockers Cards */}
-            <div className="grid gap-6 md:grid-cols-2 stagger-in">
+            {/* Middle Row: AI Coach Summary, Mood Rhythm & Active Blockers Cards */}
+            <div className="grid gap-6 lg:grid-cols-3 stagger-in">
               <section className="rounded-2xl p-6 bg-gradient-to-br from-[#E2E9DF]/70 via-white to-[#F4F1E8] border border-[#E2E9DF] shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[280px]">
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -384,6 +397,73 @@ export default function Dashboard() {
                   >
                     <Sparkles size={15} />
                     Open Accountability Coach →
+                  </button>
+                </div>
+              </section>
+
+              {/* Card 2: Emotional State & Mood Rhythm */}
+              <section className="rounded-2xl p-6 bg-gradient-to-br from-[#F4F1E8] via-white to-[#E2E9DF]/70 border border-[#E2E9DF] shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[280px]">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E2E9DF] px-3 py-0.5 text-xs font-extrabold text-[#4B5D3C] border border-[#4B5D3C]/20 shadow-2xs">
+                      <span className="text-sm">🌿</span>
+                      MOOD RHYTHM & WELL-BEING
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400">10-Class AI</span>
+                  </div>
+
+                  {dominantMood ? (
+                    <div className="mt-3 space-y-3">
+                      <div>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                          Current Emotional State
+                        </p>
+                        <MoodBadge
+                          mood={dominantMood}
+                          confidence={latestJournal?.mood_confidence || 0.85}
+                          keywords={latestJournal?.trigger_keywords || []}
+                          size="md"
+                        />
+                      </div>
+
+                      {Object.keys(moodCounts).length > 0 && (
+                        <div className="pt-2 border-t border-[#E2E9DF]">
+                          <p className="text-[11px] font-bold text-slate-500 mb-1.5">
+                            Recent Reflection Spectrum:
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {Object.entries(moodCounts).map(([m, cnt]) => {
+                              const meta = MOOD_META[m] || { label: m, emoji: "💭" };
+                              return (
+                                <span
+                                  key={m}
+                                  className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700 border border-[#E2E9DF] shadow-2xs"
+                                >
+                                  <span>{meta.emoji}</span>
+                                  <span>{meta.label}</span>
+                                  <span className="text-[#4B5D3C] font-extrabold font-mono">×{cnt}</span>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-white/80 rounded-xl border border-[#E2E9DF] my-2">
+                      <span className="text-2xl mb-1 block">🌿</span>
+                      <p className="text-sm text-[#26261F] font-bold">No emotional data yet</p>
+                      <p className="text-xs text-slate-500 mt-1 font-medium">Log a reflection to track your cognitive state & mood patterns.</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-5 pt-3 border-t border-[#E2E9DF]">
+                  <button
+                    onClick={() => navigate("/journal")}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F4F1E8] px-4 py-2.5 text-xs font-bold text-[#26261F] border border-[#E2E9DF] hover:bg-[#E2E9DF] hover:text-[#4B5D3C] transition-all shadow-2xs"
+                  >
+                    Check Emotional Trends →
                   </button>
                 </div>
               </section>

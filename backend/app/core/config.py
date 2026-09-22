@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-3.1-flash-lite"
 
+    # Groq Cloud AI
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+
     # Firebase
     FIREBASE_PROJECT_ID: str = ""
     VITE_FIREBASE_PROJECT_ID: str = ""

@@ -48,6 +48,9 @@ class JournalEntry:
     source: str = "text"  # text | voice
     title: Optional[str] = None
     ai_analysis: Optional[dict[str, Any]] = None
+    detected_mood: Optional[str] = None
+    mood_confidence: Optional[float] = None
+    trigger_keywords: Optional[list[str]] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 

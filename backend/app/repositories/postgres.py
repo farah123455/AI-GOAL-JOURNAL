@@ -215,6 +215,9 @@ class PostgresJournalRepository(AbstractJournalRepository):
                 source=journal.source,
                 title=journal.title,
                 ai_analysis=journal.ai_analysis,
+                detected_mood=journal.detected_mood,
+                mood_confidence=journal.mood_confidence,
+                trigger_keywords=journal.trigger_keywords,
                 created_at=journal.created_at,
                 updated_at=journal.updated_at,
             )
@@ -230,6 +233,9 @@ class PostgresJournalRepository(AbstractJournalRepository):
                 source=db_journal.source,
                 title=db_journal.title,
                 ai_analysis=db_journal.ai_analysis,
+                detected_mood=getattr(db_journal, "detected_mood", None),
+                mood_confidence=getattr(db_journal, "mood_confidence", None),
+                trigger_keywords=getattr(db_journal, "trigger_keywords", None),
                 created_at=db_journal.created_at,
                 updated_at=db_journal.updated_at,
             )
@@ -282,6 +288,9 @@ class PostgresJournalRepository(AbstractJournalRepository):
                 source=db_journal.source or "text",
                 title=db_journal.title,
                 ai_analysis=db_journal.ai_analysis,
+                detected_mood=getattr(db_journal, "detected_mood", None),
+                mood_confidence=getattr(db_journal, "mood_confidence", None),
+                trigger_keywords=getattr(db_journal, "trigger_keywords", None),
                 created_at=db_journal.created_at,
                 updated_at=db_journal.updated_at,
             )
@@ -324,6 +333,9 @@ class PostgresJournalRepository(AbstractJournalRepository):
                     source=row.source or "text",
                     title=row.title,
                     ai_analysis=row.ai_analysis,
+                    detected_mood=getattr(row, "detected_mood", None),
+                    mood_confidence=getattr(row, "mood_confidence", None),
+                    trigger_keywords=getattr(row, "trigger_keywords", None),
                     created_at=row.created_at,
                     updated_at=row.updated_at,
                 )
@@ -381,6 +393,9 @@ class PostgresJournalRepository(AbstractJournalRepository):
                 source=db_journal.source or "text",
                 title=db_journal.title,
                 ai_analysis=db_journal.ai_analysis,
+                detected_mood=getattr(db_journal, "detected_mood", None),
+                mood_confidence=getattr(db_journal, "mood_confidence", None),
+                trigger_keywords=getattr(db_journal, "trigger_keywords", None),
                 created_at=db_journal.created_at,
                 updated_at=db_journal.updated_at,
             )

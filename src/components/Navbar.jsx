@@ -114,7 +114,7 @@ export default function Navbar() {
     });
     if (!confirmed) return;
     await logout();
-    navigate("/login");
+    navigate("/");
   }
 
   function handleSearchSubmit(e) {

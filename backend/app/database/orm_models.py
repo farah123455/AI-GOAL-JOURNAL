@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     JSON,
     Boolean,
+    Float,
 )
 
 from app.database.connection import Base
@@ -66,6 +67,21 @@ class JournalORM(Base):
     )
 
     ai_analysis = Column(
+        JSON,
+        nullable=True
+    )
+
+    detected_mood = Column(
+        String,
+        nullable=True
+    )
+
+    mood_confidence = Column(
+        Float,
+        nullable=True
+    )
+
+    trigger_keywords = Column(
         JSON,
         nullable=True
     )

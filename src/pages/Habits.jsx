@@ -22,6 +22,7 @@ import {
   fromISODate,
 } from "../utils/habitStorage";
 import { habitApi } from "../services/api";
+import { useData } from "../context/DataContext";
 import { spawnGrowthParticles, popIn, floatLoop } from "../animations/motion";
 
 /**
@@ -62,12 +63,13 @@ function StatCard({ icon: Icon, iconClass, value, label }) {
 }
 
 export default function Habits() {
-  const [habits, setHabits] = useState([]);
+  const { habits: contextHabits, hasLoadedHabits, setHabitsInCache } = useData();
+  const [habits, setHabits] = useState(contextHabits || []);
   const [completions, setCompletions] = useState({});
   const [statusMap, setStatusMap] = useState({});
 
   // Page async state
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!hasLoadedHabits && (!contextHabits || contextHabits.length === 0));
   const [loadError, setLoadError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -130,43 +132,54 @@ export default function Habits() {
     if (logs) setCompletions((m) => ({ ...m, [habitId]: logsToDates(logs) }));
   }
 
-  // Initial load: fetch habits + per-habit status and completion logs.
+  // Initial load: parse enriched habits or fetch from API
   useEffect(() => {
     let isMounted = true;
     async function load() {
-      setLoading(true);
+      if (!hasLoadedHabits && habits.length === 0) {
+        setLoading(true);
+      }
       setLoadError("");
       try {
         const habitList = await habitApi.listHabits();
         if (!isMounted) return;
 
-        // Eagerly set habits and dismiss skeleton loading immediately!
         setHabits(habitList || []);
+        if (setHabitsInCache) setHabitsInCache(habitList || []);
         setLoading(false);
 
         if (!habitList || habitList.length === 0) return;
 
-        // Fetch per-habit status and completion history in parallel
-        const enriched = await Promise.all(
-          habitList.map(async (h) => {
-            const [status, logs] = await Promise.all([
-              habitApi.getHabitStatus(h.id).catch(() => null),
-              habitApi.getHabitLogs(h.id).catch(() => null),
-            ]);
-            return { habit: h, status, logs: logsToDates(logs) };
-          })
-        );
-        if (!isMounted) return;
-
         const nextStatus = {};
         const nextCompletions = {};
-        enriched.forEach(({ habit, status, logs }) => {
-          if (status) nextStatus[habit.id] = status;
-          if (logs) nextCompletions[habit.id] = logs;
+        const needsFetch = [];
+
+        habitList.forEach((h) => {
+          if (h.completed_today !== undefined && h.current_streak !== undefined) {
+            nextStatus[h.id] = { completed_today: h.completed_today, current_streak: h.current_streak };
+            nextCompletions[h.id] = logsToDates(h.recent_logs || []);
+          } else {
+            needsFetch.push(h);
+          }
         });
 
-        setStatusMap(nextStatus);
-        setCompletions(nextCompletions);
+        if (needsFetch.length > 0) {
+          await Promise.all(
+            needsFetch.map(async (h) => {
+              const [status, logs] = await Promise.all([
+                habitApi.getHabitStatus(h.id).catch(() => null),
+                habitApi.getHabitLogs(h.id).catch(() => null),
+              ]);
+              if (status) nextStatus[h.id] = status;
+              if (logs) nextCompletions[h.id] = logsToDates(logs);
+            })
+          );
+        }
+
+        if (isMounted) {
+          setStatusMap(nextStatus);
+          setCompletions(nextCompletions);
+        }
       } catch (err) {
         if (err?.name === "AbortError" || err?.message?.includes("aborted")) {
           return;

@@ -18,6 +18,7 @@ import {
 import VoiceRecorder from "../components/VoiceRecorder";
 import Pagination from "../components/Pagination";
 import GoalCelebration from "../components/GoalCelebration";
+import MoodBadge from "../components/MoodBadge";
 import { journalApi, goalApi } from "../services/api";
 import { useData } from "../context/DataContext";
 import { useModal, useToast } from "../context/ModalContext";
@@ -431,6 +432,27 @@ export default function Journal() {
                     </p>
                   )}
 
+                  {/* EMOTIONAL STATE PULSE (NEURAL MOOD ANALYZER) */}
+                  {(currentAi.detected_mood || selectedJournal?.detected_mood) && (
+                    <div className="rounded-xl bg-[#F4F1E8]/70 border border-[#E2E9DF] p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-[#4B5D3C]">
+                            Detected Emotional Rhythm
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            (10-Class Attention BiLSTM)
+                          </span>
+                        </div>
+                        <MoodBadge
+                          mood={currentAi.detected_mood || selectedJournal?.detected_mood}
+                          confidence={currentAi.mood_confidence || selectedJournal?.mood_confidence}
+                          keywords={currentAi.trigger_keywords || selectedJournal?.trigger_keywords}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {/* 1. GOALS EXTRACTED */}
                   {goalsExtractedList.length > 0 && (
                     <div>
@@ -598,9 +620,19 @@ export default function Journal() {
                                 year: "numeric",
                               })}
                             </span>
-                            <span className="text-xs bg-white rounded-md px-1.5 py-0.5 border border-[#E2E9DF] shadow-2xs">
-                              {emoji}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {j.detected_mood && (
+                                <MoodBadge
+                                  mood={j.detected_mood}
+                                  confidence={j.mood_confidence}
+                                  size="sm"
+                                  showKeywords={false}
+                                />
+                              )}
+                              <span className="text-xs bg-white rounded-md px-1.5 py-0.5 border border-[#E2E9DF] shadow-2xs">
+                                {emoji}
+                              </span>
+                            </div>
                           </div>
 
                           <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed font-medium mb-2.5">
@@ -609,6 +641,14 @@ export default function Journal() {
 
                           <div className="flex items-center justify-between pt-2 border-t border-[#E2E9DF]">
                             <div className="flex flex-wrap items-center gap-1">
+                              {j.trigger_keywords?.slice(0, 2).map((kw, i) => (
+                                <span
+                                  key={`kw-${i}`}
+                                  className="rounded-md bg-emerald-50 text-emerald-800 px-1.5 py-0.5 text-[9px] font-semibold border border-emerald-200"
+                                >
+                                  #{kw}
+                                </span>
+                              ))}
                               {tags.map((tag, idx) => (
                                 <span
                                   key={idx}

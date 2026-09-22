@@ -11,6 +11,7 @@ from app.api.v1.habits import router as habits_router
 from app.api.v1.productivity import router as productivity_router
 from app.api.v1.calendar import router as calendar_router
 from app.api.v1.roadmap import router as roadmap_router
+from app.api.v1.coach import router as coach_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -73,3 +74,4 @@ app.include_router(habits_router, prefix=settings.API_V1_PREFIX)
 app.include_router(productivity_router, prefix=settings.API_V1_PREFIX)
 app.include_router(calendar_router, prefix=settings.API_V1_PREFIX)
 app.include_router(roadmap_router, prefix=settings.API_V1_PREFIX)
+app.include_router(coach_router, prefix=settings.API_V1_PREFIX)

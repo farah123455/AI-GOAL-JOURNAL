@@ -389,3 +389,15 @@ export const roadmapApi = {
     });
   },
 };
+
+/**
+ * AI Coach Conversational API (Groq Cloud)
+ */
+export const coachApi = {
+  chat: (message, history = []) =>
+    fetchWithAuth('/coach/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, history }),
+    }),
+};

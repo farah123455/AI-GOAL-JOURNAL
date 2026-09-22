@@ -52,6 +52,18 @@ def init_db():
     try:
         import app.database.orm_models  # Register ORM models
         Base.metadata.create_all(bind=engine)
+        from sqlalchemy import inspect, text
+        inspector = inspect(engine)
+        if "journals" in inspector.get_table_names():
+            cols = [c["name"] for c in inspector.get_columns("journals")]
+            with engine.begin() as conn:
+                if "detected_mood" not in cols:
+                    conn.execute(text("ALTER TABLE journals ADD COLUMN detected_mood VARCHAR"))
+                if "mood_confidence" not in cols:
+                    conn.execute(text("ALTER TABLE journals ADD COLUMN mood_confidence FLOAT"))
+                if "trigger_keywords" not in cols:
+                    col_type = "JSONB" if "postgresql" in engine.dialect.name else "JSON"
+                    conn.execute(text(f"ALTER TABLE journals ADD COLUMN trigger_keywords {col_type}"))
     except Exception as e:
         print(f"Database init note: {e}")
 
