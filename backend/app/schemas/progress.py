@@ -54,34 +54,31 @@ class ProgressTrendResponse(BaseModel):
     current_progress: int
     initial_progress: int
     net_change: int
-
     average_progress_change: float = Field(
         0.0,
-        description="Average change in progress percentage between updates"
+        description="Average progress change between consecutive recorded updates "
+        "(2 decimal places); excludes the baseline record.",
     )
-
     stagnant_updates: int = Field(
         0,
-        description="Number of progress updates where progress did not change"
+        description="Number of updates where the progress value did not change from the "
+        "previous recorded value (baseline excluded).",
     )
-
-    period_days: int = Field(
-        7,
-        description="Number of days used for recent progress analytics"
+    period_days: Optional[int] = Field(
+        None,
+        description="Number of recent days used for period progress gain, or null when no "
+        "period was requested.",
     )
-
     period_progress_gain: int = Field(
         0,
-        description="Progress gained during the selected period"
+        description="Net progress gain over the requested period (or over the whole history "
+        "when no period is given).",
     )
-
     trend_direction: str = Field(
         ...,
         description="Trend direction: improving, stagnant, or declining"
     )
-
     total_updates: int
-
     history: list[ProgressHistoryItem] = Field(
         default_factory=list,
         description="Complete progress updates ordered chronologically"

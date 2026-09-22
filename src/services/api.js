@@ -209,7 +209,10 @@ export const progressApi = {
     }),
   getGoalProgress: (goalId) => fetchWithAuth(`/progress/goal/${goalId}`),
   getProgressHistory: (goalId) => fetchWithAuth(`/progress/goal/${goalId}`),
-  getProgressTrend: (goalId) => fetchWithAuth(`/progress/goal/${goalId}/trend`),
+  getProgressTrend: (goalId, days) => {
+    const query = days ? `?days=${encodeURIComponent(days)}` : '';
+    return fetchWithAuth(`/progress/goal/${goalId}/trend${query}`);
+  },
   getLatestGoalProgress: (goalId) => fetchWithAuth(`/progress/goal/${goalId}/latest`),
   getLatestProgress: (goalId) => fetchWithAuth(`/progress/goal/${goalId}/latest`),
 };

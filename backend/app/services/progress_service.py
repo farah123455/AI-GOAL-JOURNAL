@@ -44,15 +44,9 @@ class ProgressService:
 
         # Update goal progress value and status in goal repository
         updates = {"progress_value": progress_value}
-
         if progress_value >= 100:
             updates["status"] = "Completed"
-
-        goal_repo.update(
-            user_id=user_id,
-            goal_id=goal_id,
-            **updates,
-        )
+        goal_repo.update(user_id=user_id, goal_id=goal_id, **updates)
 
         logger.info(
             "Recorded progress %d%% for goal %s",
@@ -113,21 +107,15 @@ class ProgressService:
         )
 
         # Return in chronological order (oldest to newest)
-        return sorted(
-            raw_history,
-            key=lambda p: p.created_at,
-        )
+        return sorted(raw_history, key=lambda p: p.created_at)
 
     def get_progress_trend(
         self,
         user_id: str,
         goal_id: str,
-        period_days: int = 7,
+        days: Optional[int] = None,
     ):
-        from app.schemas.progress import (
-            ProgressHistoryItem,
-            ProgressTrendResponse,
-        )
+        from app.schemas.progress import ProgressHistoryItem, ProgressTrendResponse
 
         goal = goal_repo.get_by_id(
             user_id=user_id,
@@ -143,13 +131,9 @@ class ProgressService:
         )
 
         # Chronological forward order (oldest to newest)
-        history_sorted = sorted(
-            raw_history,
-            key=lambda p: p.created_at,
-        )
+        history_sorted = sorted(raw_history, key=lambda p: p.created_at)
 
-        # If no explicit progress checkpoints exist yet,
-        # supply initial baseline from goal creation
+        # If no explicit progress checkpoints exist yet, supply initial baseline from goal creation
         if not history_sorted:
             history_sorted = [
                 Progress(
@@ -161,40 +145,22 @@ class ProgressService:
                 )
             ]
 
-        # If goal is marked Completed or has 100% progress,
-        # guarantee the 100% milestone is present in the trend
-        if (
-            goal.status == "Completed"
-            or (goal.progress_value or 0) >= 100
-        ) and history_sorted[-1].progress_value < 100:
-
+        # If goal is marked Completed or has 100% progress, guarantee the 100% milestone is present in the trend
+        if (goal.status == "Completed" or (goal.progress_value or 0) >= 100) and history_sorted[-1].progress_value < 100:
             history_sorted.append(
                 Progress(
                     id=f"comp-{goal.id}",
                     goal_id=goal.id,
                     progress_value=100,
-                    note=(
-                        goal.latest_progress_note
-                        or "Goal marked as completed (100%)"
-                    ),
-                    created_at=(
-                        goal.updated_at
-                        or datetime.utcnow()
-                    ),
+                    note=goal.latest_progress_note or "Goal marked as completed (100%)",
+                    created_at=goal.updated_at or datetime.utcnow(),
                 )
             )
 
         history_items: list[ProgressHistoryItem] = []
-
         for i, rec in enumerate(history_sorted):
-            prev_val = (
-                history_sorted[i - 1].progress_value
-                if i > 0
-                else rec.progress_value
-            )
-
+            prev_val = history_sorted[i - 1].progress_value if i > 0 else rec.progress_value
             delta = rec.progress_value - prev_val
-
             history_items.append(
                 ProgressHistoryItem(
                     id=rec.id,
@@ -207,102 +173,59 @@ class ProgressService:
             )
 
         current_val = goal.progress_value or 0
-
         if history_items:
             current_val = history_items[-1].progress_value
             initial_val = history_items[0].progress_value
-
-            net_change = (
-                current_val - initial_val
-            )
-
+            net_change = current_val - initial_val
             # Determine trend direction
-            recent_delta = (
-                history_items[-1].change_from_previous
-                if len(history_items) > 1
-                else net_change
-            )
-
+            recent_delta = history_items[-1].change_from_previous if len(history_items) > 1 else net_change
             if recent_delta > 0 or net_change > 0:
                 trend_direction = "improving"
-
             elif recent_delta < 0 or net_change < 0:
                 trend_direction = "declining"
-
             else:
                 trend_direction = "stagnant"
-
         else:
             initial_val = current_val
             net_change = 0
             trend_direction = "stagnant"
 
-        # Calculate average progress change and stagnant updates
-        progress_changes = [
+        # --- Average progress change across consecutive updates (excludes the baseline record) ---
+        deltas = [
             item.change_from_previous
             for item in history_items[1:]
         ]
-
-        if progress_changes:
-            average_progress_change = round(
-                sum(progress_changes)
-                / len(progress_changes),
-                2,
-            )
-
-            stagnant_updates = sum(
-                1
-                for change in progress_changes
-                if change == 0
-            )
-
-        else:
-            average_progress_change = 0.0
-            stagnant_updates = 0
-
-        # Calculate progress gained during the selected recent period
-        cutoff_date = (
-            datetime.utcnow()
-            - timedelta(days=period_days)
+        average_progress_change = (
+            round(sum(deltas) / len(deltas), 2) if deltas else 0.0
         )
 
-        period_records = [
-            item
-            for item in history_items
-            if item.created_at >= cutoff_date
-        ]
+        # --- Number of stagnant updates (records that did not change from the previous value);
+        #     the baseline record has no previous value and is never counted as stagnant ---
+        stagnant_updates = sum(
+            1 for item in history_items[1:] if item.change_from_previous == 0
+        )
 
-        if period_records:
-            records_before_period = [
-                item
-                for item in history_items
-                if item.created_at < cutoff_date
-            ]
-
-            if records_before_period:
-                period_start_value = (
-                    records_before_period[-1]
-                    .progress_value
-                )
-
+        # --- Period-based progress gain ---
+        now_utc = datetime.utcnow()
+        period_days = days if days is not None else None
+        if days is not None:
+            period_start = now_utc - timedelta(days=days)
+            # Progress value at or before the beginning of the requested period.
+            before_period = [r for r in history_sorted if r.created_at < period_start]
+            base_val = (
+                before_period[-1].progress_value
+                if before_period
+                else (history_sorted[0].progress_value if history_sorted else 0)
+            )
+            # Latest progress value recorded within the requested period.
+            in_period = [r for r in history_sorted if r.created_at >= period_start]
+            if in_period:
+                period_progress_gain = in_period[-1].progress_value - base_val
             else:
-                period_start_value = (
-                    period_records[0]
-                    .progress_value
-                )
-
-            period_end_value = (
-                period_records[-1]
-                .progress_value
-            )
-
-            period_progress_gain = (
-                period_end_value
-                - period_start_value
-            )
-
+                period_progress_gain = 0
         else:
-            period_progress_gain = 0
+            # No explicit period requested: report the gain over the whole recorded history.
+            period_progress_gain = net_change
 
         return ProgressTrendResponse(
             goal_id=goal_id,
