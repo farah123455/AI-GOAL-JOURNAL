@@ -5,6 +5,7 @@ cd /d "%~dp0"
 echo ======================================================================
 echo           AI Goal Journal ^& Accountability Coach Launcher
 echo ======================================================================
+
 :: 1. Check for Python
 where python >nul 2>nul
 if %ERRORLEVEL% neq 0 (
@@ -29,7 +30,7 @@ if not exist ".env" (
     if exist ".env.example" (
         echo [*] Creating .env from .env.example
         copy ".env.example" ".env" >nul
-        echo [*] Created .env template. Please ensure your GEMINI_API_KEY is configured.
+        echo [*] Created .env template. Please configure your GEMINI_API_KEY and GROQ_API_KEY.
     )
 )
 
