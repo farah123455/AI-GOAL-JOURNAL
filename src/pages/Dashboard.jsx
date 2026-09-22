@@ -43,7 +43,7 @@ export default function Dashboard() {
   const [showScoreModal, setShowScoreModal] = useState(false);
 
   // --- REAL PROGRESS ANALYTICS & TREND STATE (Panshobh) ---
-  const [selectedGoalId, setSelectedGoalId] = useState(null);
+  const [selectedGoalId, setSelectedGoalId] = useState("all");
   const [trendData, setTrendData] = useState(null);
   const [isTrendLoading, setIsTrendLoading] = useState(false);
   const [trendError, setTrendError] = useState(null);
@@ -53,17 +53,22 @@ export default function Dashboard() {
     [goals]
   );
 
-  // Default to "all" if multiple active goals exist, or first available goal
-  const primaryGoalId = selectedGoalId === "all"
+  const displayGoals = useMemo(
+    () => goals.filter((g) => g.status?.toLowerCase() !== "archived"),
+    [goals]
+  );
+
+  // Default to "all" so all goals are rendered on the trajectory by default
+  const primaryGoalId = !selectedGoalId || selectedGoalId === "all"
     ? "all"
     : goals.some((g) => g.id === selectedGoalId)
     ? selectedGoalId
-    : (goals.find((g) => g.status?.toLowerCase() === "active")?.id || goals[0]?.id || null);
+    : "all";
 
-  // Multi-series representation for all active goals
+  // Multi-series representation for all goals with distinct colors
   const multiSeries = useMemo(() => {
-    if (activeGoals.length === 0) return null;
-    return activeGoals.slice(0, 6).map((g, idx) => {
+    if (displayGoals.length === 0) return null;
+    return displayGoals.slice(0, 8).map((g, idx) => {
       const prog = g.status === "Completed" ? 100 : (g.progress_value || 0);
       const createdDate = g.created_at || g.createdAt || new Date().toISOString();
       return {
@@ -77,7 +82,7 @@ export default function Dashboard() {
         ],
       };
     });
-  }, [activeGoals]);
+  }, [displayGoals]);
 
   useEffect(() => {
     if (!primaryGoalId || primaryGoalId === "all") {
@@ -728,69 +733,91 @@ export default function Dashboard() {
             <div className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="rounded-xl bg-[#F4F1E8]/70 p-3.5 border border-[#E2E9DF] flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Current Progress</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    {primaryGoalId === "all" ? "Average Progress" : "Current Progress"}
+                  </span>
                   <div className="mt-1.5 flex items-baseline justify-between">
-                    <span className="text-2xl font-extrabold text-[#26261F]">{trendData?.current_progress ?? (selectedTrendGoal?.progress_value || 0)}%</span>
+                    <span className="text-2xl font-extrabold text-[#26261F]">
+                      {primaryGoalId === "all"
+                        ? (displayGoals.length > 0
+                            ? Math.round(displayGoals.reduce((sum, g) => sum + (g.status === "Completed" ? 100 : (g.progress_value || 0)), 0) / displayGoals.length)
+                            : 0)
+                        : (trendData?.current_progress ?? (selectedTrendGoal?.progress_value || 0))}%
+                    </span>
                     <div className="w-14 h-2 rounded-full bg-[#E2E9DF] overflow-hidden">
                       <div
                         className="h-full bg-[#4B5D3C] rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, trendData?.current_progress ?? (selectedTrendGoal?.progress_value || 0))}%` }}
+                        style={{
+                          width: `${Math.min(100, primaryGoalId === "all"
+                            ? (displayGoals.length > 0 ? Math.round(displayGoals.reduce((sum, g) => sum + (g.status === "Completed" ? 100 : (g.progress_value || 0)), 0) / displayGoals.length) : 0)
+                            : (trendData?.current_progress ?? (selectedTrendGoal?.progress_value || 0)))}%`
+                        }}
                       />
                     </div>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-medium mt-1">Goal milestone completion</span>
+                  <span className="text-[10px] text-slate-400 font-medium mt-1">
+                    {primaryGoalId === "all" ? "Across all active & completed goals" : "Goal milestone completion"}
+                  </span>
                 </div>
 
                 <div className="rounded-xl bg-[#F4F1E8]/70 p-3.5 border border-[#E2E9DF] flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Recent Trend</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    {primaryGoalId === "all" ? "Goals Portfolio" : "Recent Trend"}
+                  </span>
                   <div className="mt-1.5 flex items-center gap-2">
-                    {trendData?.trend_direction === 'improving' ? (
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E2E9DF] text-[#4B5D3C]">
-                        <TrendingUp size={16} />
-                      </div>
-                    ) : trendData?.trend_direction === 'declining' ? (
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FBEBE3] text-[#C1622C]">
-                        <TrendingDown size={16} />
-                      </div>
-                    ) : (
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-200 text-slate-600">
-                        <Minus size={16} />
-                      </div>
-                    )}
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E2E9DF] text-[#4B5D3C]">
+                      <TrendingUp size={16} />
+                    </div>
                     <span className="text-lg font-bold text-[#26261F] capitalize">
-                      {trendData?.trend_direction || "Stagnant"}
+                      {primaryGoalId === "all"
+                        ? `${displayGoals.length} Tracked`
+                        : (trendData?.trend_direction || "Stagnant")}
                     </span>
                   </div>
                   <span className="text-[10px] text-slate-400 font-medium mt-1">
-                    {trendData?.history?.length > 1
-                      ? `${formatChange(trendData.history[trendData.history.length - 1].change_from_previous)} on last update`
-                      : "Baseline established"}
+                    {primaryGoalId === "all"
+                      ? `${completedGoals.length} completed, ${displayGoals.length - completedGoals.length} active`
+                      : (trendData?.history?.length > 1
+                        ? `${formatChange(trendData.history[trendData.history.length - 1].change_from_previous)} on last update`
+                        : "Baseline established")}
                   </span>
                 </div>
 
                 <div className="rounded-xl bg-[#F4F1E8]/70 p-3.5 border border-[#E2E9DF] flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Net Milestone Gain</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    {primaryGoalId === "all" ? "Top Milestone" : "Net Milestone Gain"}
+                  </span>
                   <div className="mt-1.5 flex items-baseline gap-1.5">
-                    <span className={`text-2xl font-extrabold ${
-                      (trendData?.net_change || 0) > 0 ? "text-[#4B5D3C]" : (trendData?.net_change || 0) < 0 ? "text-[#C1622C]" : "text-slate-700"
-                    }`}>
-                      {formatChange(trendData?.net_change || 0)}
+                    <span className="text-2xl font-extrabold text-[#4B5D3C]">
+                      {primaryGoalId === "all"
+                        ? (displayGoals.length > 0
+                            ? `${Math.max(...displayGoals.map((g) => g.status === "Completed" ? 100 : (g.progress_value || 0)))}%`
+                            : "0%")
+                        : formatChange(trendData?.net_change || 0)}
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-medium mt-1">
-                    From initial {trendData?.initial_progress ?? 0}% baseline
+                  <span className="text-[10px] text-slate-400 font-medium mt-1 truncate max-w-[200px]">
+                    {primaryGoalId === "all"
+                      ? (displayGoals.slice().sort((a, b) => (b.progress_value || 0) - (a.progress_value || 0))[0]?.title || "None")
+                      : `From initial ${trendData?.initial_progress ?? 0}% baseline`}
                   </span>
                 </div>
 
                 <div className="rounded-xl bg-[#F4F1E8]/70 p-3.5 border border-[#E2E9DF] flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Checkpoints Logged</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    {primaryGoalId === "all" ? "Active Goal Series" : "Checkpoints Logged"}
+                  </span>
                   <div className="mt-1.5 flex items-baseline justify-between">
-                    <span className="text-2xl font-extrabold text-[#26261F]">{trendData?.total_updates ?? 0}</span>
+                    <span className="text-2xl font-extrabold text-[#26261F]">
+                      {primaryGoalId === "all" ? displayGoals.length : (trendData?.total_updates ?? 0)}
+                    </span>
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E2E9DF] text-[#4B5D3C]">
                       <Target size={16} />
                     </div>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-medium mt-1">Historical progress entries</span>
+                  <span className="text-[10px] text-slate-400 font-medium mt-1">
+                    {primaryGoalId === "all" ? "Visualized in trajectory chart" : "Historical progress entries"}
+                  </span>
                 </div>
               </div>
 

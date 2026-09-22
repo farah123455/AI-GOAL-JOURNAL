@@ -164,7 +164,7 @@ export function GoalLoadingState() {
       </div>
       <h3 className="text-xl font-bold text-slate-900 mb-2">Hitting Your Goal Targets...</h3>
       <p className="text-sm text-slate-500 max-w-sm mx-auto font-medium leading-relaxed">
-        Organizing your manual goals, tracking progress, and preparing milestone updates.
+        Organizing your goals, tracking progress, and preparing milestone updates.
       </p>
     </div>
   );

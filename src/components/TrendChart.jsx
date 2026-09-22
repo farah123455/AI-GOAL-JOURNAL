@@ -119,7 +119,7 @@ export default function TrendChart({ data = [], multiSeries = null }) {
                     x2={padL + (i + 1) * stepX}
                     y2={y(pts[i + 1].progress_value)}
                     stroke={series.color}
-                    strokeWidth={2.5}
+                    strokeWidth={3}
                     strokeLinecap="round"
                   />
                 ))}
@@ -128,13 +128,13 @@ export default function TrendChart({ data = [], multiSeries = null }) {
                     <circle
                       cx={padL + i * stepX}
                       cy={y(pt.progress_value)}
-                      r={i === pts.length - 1 ? 5.5 : 4}
+                      r={i === pts.length - 1 ? 6 : 4.5}
                       fill="#ffffff"
                       stroke={series.color}
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       className="transition-transform duration-200 hover:scale-125"
                     />
-                    <title>{`${series.label}: ${pt.progress_value}% (${formatChartDate(pt.date || pt.created_at)})`}</title>
+                    <title>{`${series.label}: ${pt.progress_value}%`}</title>
                   </g>
                 ))}
               </g>
@@ -142,30 +142,49 @@ export default function TrendChart({ data = [], multiSeries = null }) {
           })}
 
           {/* X-axis date labels */}
-          {sortedDates.map((dateStr, i) =>
-            i % Math.max(1, Math.ceil(sortedDates.length / 6)) === 0 || i === sortedDates.length - 1 ? (
-              <text
-                key={`label-${dateStr}-${i}`}
-                x={xPos(i)}
-                y={H - 14}
-                textAnchor="middle"
-                fontSize={10}
-                fontWeight={600}
-                fill="#94A3B8"
-              >
-                {dateStr}
+          {sortedDates.length <= 1 ? (
+            <>
+              <text x={padL} y={H - 14} textAnchor="start" fontSize={10} fontWeight={600} fill="#94A3B8">
+                Milestone Start
               </text>
-            ) : null
+              <text x={W - padR} y={H - 14} textAnchor="end" fontSize={10} fontWeight={600} fill="#94A3B8">
+                {sortedDates[0] || "Current"}
+              </text>
+            </>
+          ) : (
+            sortedDates.map((dateStr, i) =>
+              i % Math.max(1, Math.ceil(sortedDates.length / 6)) === 0 || i === sortedDates.length - 1 ? (
+                <text
+                  key={`label-${dateStr}-${i}`}
+                  x={xPos(i)}
+                  y={H - 14}
+                  textAnchor="middle"
+                  fontSize={10}
+                  fontWeight={600}
+                  fill="#94A3B8"
+                >
+                  {dateStr}
+                </text>
+              ) : null
+            )
           )}
         </svg>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-4 mt-3 pt-2.5 border-t border-slate-100">
+        <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-[#E2E9DF]">
           {multiSeries.map((s) => (
-            <div key={s.id} className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold">
+            <div
+              key={s.id}
+              className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#F4F1E8]/70 border border-[#E2E9DF] text-xs text-[#26261F] font-semibold shadow-2xs"
+            >
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-              <span className="truncate max-w-[150px]">{s.label}</span>
-              <span className="text-[11px] text-slate-400 font-mono">({s.currentProgress}%)</span>
+              <span className="truncate max-w-[170px]">{s.label}</span>
+              <span
+                className="text-[11px] font-bold px-1.5 py-0.2 rounded-md font-mono"
+                style={{ backgroundColor: `${s.color}18`, color: s.color }}
+              >
+                {s.currentProgress}%
+              </span>
             </div>
           ))}
         </div>

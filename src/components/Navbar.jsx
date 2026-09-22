@@ -37,10 +37,12 @@ export default function Navbar() {
   const pageTitles = {
     "/dashboard": "Dashboard",
     "/journal": "Journal & Refinement",
-    "/goals": "Manual Goals",
-    "/coach": "Weekly AI Coach",
+    "/goals": "Goals",
+    "/coach": "AI Coach",
     "/insights": "AI Insights",
     "/progress": "Progress & Growth",
+    "/habits": "Habits Tracker",
+    "/calendar": "Calendar",
     "/profile": "User Profile",
     "/settings": "Settings",
   };
@@ -54,8 +56,8 @@ export default function Navbar() {
       title: summary?.headline ? "Weekly AI Summary Ready" : "AI Coach Insight Available",
       message: summary?.headline
         ? `"${summary.headline}"`
-        : "Generate your weekly accountability review in the AI Coach tab.",
-      link: "/coach",
+        : "Generate your weekly reflection review in the AI Insights tab.",
+      link: "/insights",
       time: "Recent",
     },
     {

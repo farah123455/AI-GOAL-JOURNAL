@@ -123,6 +123,8 @@ function formatChange(value) {
 
 
 
+const progressTrendCache = new Map();
+
 export default function Progress() {
   const { goals = [], journals = [], initialLoading } = useData();
 
@@ -144,12 +146,21 @@ export default function Progress() {
     ? selectedGoalId
     : goals[0]?.id || null;
 
-  // Fetch real progress history & trend whenever activeGoalId changes
+  // Fetch real progress history & trend whenever activeGoalId changes with 0ms in-memory cache
   useEffect(() => {
     if (!activeGoalId) return;
 
+    const cacheKey = `${activeGoalId}_${periodDays}`;
     let isMounted = true;
-    setHistLoading((m) => ({ ...m, [activeGoalId]: true }));
+
+    if (progressTrendCache.has(cacheKey)) {
+      const cached = progressTrendCache.get(cacheKey);
+      setHistoryByGoal((m) => ({ ...m, [activeGoalId]: cached.history }));
+      setTrendByGoal((m) => ({ ...m, [activeGoalId]: cached.trendData }));
+      setHistLoading((m) => ({ ...m, [activeGoalId]: false }));
+    } else {
+      setHistLoading((m) => ({ ...m, [activeGoalId]: true }));
+    }
 
     const daysParam = periodDays === "all" ? undefined : parseInt(periodDays, 10);
 
@@ -160,6 +171,7 @@ export default function Progress() {
         const sorted = (trendData?.history || [])
           .slice()
           .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        progressTrendCache.set(cacheKey, { history: sorted, trendData });
         setHistoryByGoal((m) => ({ ...m, [activeGoalId]: sorted }));
         setTrendByGoal((m) => ({ ...m, [activeGoalId]: trendData }));
         setHistError((m) => {
@@ -478,10 +490,10 @@ export default function Progress() {
                   <Target size={32} className="mx-auto text-slate-400 mb-2" />
                   <p className="text-sm font-bold text-[#26261F]">No goals created yet</p>
                   <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto font-medium">
-                    Set a goal in the Manual Goals tab to track progress trajectory.
+                    Set a goal in the Goals tab to track progress trajectory.
                   </p>
                 </div>
-              ) : isHistoryLoading ? (
+              ) : isHistoryLoading && progressHistory.length === 0 ? (
                 <div className="py-10 text-center">
                   <p className="text-xs font-medium text-slate-500">Loading progress history…</p>
                 </div>
