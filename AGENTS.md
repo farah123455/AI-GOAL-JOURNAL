@@ -20,19 +20,18 @@
 - **Speech-to-Text**: `faster-whisper` (Model: `tiny`, Device: `cpu`, Compute: `int8`, lazy singleton).
 - **AI Engine**: Google Gemini API (`gemini-3.1-flash-lite` via `google-genai` SDK).
 - **Security & Cryptography**: AES-256-GCM field encryption (`cryptography`), plaintext backward compatibility, zero-downtime key rotation.
-- **Persistence (Current Phase)**: Thread-safe in-memory repository layer with strict per-user data isolation.
-- **Persistence (Future Cloud Phase)**: PostgreSQL with SQLAlchemy and Alembic migrations (strictly deferred; not required for running the app).
+- **Persistence (Primary)**: PostgreSQL (via dedicated Docker container `ai_goal_journal_db` on port 5433) with SQLAlchemy ORM and Alembic migrations.
+- **Persistence (Fallback)**: Automatic, transparent local SQLite fallback (`sqlite:///./app.db`) whenever Docker/PostgreSQL is stopped or unreachable.
 
 ---
 
 ## 3. Universal Development Rules for AI Agents
 
 1. **DO NOT Install or Clone DOX**: DOX is a documentation methodology based on `AGENTS.md` files. Do NOT install DOX as an npm package, Python dependency, or Git submodule.
-2. **NO Docker / NO Running PostgreSQL Required**:
-   - Docker, Docker Desktop, Dockerfiles, and `docker-compose.yml` are **strictly NOT needed** to run this website.
-   - The application runs directly in local Python (`3.10+`) and Node.js (`18+`) environments.
-   - The runtime default persistence is the thread-safe **in-memory repository layer** (`backend/app/repositories/in_memory.py`). Live PostgreSQL servers are NOT required.
-   - **In-Memory Lifecycle**: During local MVP operation, all state (journals, goals, habits, progress) lives in Python process memory (RAM). When the server process restarts (such as when uvicorn reloads after code edits or when closing the terminal), the in-memory store reinitializes. Durable disk persistence via PostgreSQL/SQLAlchemy is deferred to the cloud phase.
+2. **Dual-Persistence: PostgreSQL Primary (Docker) with Automatic SQLite Fallback**:
+   - **Dedicated Docker Container**: PostgreSQL runs in a dedicated container (`ai_goal_journal_db` mapped to host port `5433:5432`) configured via `docker-compose.yml`, avoiding collisions with other database containers on port 5432.
+   - **Automatic Local Fallback**: If Docker Desktop is closed, stopped, or unreachable, `connection.py` automatically and transparently falls back to local SQLite (`sqlite:///./app.db`) with `check_same_thread=False`. The app runs reliably in both environments.
+   - **Dynamic Table Initialization**: `init_db()` automatically provisions all ORM tables (`users`, `journals`, `goals`, `progress`, `habits`, `habit_logs`, `ai_summaries`, `roadmaps`) in whichever database is active.
 3. **DO NOT Break or Mock Firebase Authentication**: Preserve `src/firebase.js`, `src/services/authService.js`, and `src/context/AuthContext.jsx`. All protected backend endpoints must authenticate requests using verified Firebase ID tokens (`Authorization: Bearer <token>`). Never trust a client-supplied user ID.
 4. **4 GB RAM PC Constraint**:
    - Only `faster-whisper` **Tiny** model with **INT8** quantization on **CPU** is permitted.
@@ -71,7 +70,7 @@
 | **Productivity Score API (0–100)** | **Complete** | Multi-factor deterministic formula mounted at `/api/v1/productivity-score`. |
 | **Cost & Deployment Documentation** | **Complete** | Dedicated API token model (`docs/COST_ANALYSIS.md`) and deployment/hosting architecture (`docs/deployment_costs.md`). |
 | **Brand Identity & Navigation** | **Complete** | Custom quill & AI chip logo (`public/logo.png`), responsive sidebar spacing, calendar padding. |
-| **PostgreSQL & Docker** | **DEFERRED** | ORM models prepared for future cloud phase; zero runtime requirement for local MVP. |
+| **PostgreSQL & Docker Dual Persistence** | **Complete** | Dedicated Docker PostgreSQL container (`ai_goal_journal_db` on port 5433) with automatic seamless SQLite fallback (`sqlite:///./app.db`). |
 
 ---
 

@@ -44,6 +44,36 @@ if not exist "node_modules\" (
     )
 )
 
+:: 5. Check and Start Docker PostgreSQL Container (with SQLite Fallback)
+echo [*] Checking database service...
+where docker >nul 2>nul
+if %ERRORLEVEL% equ 0 (
+    docker info >nul 2>nul
+    if %ERRORLEVEL% equ 0 (
+        docker ps --filter "name=ai_goal_journal_db" --filter "status=running" -q > "%TEMP%\docker_pg_check.tmp" 2>nul
+        set /p PG_RUNNING=<"%TEMP%\docker_pg_check.tmp"
+        del "%TEMP%\docker_pg_check.tmp" 2>nul
+        if defined PG_RUNNING (
+            echo [*] Dedicated PostgreSQL container 'ai_goal_journal_db' is already running on port 5433.
+        ) else (
+            echo [*] Starting dedicated PostgreSQL container 'ai_goal_journal_db' on port 5433...
+            docker compose up -d
+            if errorlevel 1 (
+                echo [!] Docker compose start failed. Backend will fall back to local SQLite database.
+            ) else (
+                echo [*] PostgreSQL container successfully started on port 5433.
+            )
+        )
+    ) else (
+        echo [!] Docker Desktop daemon is not running.
+        echo [*] Running with local SQLite fallback (app.db).
+    )
+) else (
+    echo [!] Docker CLI not detected.
+    echo [*] Running with local SQLite fallback (app.db).
+)
+
+echo.
 echo [1/2] Starting FastAPI Backend Server on http://127.0.0.1:8000 ...
 start "AI Goal Journal - FastAPI Backend" cmd /k "set PYTHONPATH=backend&& python -m uvicorn app.main:app --app-dir backend --reload --host 127.0.0.1 --port 8000"
 

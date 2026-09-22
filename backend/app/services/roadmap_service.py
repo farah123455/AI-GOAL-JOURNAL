@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional, Any
 from app.models.domain import Roadmap
 from app.schemas.roadmap import RoadmapResponse, Milestone
-from app.repositories.in_memory import roadmap_repo, goal_repo
+from app.repositories.postgres import roadmap_repo, goal_repo
 from app.services.gemini_service import gemini_service
 
 class RoadmapService:

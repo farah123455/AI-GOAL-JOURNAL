@@ -10,6 +10,7 @@ from app.database.orm_models import (
     AISummaryORM,
     HabitORM,
     HabitLogORM,
+    RoadmapORM,
 )
 from app.models.domain import (
     User,
@@ -19,6 +20,7 @@ from app.models.domain import (
     WeeklySummary,
     Habit,
     HabitLog,
+    Roadmap,
 )
 from app.repositories.base import (
     AbstractUserRepository,
@@ -27,6 +29,7 @@ from app.repositories.base import (
     AbstractProgressRepository,
     AbstractSummaryRepository,
     AbstractHabitRepository,
+    AbstractRoadmapRepository,
 )
 
 class PostgresUserRepository(AbstractUserRepository):
@@ -1473,6 +1476,160 @@ class PostgresHabitRepository(AbstractHabitRepository):
 
         finally:
             db.close()
+
+
+class PostgresRoadmapRepository(AbstractRoadmapRepository):
+
+    def _get_internal_user_id(
+        self,
+        db,
+        firebase_uid: str
+    ) -> Optional[int]:
+        user = (
+            db.query(UserORM)
+            .filter(UserORM.firebase_uid == firebase_uid)
+            .first()
+        )
+        if not user:
+            user = UserORM(
+                firebase_uid=firebase_uid,
+                email=f"{firebase_uid}@local.dev",
+                created_at=datetime.utcnow(),
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        return user.id
+
+    def _to_domain(self, row: RoadmapORM) -> Roadmap:
+        return Roadmap(
+            id=str(row.id),
+            goal_id=str(row.goal_id),
+            user_id=str(row.user_id),
+            goal_title=row.goal_title,
+            total_milestones=row.total_milestones,
+            estimated_total_duration=row.estimated_total_duration,
+            milestones=row.milestones or [],
+            created_at=row.created_at,
+            updated_at=row.updated_at,
+        )
+
+    def save(self, roadmap: Roadmap) -> Roadmap:
+        db = SessionLocal()
+        try:
+            internal_user_id = self._get_internal_user_id(db, roadmap.user_id)
+            try:
+                db_goal_id = int(roadmap.goal_id)
+            except ValueError:
+                g = db.query(GoalORM).filter(GoalORM.user_id == internal_user_id).first()
+                db_goal_id = g.id if g else 1
+
+            existing = (
+                db.query(RoadmapORM)
+                .filter(
+                    RoadmapORM.user_id == internal_user_id,
+                    RoadmapORM.goal_id == db_goal_id,
+                )
+                .first()
+            )
+
+            if existing:
+                existing.goal_title = roadmap.goal_title
+                existing.total_milestones = roadmap.total_milestones
+                existing.estimated_total_duration = roadmap.estimated_total_duration
+                existing.milestones = roadmap.milestones
+                existing.updated_at = datetime.utcnow()
+                db.commit()
+                db.refresh(existing)
+                return self._to_domain(existing)
+            else:
+                row = RoadmapORM(
+                    user_id=internal_user_id,
+                    goal_id=db_goal_id,
+                    goal_title=roadmap.goal_title,
+                    total_milestones=roadmap.total_milestones,
+                    estimated_total_duration=roadmap.estimated_total_duration,
+                    milestones=roadmap.milestones,
+                    created_at=roadmap.created_at or datetime.utcnow(),
+                    updated_at=roadmap.updated_at or datetime.utcnow(),
+                )
+                db.add(row)
+                db.commit()
+                db.refresh(row)
+                return self._to_domain(row)
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def get_by_goal(self, user_id: str, goal_id: str) -> Optional[Roadmap]:
+        db = SessionLocal()
+        try:
+            internal_user_id = self._get_internal_user_id(db, user_id)
+            try:
+                db_goal_id = int(goal_id)
+            except ValueError:
+                return None
+
+            row = (
+                db.query(RoadmapORM)
+                .filter(
+                    RoadmapORM.user_id == internal_user_id,
+                    RoadmapORM.goal_id == db_goal_id,
+                )
+                .first()
+            )
+            return self._to_domain(row) if row else None
+        finally:
+            db.close()
+
+    def toggle_milestone(
+        self,
+        user_id: str,
+        goal_id: str,
+        step_number: int,
+        completed: Optional[bool] = None,
+    ) -> Optional[Roadmap]:
+        db = SessionLocal()
+        try:
+            internal_user_id = self._get_internal_user_id(db, user_id)
+            try:
+                db_goal_id = int(goal_id)
+            except ValueError:
+                return None
+
+            row = (
+                db.query(RoadmapORM)
+                .filter(
+                    RoadmapORM.user_id == internal_user_id,
+                    RoadmapORM.goal_id == db_goal_id,
+                )
+                .first()
+            )
+
+            if not row:
+                return None
+
+            milestones = list(row.milestones or [])
+            for m in milestones:
+                if isinstance(m, dict) and m.get("step_number") == step_number:
+                    m["completed"] = not m.get("completed", False) if completed is None else completed
+
+            row.milestones = milestones
+            row.updated_at = datetime.utcnow()
+
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(row, "milestones")
+
+            db.commit()
+            db.refresh(row)
+            return self._to_domain(row)
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
                     
 user_repo = PostgresUserRepository()
 journal_repo = PostgresJournalRepository()
@@ -1480,3 +1637,4 @@ goal_repo = PostgresGoalRepository()
 progress_repo = PostgresProgressRepository()
 summary_repo = PostgresSummaryRepository()
 habit_repo = PostgresHabitRepository()
+roadmap_repo = PostgresRoadmapRepository()

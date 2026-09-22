@@ -23,11 +23,11 @@ The `backend/` directory houses the complete FastAPI application providing REST 
 
 ## 2. Invariants & Rules
 
-1. **NO Docker / NO Live PostgreSQL Required**:
-   - Docker and Docker Desktop are **strictly NOT required** to run this backend.
-   - The application runs directly using local Python (`python -m uvicorn app.main:app --app-dir backend --port 8000`).
-   - Default runtime persistence uses thread-safe in-memory repositories (`app/repositories/in_memory.py`). Live PostgreSQL servers are NOT required for the local MVP.
-   - **In-Memory Lifecycle**: During local MVP operation, all state (journals, goals, habits, progress) lives in Python process memory (RAM). When the server process restarts (such as when uvicorn reloads after code edits or when closing the terminal), the in-memory store reinitializes. Durable disk persistence via PostgreSQL/SQLAlchemy is deferred to the cloud phase.
+1. **Dual Persistence (PostgreSQL Primary + SQLite Fallback)**:
+   - The primary database is PostgreSQL running in a dedicated Docker container (`ai_goal_journal_db` mapped to host port `5433:5432` to avoid collisions with any other system databases).
+   - If Docker or PostgreSQL is not available, the backend automatically and seamlessly falls back to local SQLite (`sqlite:///./app.db`) via `app/database/connection.py`.
+   - All models and repository implementations support both PostgreSQL and SQLite identically.
+   - For fast standalone testing or in-memory scenarios, in-memory repositories (`app/repositories/in_memory.py`) remain available.
 2. **4 GB RAM PC Constraint**:
    - Only `faster-whisper` **Tiny** model with **INT8** quantization on **CPU** is permitted.
    - Lazy-load the Whisper model once as a singleton in `app/services/whisper_service.py`. Never load multiple instances or larger models.
@@ -57,13 +57,15 @@ The `backend/` directory houses the complete FastAPI application providing REST 
   - `habits.py` — Habit tracking and daily check-offs
   - `summaries.py` — Weekly AI accountability summaries
   - `productivity.py` — Productivity score (0–100) endpoint
+  - `roadmaps.py` — AI-powered Goal Roadmap generation, milestone tracking, and step completion
 - `app/core/` — Infrastructure and security utilities:
   - `config.py` — Environment configuration (`Settings`)
   - `auth.py` — Firebase ID token verification dependency
   - `crypto.py` — AES-256-GCM field encryption service
   - `key_rotation.py` — Key rotation management utility
+- `app/database/` — Database connection probing, session creation, and engine setup (`connection.py`, `init_db.py`, `orm_models.py`)
 - `app/models/` — Domain dataclasses (`domain.py`)
-- `app/repositories/` — Repository pattern (`in_memory.py` default; `postgres.py` prepared for future cloud)
+- `app/repositories/` — Repository pattern (`in_memory.py` for testing/RAM fallback, `postgres.py` for dual PostgreSQL/SQLite persistence including `PostgresRoadmapRepository`)
 - `app/schemas/` — Pydantic request/response validation schemas
 - `app/services/` — Core business logic services (Whisper, Gemini, Goals, Journals, Progress, Productivity, Coach, Migration)
 - `scripts/` — Database administration and maintenance scripts:
