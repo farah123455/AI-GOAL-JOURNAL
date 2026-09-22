@@ -1,0 +1,13 @@
+warning: in the working copy of 'backend/app/api/v1/progress.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/schemas/progress.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/services/progress_service.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_progress_trends.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/progress.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/api.js', LF will be replaced by CRLF the next time Git touches it
+ backend/app/api/v1/progress.py           |  11 [32m++[m[31m-[m
+ backend/app/schemas/progress.py          |  20 [32m+++++[m
+ backend/app/services/progress_service.py |  44 [32m++++++++++[m[31m-[m
+ backend/tests/test_progress_trends.py    | 131 [32m++++++++++++++++++++++++++++++[m[31m-[m
+ src/pages/progress.jsx                   |  53 [32m++++++++++++[m[31m-[m
+ src/services/api.js                      |   5 [32m+[m[31m-[m
+ 6 files changed, 258 insertions(+), 6 deletions(-)

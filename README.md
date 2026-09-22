@@ -297,6 +297,36 @@ VITE_FIREBASE_APP_ID=your_app_id
 
 ---
 
+### Step 4: See Roadmap & Progress Analytics without Firebase (teammates / reviewers)
+
+The Roadmap and Progress Analytics work lives on the **`progress-analytics`**
+branch (it is *not* on `main`), so check it out first:
+
+```bash
+git fetch origin
+git checkout progress-analytics
+```
+
+Then, with the backend from Step 2 running on port 8000:
+
+1. Create your `.env`: `cp .env.example .env` — the placeholder Firebase values are fine.
+2. `npm install` → `npm run dev` → open [http://localhost:5173](http://localhost:5173).
+3. Protected pages open automatically in **local preview** mode (mock dev token, no
+   login screen), because no real `VITE_FIREBASE_API_KEY` is configured. Set
+   `VITE_DEV_PREVIEW=false` in `.env` to force the real Firebase login instead.
+4. Create a goal in **Manual Goals** — the **Roadmap** button appears on every goal
+   card and opens `/goals/<goalId>/roadmap`. The Progress Analytics page also needs
+   at least one goal; its `7 / 30 / 90 / All time` selector changes the
+   *Period Progress Gain* card (the other metrics always use the full history, and
+   every period shows the same value until progress checkpoints are spread over
+   more than 7 days).
+
+API calls are made to same-origin `/api/v1`, which the Vite dev server forwards to
+`VITE_API_PROXY_TARGET` (default `http://127.0.0.1:8000`) — so there is no
+hard-coded localhost and no CORS setup needed on any developer machine.
+
+---
+
 ## Security & Data Migration
 
 ### Field-Level Encryption Standard

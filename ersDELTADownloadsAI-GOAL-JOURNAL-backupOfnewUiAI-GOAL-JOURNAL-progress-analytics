@@ -1,0 +1,160 @@
+[1mdiff --git a/backend/alembic/versions/471973c3eabe_add_calendar_fields_to_goals.py b/backend/alembic/versions/471973c3eabe_add_calendar_fields_to_goals.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..c4a7c70[m
+[1m--- /dev/null[m
+[1m+++ b/backend/alembic/versions/471973c3eabe_add_calendar_fields_to_goals.py[m
+[36m@@ -0,0 +1,46 @@[m
+[32m+[m[32m"""add calendar fields to goals[m
+[32m+[m
+[32m+[m[32mRevision ID: 471973c3eabe[m
+[32m+[m[32mRevises: 18fd7b136284[m
+[32m+[m[32mCreate Date: 2026-09-16 22:05:28.768795[m
+[32m+[m
+[32m+[m[32m"""[m
+[32m+[m[32mfrom typing import Sequence, Union[m
+[32m+[m
+[32m+[m[32mfrom alembic import op[m
+[32m+[m[32mimport sqlalchemy as sa[m
+[32m+[m
+[32m+[m
+[32m+[m[32m# revision identifiers, used by Alembic.[m
+[32m+[m[32mrevision: str = '471973c3eabe'[m
+[32m+[m[32mdown_revision: Union[str, Sequence[str], None] = '18fd7b136284'[m
+[32m+[m[32mbranch_labels: Union[str, Sequence[str], None] = None[m
+[32m+[m[32mdepends_on: Union[str, Sequence[str], None] = None[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef upgrade() -> None:[m
+[32m+[m[32m    op.add_column([m
+[32m+[m[32m        "goals",[m
+[32m+[m[32m        sa.Column("google_event_id", sa.String(length=255), nullable=True)[m
+[32m+[m[32m    )[m
+[32m+[m
+[32m+[m[32m    op.add_column([m
+[32m+[m[32m        "goals",[m
+[32m+[m[32m        sa.Column("google_event_link", sa.Text(), nullable=True)[m
+[32m+[m[32m    )[m
+[32m+[m
+[32m+[m[32m    op.add_column([m
+[32m+[m[32m        "goals",[m
+[32m+[m[32m        sa.Column([m
+[32m+[m[32m            "calendar_synced",[m
+[32m+[m[32m            sa.Boolean(),[m
+[32m+[m[32m            nullable=False,[m
+[32m+[m[32m            server_default=sa.false()[m
+[32m+[m[32m        )[m
+[32m+[m[32m    )[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef downgrade() -> None:[m
+[32m+[m[32m    op.drop_column("goals", "calendar_synced")[m
+[32m+[m[32m    op.drop_column("goals", "google_event_link")[m
+[32m+[m[32m    op.drop_column("goals", "google_event_id")[m
+[1mdiff --git a/backend/alembic/versions/b9821d3f56e1_create_roadmaps_table.py b/backend/alembic/versions/b9821d3f56e1_create_roadmaps_table.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..afbf978[m
+[1m--- /dev/null[m
+[1m+++ b/backend/alembic/versions/b9821d3f56e1_create_roadmaps_table.py[m
+[36m@@ -0,0 +1,46 @@[m
+[32m+[m[32m"""create roadmaps table[m
+[32m+[m
+[32m+[m[32mRevision ID: b9821d3f56e1[m
+[32m+[m[32mRevises: 471973c3eabe[m
+[32m+[m[32mCreate Date: 2026-09-21 20:25:00.000000[m
+[32m+[m
+[32m+[m[32m"""[m
+[32m+[m[32mfrom typing import Sequence, Union[m
+[32m+[m
+[32m+[m[32mfrom alembic import op[m
+[32m+[m[32mimport sqlalchemy as sa[m
+[32m+[m
+[32m+[m
+[32m+[m[32m# revision identifiers, used by Alembic.[m
+[32m+[m[32mrevision: str = 'b9821d3f56e1'[m
+[32m+[m[32mdown_revision: Union[str, Sequence[str], None] = '471973c3eabe'[m
+[32m+[m[32mbranch_labels: Union[str, Sequence[str], None] = None[m
+[32m+[m[32mdepends_on: Union[str, Sequence[str], None] = None[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef upgrade() -> None:[m
+[32m+[m[32m    op.create_table([m
+[32m+[m[32m        'roadmaps',[m
+[32m+[m[32m        sa.Column('id', sa.Integer(), nullable=False),[m
+[32m+[m[32m        sa.Column('goal_id', sa.Integer(), nullable=False),[m
+[32m+[m[32m        sa.Column('user_id', sa.Integer(), nullable=False),[m
+[32m+[m[32m        sa.Column('goal_title', sa.String(), nullable=False),[m
+[32m+[m[32m        sa.Column('total_milestones', sa.Integer(), nullable=False, server_default='0'),[m
+[32m+[m[32m        sa.Column('estimated_total_duration', sa.String(), nullable=True, server_default='Self-paced'),[m
+[32m+[m[32m        sa.Column('milestones', sa.JSON(), nullable=False),[m
+[32m+[m[32m        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),[m
+[32m+[m[32m        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),[m
+[32m+[m[32m        sa.ForeignKeyConstraint(['goal_id'], ['goals.id'], ondelete='CASCADE'),[m
+[32m+[m[32m        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),[m
+[32m+[m[32m        sa.PrimaryKeyConstraint('id')[m
+[32m+[m[32m    )[m
+[32m+[m[32m    op.create_index(op.f('ix_roadmaps_id'), 'roadmaps', ['id'], unique=False)[m
+[32m+[m[32m    op.create_index(op.f('ix_roadmaps_goal_id'), 'roadmaps', ['goal_id'], unique=False)[m
+[32m+[m[32m    op.create_index(op.f('ix_roadmaps_user_id'), 'roadmaps', ['user_id'], unique=False)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef downgrade() -> None:[m
+[32m+[m[32m    op.drop_index(op.f('ix_roadmaps_user_id'), table_name='roadmaps')[m
+[32m+[m[32m    op.drop_index(op.f('ix_roadmaps_goal_id'), table_name='roadmaps')[m
+[32m+[m[32m    op.drop_index(op.f('ix_roadmaps_id'), table_name='roadmaps')[m
+[32m+[m[32m    op.drop_table('roadmaps')[m
+[1mdiff --git a/backend/app/api/v1/goals.py b/backend/app/api/v1/goals.py[m
+[1mindex 81f9482..4605dea 100644[m
+[1m--- a/backend/app/api/v1/goals.py[m
+[1m+++ b/backend/app/api/v1/goals.py[m
+[36m@@ -3,8 +3,10 @@[m [mfrom fastapi import APIRouter, Depends, HTTPException, Query, status[m
+ from app.core.auth import get_current_user, AuthenticatedUser[m
+ from app.schemas.goal import GoalCreate, GoalUpdate, GoalResponse, FocusNextResponse[m
+ from app.schemas.progress import ProgressCreate, ProgressResponse[m
+[32m+[m[32mfrom app.schemas.roadmap import RoadmapResponse[m
+ from app.services.goal_service import goal_service[m
+ from app.services.progress_service import progress_service[m
+[32m+[m[32mfrom app.services.gemini_service import gemini_service[m
+ [m
+ router = APIRouter(prefix="/goals", tags=["Goals"])[m
+ [m
+[36m@@ -98,3 +100,51 @@[m [mdef get_goal_progress_history([m
+ ):[m
+     """Get progress history for a goal."""[m
+     return progress_service.get_progress_history(user_id=current_user.uid, goal_id=goal_id)[m
+[32m+[m
+[32m+[m[32mfrom app.services.roadmap_service import roadmap_service[m
+[32m+[m
+[32m+[m[32m@router.post("/{goal_id}/roadmap", response_model=RoadmapResponse)[m
+[32m+[m[32m@router.get("/{goal_id}/roadmap", response_model=RoadmapResponse)[m
+[32m+[m[32mdef get_or_generate_goal_roadmap([m
+[32m+[m[32m    goal_id: str,[m
+[32m+[m[32m    timeline: Optional[str] = Query("Self-paced"),[m
+[32m+[m[32m    level: Optional[str] = Query("Beginner"),[m
+[32m+[m[32m    current_user: AuthenticatedUser = Depends(get_current_user),[m
+[32m+[m[32m):[m
+[32m+[m[32m    """Generate or retrieve a structured learning roadmap for an existing goal."""[m
+[32m+[m[32m    goal = goal_service.get_goal(user_id=current_user.uid, goal_id=goal_id)[m
+[32m+[m[32m    if not goal:[m
+[32m+[m[32m        raise HTTPException([m
+[32m+[m[32m            status_code=status.HTTP_404_NOT_FOUND,[m
+[32m+[m[32m            detail="Goal not found",[m
+[32m+[m[32m        )[m
+[32m+[m[32m    return roadmap_service.get_or_create_roadmap([m
+[32m+[m[32m        user_id=current_user.uid,[m
+[32m+[m[32m        goal_id=goal_id,[m
+[32m+[m[32m        goal_title=goal.title,[m
+[32m+[m[32m        timeline=timeline or "Self-paced",[m
+[32m+[m[32m        level=level or "Beginner",[m
+[32m+[m[32m    )[m
+[32m+[m
+[32m+[m[32m@router.post("/{goal_id}/roadmap/milestones/{step_number}/toggle", response_model=RoadmapResponse)[m
+[32m+[m[32m@router.put("/{goal_id}/roadmap/milestones/{step_number}/toggle", response_model=RoadmapResponse)[m
+[32m+[m[32mdef toggle_roadmap_milestone([m
+[32m+[m[32m    goal_id: str,[m
+[32m+[m[32m    step_number: int,[m
+[32m+[m[32m    completed: Optional[bool] = Query(None),[m
+[32m+[m[32m    current_user: AuthenticatedUser = Depends(get_current_user),[m
+[32m+[m[32m):[m
+[32m+[m[32m    """Toggle or set milestone completion status for a goal roadmap."""[m
+[32m+[m[32m    updated = roadmap_service.toggle_milestone([m
+[32m+[m[32m        
