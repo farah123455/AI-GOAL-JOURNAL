@@ -289,6 +289,11 @@ export default function Habits() {
       return;
     }
 
+    // One-Way Daily Completion Lock: Once completed today, cannot be untoggled
+    if (!isCompleting) {
+      return;
+    }
+
     const toggleKey = `${habitId}_${date}`;
     if (pendingToggles[toggleKey]) return; // prevent duplicate clicks while pending
 
@@ -541,16 +546,21 @@ export default function Habits() {
                 {habit.frequency !== "weekly" && (
                   <button
                     type="button"
-                    onClick={(e) => toggleCheck(habit.id, today, !doneToday, e.currentTarget)}
+                    onClick={(e) => {
+                      if (!doneToday) {
+                        toggleCheck(habit.id, today, true, e.currentTarget);
+                      }
+                    }}
+                    disabled={doneToday}
                     aria-pressed={doneToday}
-                    className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold border transition active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                    className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold border transition ${
                       doneToday
-                        ? "bg-[#4B5D3C] border-[#4B5D3C] text-white hover:bg-[#3A492E] focus-visible:ring-[#4B5D3C]"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-[#4B5D3C]/40 hover:text-[#4B5D3C] focus-visible:ring-[#4B5D3C]"
+                        ? "bg-[#4B5D3C] border-[#4B5D3C] text-white cursor-default shadow-xs"
+                        : "bg-white border-slate-200 text-slate-700 hover:border-[#4B5D3C]/40 hover:text-[#4B5D3C] active:scale-[0.98] focus-visible:ring-[#4B5D3C]"
                     }`}
                   >
                     <Check size={16} strokeWidth={3} />
-                    {doneToday ? "Completed Today" : "Mark Today Complete"}
+                    {doneToday ? "Completed Today ✓" : "Mark Today Complete"}
                   </button>
                 )}
 
@@ -597,30 +607,30 @@ export default function Habits() {
                       const isToday = date === today;
                       const isPast = date < today;
                       const tooltipTitle = isToday
-                        ? date
+                        ? checked
+                          ? `${date} (Completed today — locked)`
+                          : `${date} (Click to complete today)`
                         : isPast
-                        ? `${date} (Past day - read only)`
-                        : `${date} (Future day - read only)`;
+                        ? `${date} (Past day — read only)`
+                        : `${date} (Future day — read only)`;
 
                       return (
                         <button
                           key={date}
                           type="button"
-                          disabled={!isToday}
+                          disabled={!isToday || checked}
                           onClick={(e) => {
-                            if (!isToday) return;
-                            toggleCheck(habit.id, date, !checked, e.currentTarget);
+                            if (!isToday || checked) return;
+                            toggleCheck(habit.id, date, true, e.currentTarget);
                           }}
                           aria-pressed={checked}
-                          aria-label={`${checked ? "Completed" : "Incomplete"} ${habit.name} on ${date}${!isToday ? " (read-only)" : ""}`}
+                          aria-label={`${checked ? "Completed" : "Incomplete"} ${habit.name} on ${date}${!isToday ? " (read-only)" : checked ? " (locked)" : ""}`}
                           title={tooltipTitle}
                           className={`flex flex-1 flex-col items-center gap-1 rounded-xl border py-2 transition focus:outline-none ${
                             isToday
-                              ? `cursor-pointer active:scale-95 ring-2 ring-[#4B5D3C]/40 shadow-2xs ${
-                                  checked
-                                    ? "border-[#4B5D3C] bg-[#E2E9DF]/60 text-[#3A492E]"
-                                    : "border-[#4B5D3C]/40 bg-[#E2E9DF]/20 text-slate-700 hover:border-[#4B5D3C] hover:bg-white"
-                                }`
+                              ? checked
+                                ? "cursor-default border-[#4B5D3C] bg-[#E2E9DF]/80 text-[#3A492E] ring-2 ring-[#4B5D3C]/40 shadow-2xs"
+                                : "cursor-pointer active:scale-95 ring-2 ring-[#4B5D3C]/40 shadow-2xs border-[#4B5D3C]/40 bg-[#E2E9DF]/20 text-slate-700 hover:border-[#4B5D3C] hover:bg-white"
                               : `cursor-not-allowed ${
                                   checked
                                     ? "border-[#4B5D3C]/30 bg-[#E2E9DF]/40 text-[#3A492E] opacity-80"

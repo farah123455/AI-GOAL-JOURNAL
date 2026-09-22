@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 export default function PublicFooter() {
   return (
     <footer id="privacy" className="border-t border-[#E2E9DF] bg-[#F4F1E8] py-12 px-6">
-      <div className="mx-auto max-w-[1250px]">
-        <div className="grid gap-8 md:grid-cols-4 pb-8 border-b border-[#E2E9DF]">
+      <div className="mx-auto max-w-[1100px]">
+        <div className="grid gap-8 md:grid-cols-3 pb-8 border-b border-[#E2E9DF]">
           {/* Brand Col */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-3">
@@ -20,8 +20,8 @@ export default function PublicFooter() {
                 </p>
               </div>
             </div>
-            <p className="mt-3 text-xs text-slate-600 max-w-sm leading-relaxed font-medium">
-              An intelligent personal reflection and goal-tracking platform. Turns conversational text and voice reflections into structured momentum, actionable blockers, and weekly accountability coaching.
+            <p className="mt-3 text-xs text-slate-600 max-w-md leading-relaxed font-medium">
+              An intelligent personal reflection and goal-tracking platform. Turns conversational text and voice reflections into structured momentum, actionable blockers, and intelligent AI coaching.
             </p>
           </div>
 
@@ -31,17 +31,8 @@ export default function PublicFooter() {
             <ul className="flex flex-col gap-2 text-xs text-slate-600 font-medium">
               <li><a href="#features" className="hover:text-[#4B5D3C] transition">Voice Reflection</a></li>
               <li><a href="#journey" className="hover:text-[#4B5D3C] transition">Gemini AI Structuring</a></li>
-              <li><a href="#features" className="hover:text-[#4B5D3C] transition">Goal Progress Engine</a></li>
-              <li><a href="#features" className="hover:text-[#4B5D3C] transition">Accountability Coach</a></li>
-            </ul>
-          </div>
-
-          {/* Quick Access Links */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#26261F] mb-3">Account</h4>
-            <ul className="flex flex-col gap-2 text-xs text-slate-600 font-medium">
-              <li><Link to="/login" className="hover:text-[#4B5D3C] transition">Sign In to Workspace</Link></li>
-              <li><Link to="/register" className="hover:text-[#4B5D3C] transition">Create Free Account</Link></li>
+              <li><a href="#features" className="hover:text-[#4B5D3C] transition">10-Class Mood Analyzer</a></li>
+              <li><a href="#features" className="hover:text-[#4B5D3C] transition">AI Coach</a></li>
             </ul>
           </div>
         </div>

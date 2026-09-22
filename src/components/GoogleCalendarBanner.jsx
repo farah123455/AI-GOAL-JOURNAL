@@ -12,9 +12,11 @@ import {
 import { calendarApi } from "../services/api";
 import GoogleCalendarSetupModal from "./GoogleCalendarSetupModal";
 
+let cachedCalendarStatus = null;
+
 export default function GoogleCalendarBanner({ onStatusChange, className = "" }) {
-  const [status, setStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState(cachedCalendarStatus);
+  const [loading, setLoading] = useState(!cachedCalendarStatus);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSetupModal, setShowSetupModal] = useState(false);
@@ -25,14 +27,17 @@ export default function GoogleCalendarBanner({ onStatusChange, className = "" })
 
   async function fetchStatus() {
     try {
-      setLoading(true);
+      if (!cachedCalendarStatus) setLoading(true);
       setError("");
       const res = await calendarApi.getStatus();
+      cachedCalendarStatus = res;
       setStatus(res);
       if (onStatusChange) onStatusChange(res);
     } catch (err) {
       console.error("Error fetching Google Calendar status:", err);
-      setStatus({ connected: false, is_configured: false });
+      const fallback = { connected: false, is_configured: false };
+      cachedCalendarStatus = fallback;
+      setStatus(fallback);
     } finally {
       setLoading(false);
     }

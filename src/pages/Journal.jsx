@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import VoiceRecorder from "../components/VoiceRecorder";
 import Pagination from "../components/Pagination";
-import GoalCelebration from "../components/GoalCelebration";
 import MoodBadge from "../components/MoodBadge";
 import { journalApi, goalApi } from "../services/api";
 import { useData } from "../context/DataContext";
@@ -243,13 +242,6 @@ export default function Journal() {
 
   return (
     <div className="app-page min-h-screen bg-[#F4F1E8]">
-      {/* Full-Screen Confetti Celebration Overlay when a goal is completed */}
-      {recentlyCompletedGoal && (
-        <GoalCelebration
-          goal={recentlyCompletedGoal}
-          onClose={clearCompletedGoalTrigger}
-        />
-      )}
       <main className="mx-auto max-w-7xl w-full px-5 py-6 md:px-8">
         {error && (
           <div className="mb-5 rounded-xl border border-[#C1622C]/30 bg-[#FBEBE3] px-4 py-3 text-xs text-[#C1622C] font-medium">

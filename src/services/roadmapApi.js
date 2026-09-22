@@ -31,6 +31,7 @@ import { MOCK_ROADMAP } from '../data/mockRoadmap';
 export const USE_MOCK_ROADMAP_API = false;
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const roadmapCache = new Map();
 
 export const roadmapApi = {
   /**
@@ -38,12 +39,18 @@ export const roadmapApi = {
    * Resolves with the roadmap object, or rejects when it cannot be loaded.
    *
    * @param {string} goalId
-   * @param {{ simulate?: 'loading' | 'empty' | 'error' }} options
+   * @param {{ simulate?: 'loading' | 'empty' | 'error', forceRefresh?: boolean }} options
    *   Mock-mode-only preview hooks (e.g. /goals/xyz/roadmap?simulate=empty).
    */
   getRoadmap: async (goalId, options = {}) => {
+    if (!options.forceRefresh && !options.simulate && roadmapCache.has(goalId)) {
+      return roadmapCache.get(goalId);
+    }
+
     if (!USE_MOCK_ROADMAP_API) {
-      return rawRoadmapApi.getGoalRoadmap(goalId);
+      const data = await rawRoadmapApi.getGoalRoadmap(goalId);
+      if (data) roadmapCache.set(goalId, data);
+      return data;
     }
 
     const { simulate } = options;
@@ -53,7 +60,9 @@ export const roadmapApi = {
     }
     await delay(1400); // simulated AI generation latency
     if (simulate === 'empty') return null;
-    return JSON.parse(JSON.stringify(MOCK_ROADMAP));
+    const mockData = JSON.parse(JSON.stringify(MOCK_ROADMAP));
+    roadmapCache.set(goalId, mockData);
+    return mockData;
   },
 
   /**
@@ -63,6 +72,8 @@ export const roadmapApi = {
    * @param {boolean} completed
    */
   setTaskCompletion: async (goalId, taskId, completed) => {
-    return rawRoadmapApi.toggleMilestone(goalId, Number(taskId), completed);
+    const updated = await rawRoadmapApi.toggleMilestone(goalId, Number(taskId), completed);
+    if (updated) roadmapCache.set(goalId, updated);
+    return updated;
   },
 };

@@ -8,8 +8,6 @@ import {
   RotateCcw,
   Sparkles,
   TrendingUp,
-  LayoutGrid,
-  CalendarDays,
   Calendar,
   Route,
 } from "lucide-react";
@@ -21,7 +19,6 @@ import { goalApi } from "../services/api";
 import CircularProgress from "../components/CircularProgress";
 import { GridSkeleton, GoalLoadingState } from "../components/LoadingSkeleton";
 import GoalCelebration from "../components/GoalCompletionCelebration";
-import GoalCalendar from "../components/GoalCalendar";
 import Pagination from "../components/Pagination";
 import SyncGoogleCalendarModal from "../components/SyncGoogleCalendarModal";
 
@@ -41,7 +38,6 @@ export default function Goals() {
   const navigate = useNavigate();
 
   const [statusFilter, setStatusFilter] = useState("");
-  const [viewMode, setViewMode] = useState("grid"); // "grid" | "calendar"
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
   const [syncingGoal, setSyncingGoal] = useState(null);
@@ -53,6 +49,7 @@ export default function Goals() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("Active");
+  const [priority, setPriority] = useState("Medium Priority");
   const [targetDate, setTargetDate] = useState("");
   const [progressValue, setProgressValue] = useState(0);
   const [progressNote, setProgressNote] = useState("");
@@ -80,6 +77,7 @@ export default function Goals() {
     setDescription("");
     setCategory("");
     setStatus("Active");
+    setPriority("Medium Priority");
     setTargetDate("");
     setProgressValue(0);
     setProgressNote("");
@@ -94,6 +92,7 @@ export default function Goals() {
     setDescription(goal.description || "");
     setCategory(goal.category || "");
     setStatus(goal.status || "Active");
+    setPriority(goal.priority || "Medium Priority");
     setTargetDate(goal.target_date || "");
     setProgressValue(goal.status === "Completed" ? 100 : goal.progress_value || 0);
     setProgressNote(goal.latest_progress_note || "");
@@ -130,6 +129,7 @@ export default function Goals() {
           description: description.trim() || null,
           category: category.trim() || null,
           status: finalStatus,
+          priority: priority || "Medium Priority",
           target_date: targetDate || null,
           progress_value: finalProgress,
           latest_progress_note: progressNote.trim() || null,
@@ -145,6 +145,7 @@ export default function Goals() {
           description: description.trim() || null,
           category: category.trim() || null,
           status: finalStatus,
+          priority: priority || "Medium Priority",
           target_date: targetDate || null,
           progress_value: finalProgress,
         };
@@ -220,48 +221,22 @@ export default function Goals() {
         {/* Status Filter & Action Bar */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            {/* View Mode Toggle: Grid vs Calendar */}
-            <div className="flex items-center rounded-xl bg-white p-1 border border-slate-200 shadow-sm">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                  viewMode === "grid"
-                    ? "bg-[#4B5D3C] text-white shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <LayoutGrid size={15} /> Grid Cards
-              </button>
-              <button
-                onClick={() => setViewMode("calendar")}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                  viewMode === "calendar"
-                    ? "bg-[#4B5D3C] text-white shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <CalendarDays size={15} /> Calendar & Deadlines
-              </button>
+            {/* Status Filter Pills */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {["", "Active", "Completed", "Stalled", "High Priority"].map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setStatusFilter(st)}
+                  className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                    statusFilter === st
+                      ? "bg-[#4B5D3C] text-white shadow-sm font-bold"
+                      : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  {st === "" ? "All Goals" : st}
+                </button>
+              ))}
             </div>
-
-            {/* Status Filter Pills (For Grid View) */}
-            {viewMode === "grid" && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {["", "Active", "Completed", "Stalled", "High Priority"].map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => setStatusFilter(st)}
-                    className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
-                      statusFilter === st
-                        ? "bg-[#4B5D3C] text-white shadow-sm font-bold"
-                        : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900"
-                    }`}
-                  >
-                    {st === "" ? "All Goals" : st}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="flex items-center gap-3.5">
@@ -388,15 +363,17 @@ export default function Goals() {
 
                   <div>
                     <label className="text-xs font-semibold text-slate-700 block mb-1">
-                      Latest Progress Note
+                      Priority
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Finished modules 1 & 2"
-                      value={progressNote}
-                      onChange={(e) => setProgressNote(e.target.value)}
-                      className="input-field p-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900"
-                    />
+                    <select
+                      value={priority}
+                      onChange={(e) => setPriority(e.target.value)}
+                      className="input-field p-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 font-semibold"
+                    >
+                      <option value="High Priority">High Priority</option>
+                      <option value="Medium Priority">Medium Priority</option>
+                      <option value="Low Priority">Low Priority</option>
+                    </select>
                   </div>
                 </div>
 
@@ -448,16 +425,9 @@ export default function Goals() {
           </div>
         )}
 
-        {/* View Mode Rendering: Calendar View vs Cards View */}
+        {/* Goals Grid Cards Rendering */}
         {loading || !hasLoadedGoals ? (
           <GoalLoadingState />
-        ) : viewMode === "calendar" ? (
-          <GoalCalendar
-            goals={goals}
-            onQuickStatusChange={handleQuickStatusChange}
-            onOpenEdit={openEdit}
-            onSyncGoal={(goal) => setSyncingGoal(goal)}
-          />
         ) : filteredGoals.length === 0 ? (
           <section className="panel px-6 py-16 text-center shadow-sm">
             <Target size={36} className="mx-auto text-slate-300 mb-3" />

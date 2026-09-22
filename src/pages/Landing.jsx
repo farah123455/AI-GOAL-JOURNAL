@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import PublicNavbar from "../components/PublicNavbar";
 import PublicFooter from "../components/PublicFooter";
 import Reveal from "../components/Reveal";
-import { Target, Mic, Sparkles, Trophy, ArrowRight, Flag, Compass, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Target, Mic, Sparkles, Trophy, ArrowRight, Flag, Compass, CheckCircle2, AlertTriangle, Bot, Heart, Repeat } from "lucide-react";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -57,7 +57,7 @@ export default function Landing() {
               {/* Tagline Pill */}
               <div className="animate-rise inline-flex items-center gap-2 rounded-full border border-[#4B5D3C]/30 bg-white/80 px-4 py-1.5 text-xs font-bold text-[#4B5D3C] shadow-xs backdrop-blur-md mb-5">
                 <span className="h-2 w-2 rounded-full bg-[#4B5D3C] animate-pulse" />
-                <span>🌱 AI Journal & Accountability Coach</span>
+                <span>🌱 AI Goal Journal & Coach</span>
               </div>
 
               {/* Main Headline */}
@@ -413,61 +413,103 @@ export default function Landing() {
 
       {/* Feature Capabilities Section */}
       <section id="features" className="py-16 md:py-20 px-5 md:px-8 bg-white border-t border-[#E2E9DF]">
-        <div className="mx-auto max-w-[1150px]">
+        <div className="mx-auto max-w-[1100px]">
           <Reveal className="text-center max-w-xl mx-auto mb-12">
-            <span className="text-[11px] font-extrabold tracking-widest text-[#4B5D3C] uppercase">FOUR PILLARS OF GROWTH</span>
+            <span className="text-[11px] font-extrabold tracking-widest text-[#4B5D3C] uppercase">CORE CAPABILITIES</span>
             <h2 className="mt-1.5 text-2xl sm:text-3xl font-bold font-serif text-[#26261F]">
               Everything you need for goal consistency.
             </h2>
           </Reveal>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <Reveal className="rounded-[24px] p-6 bg-[#F4F1E8]/60 border border-[#E2E9DF] shadow-xs hover-lift" delay={40}>
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E2E9DF] text-[#4B5D3C] mb-4">
-                <Mic size={22} />
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {/* 1. Voice Reflection */}
+            <Reveal className="rounded-[24px] p-6 bg-[#F4F1E8]/60 border border-[#E2E9DF] shadow-xs hover-lift flex flex-col justify-between" delay={40}>
+              <div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E2E9DF] text-[#4B5D3C] mb-4">
+                  <Mic size={22} />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold font-serif text-[#26261F]">
+                  Voice Reflection
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                  Speak freely after work or study. Transcribed locally on CPU with faster-whisper Tiny INT8, zero audio upload fees, and instant editable text.
+                </p>
               </div>
-              <h3 className="text-lg font-bold font-serif text-[#26261F]">
-                Voice Reflection (faster-whisper Tiny)
-              </h3>
-              <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-                Speak freely after work or study. Transcribed locally on CPU using INT8 quantization with zero audio upload fees and full editable transcripts.
-              </p>
             </Reveal>
 
-            <Reveal className="rounded-[24px] p-6 bg-[#F4F1E8]/60 border border-[#E2E9DF] shadow-xs hover-lift" delay={90}>
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E2E9DF] text-[#4B5D3C] mb-4">
-                <Sparkles size={22} />
+            {/* 2. Gemini Semantic Extraction */}
+            <Reveal className="rounded-[24px] p-6 bg-[#F4F1E8]/60 border border-[#E2E9DF] shadow-xs hover-lift flex flex-col justify-between" delay={80}>
+              <div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E2E9DF] text-[#4B5D3C] mb-4">
+                  <Sparkles size={22} />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold font-serif text-[#26261F]">
+                  Gemini Semantic Extraction
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                  Google Gemini Flash-Lite extracts completed tasks, upcoming plans, active blockers (technical, distraction, fatigue), and goal connections.
+                </p>
               </div>
-              <h3 className="text-lg font-bold font-serif text-[#26261F]">
-                Gemini Semantic Extraction
-              </h3>
-              <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-                Google Gemini Flash-Lite categorizes finished tasks, upcoming plans, active blockers (technical, distraction, time), and mood confidence score.
-              </p>
             </Reveal>
 
-            <Reveal className="rounded-[24px] p-6 bg-[#F4F1E8]/60 border border-[#E2E9DF] shadow-xs hover-lift" delay={140}>
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E2E9DF] text-[#4B5D3C] mb-4">
-                <Target size={22} />
+            {/* 3. 10-Class Neural Mood Analyzer */}
+            <Reveal className="rounded-[24px] p-6 bg-[#F4F1E8]/60 border border-[#E2E9DF] shadow-xs hover-lift flex flex-col justify-between" delay={120}>
+              <div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E2E9DF] text-[#4B5D3C] mb-4">
+                  <Heart size={22} />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold font-serif text-[#26261F]">
+                  10-Class Mood Analyzer
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                  Custom PyTorch 4-Head Attention BiLSTM running on CPU. Detects emotional states with genuine confidence scoring and keyword extraction.
+                </p>
               </div>
-              <h3 className="text-lg font-bold font-serif text-[#26261F]">
-                Deterministic Goal Matching
-              </h3>
-              <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-                Set milestones with target dates. The system automatically links daily journal activities to your active goals without cluttering your board.
-              </p>
             </Reveal>
 
-            <Reveal className="rounded-[24px] p-6 bg-[#F4F1E8]/60 border border-[#E2E9DF] shadow-xs hover-lift" delay={190}>
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E2E9DF] text-[#4B5D3C] mb-4">
-                <Trophy size={22} />
+            {/* 4. AI Conversational Coach */}
+            <Reveal className="rounded-[24px] p-6 bg-[#F4F1E8]/60 border border-[#E2E9DF] shadow-xs hover-lift flex flex-col justify-between" delay={160}>
+              <div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E2E9DF] text-[#4B5D3C] mb-4">
+                  <Bot size={22} />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold font-serif text-[#26261F]">
+                  AI Conversational Coach
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                  Two-way interactive coaching grounded in your real goals, habits, and emotional rhythm. Provides actionable advice and thoughtful questions.
+                </p>
               </div>
-              <h3 className="text-lg font-bold font-serif text-[#26261F]">
-                Weekly AI Accountability Coach
-              </h3>
-              <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-                On-demand weekly reviews that synthesize your week's accomplishments, surface recurring blocker patterns, and offer actionable coaching advice.
-              </p>
+            </Reveal>
+
+            {/* 5. Habits Tracker */}
+            <Reveal className="rounded-[24px] p-6 bg-[#F4F1E8]/60 border border-[#E2E9DF] shadow-xs hover-lift flex flex-col justify-between" delay={200}>
+              <div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E2E9DF] text-[#4B5D3C] mb-4">
+                  <Repeat size={22} />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold font-serif text-[#26261F]">
+                  Habits Tracker
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                  Build unbreakable consistency with Monday–Sunday weekly streaks, 0 ms instant optimistic check-offs, and a one-way daily completion lock.
+                </p>
+              </div>
+            </Reveal>
+
+            {/* 6. AI Goal Roadmaps */}
+            <Reveal className="rounded-[24px] p-6 bg-[#F4F1E8]/60 border border-[#E2E9DF] shadow-xs hover-lift flex flex-col justify-between" delay={240}>
+              <div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E2E9DF] text-[#4B5D3C] mb-4">
+                  <Target size={22} />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold font-serif text-[#26261F]">
+                  Goal Roadmaps & Milestones
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                  Transform broad ambitions into structured, sequential milestones with AI roadmaps, progress rings, and Google Calendar deadline sync.
+                </p>
+              </div>
             </Reveal>
           </div>
         </div>

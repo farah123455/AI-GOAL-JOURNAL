@@ -3,7 +3,6 @@ import {
   Bell,
   Sparkles,
   BookOpen,
-  Moon,
   Save,
   Check,
   Calendar,
@@ -23,7 +22,6 @@ const defaults = {
   notifications: true,
   aiInsights: true,
   journalReminders: true,
-  compactMode: false,
 };
 
 function mergeWithDefaults(preferences) {
@@ -299,20 +297,6 @@ export default function Settings() {
                 setShowSetupModal(false);
                 fetchCalendarStatus();
               }}
-            />
-          </SettingSection>
-
-          <SettingSection
-            icon={Moon}
-            title="Interface"
-            description="Adjust the application layout."
-          >
-            <SettingRow
-              title="Compact mode"
-              description="Use a more condensed content layout."
-              enabled={settings.compactMode}
-              onChange={() => update("compactMode")}
-              disabled={saving}
             />
           </SettingSection>
 

@@ -332,14 +332,14 @@ export default function Auth() {
           {/* Top text branding in sliding overlay */}
           <div className="relative z-10 text-white">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-xs font-semibold tracking-wide">
-              <span>🌱</span> AI Accountability Coach
+              <span>🌱</span> AI Coach
             </div>
           </div>
 
           {/* Center Dynamic Content */}
           <div className="relative z-10 text-white text-center px-4 py-6">
             <h2 className="text-3xl font-bold font-serif mb-3 leading-tight tracking-tight drop-shadow-md">
-              {isSignUp ? "Already tracking goals?" : "New to Accountability Coach?"}
+              {isSignUp ? "Already tracking goals?" : "New to AI Coach?"}
             </h2>
             <p className="text-sm text-slate-100/90 leading-relaxed max-w-xs mx-auto mb-8 font-medium">
               {isSignUp

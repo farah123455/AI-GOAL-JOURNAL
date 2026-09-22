@@ -8,6 +8,7 @@ import {
   User,
   Settings,
   Repeat,
+  Bot,
   Menu,
   X,
   ChevronLeft,
@@ -48,7 +49,7 @@ const navigation = [
         icon: BookOpen,
       },
       {
-        name: "Manual Goal",
+        name: "Goals",
         path: "/goals",
         icon: Target,
       },
@@ -60,7 +61,7 @@ const navigation = [
       {
         name: "AI Coach",
         path: "/coach",
-        icon: Sparkles,
+        icon: Bot,
       },
       {
         name: "AI Insights",

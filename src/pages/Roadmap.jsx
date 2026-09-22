@@ -268,7 +268,7 @@ export default function RoadmapPage({
 
   return (
     <div className="app-page bg-slate-50 min-h-screen">
-      <main className="mx-auto max-w-3xl px-4 py-6 md:px-6 lg:px-8">
+      <main className="mx-auto max-w-5xl px-4 py-6 md:px-6 lg:px-8">
         <Link
           to="/goals"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#4B5D3C] hover:text-[#3A492E] transition mb-5"

@@ -212,7 +212,7 @@ export default function InteractiveGrowthCube() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-[10px] font-medium text-emerald-200">Accountability Coach</p>
+                  <p className="text-[10px] font-medium text-emerald-200">AI Coach</p>
                 </div>
 
                 {/* BOTTOM FACE */}

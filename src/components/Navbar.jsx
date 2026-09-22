@@ -110,7 +110,7 @@ export default function Navbar() {
       message: "Are you sure you want to sign out of your account?",
       confirmText: "Sign Out",
       cancelText: "Cancel",
-      variant: "warning",
+      variant: "signout",
     });
     if (!confirmed) return;
     await logout();
@@ -136,7 +136,7 @@ export default function Navbar() {
         </h1>
       </div>
 
-      {/* RIGHT: Global Search, Coach Badge, Notifications & Account */}
+      {/* RIGHT: Global Search, Notifications & Account */}
       <div className="flex items-center gap-3.5">
         {/* Search Bar */}
         <form onSubmit={handleSearchSubmit} className="hidden md:flex items-center relative">
@@ -149,15 +149,6 @@ export default function Navbar() {
             className="w-56 lg:w-72 rounded-full border border-[#E2E9DF] bg-white py-2.5 pl-10 pr-4 text-sm text-[#26261F] placeholder:text-slate-400 outline-none transition focus:border-[#4B5D3C] focus:ring-2 focus:ring-[#4B5D3C]/20 shadow-xs"
           />
         </form>
-
-        {/* Coach Active Pill Badge */}
-        <button
-          onClick={() => navigate("/coach")}
-          className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[#E2E9DF] px-4 py-1.5 text-xs font-bold text-[#4B5D3C] border border-[#4B5D3C]/20 hover:bg-[#4B5D3C]/10 transition shadow-xs"
-        >
-          <Sparkles size={14} className="text-[#4B5D3C] animate-pulse" />
-          Coach Active
-        </button>
 
         {/* NOTIFICATION BUTTON & POPOVER */}
         <div className="relative" ref={popoverRef}>

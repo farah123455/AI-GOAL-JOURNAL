@@ -25,6 +25,9 @@ import { progressApi } from "../services/api";
 import TrendChart, { formatChange } from "../components/TrendChart";
 import MoodBadge, { MOOD_META } from "../components/MoodBadge";
 
+const trendCache = new Map();
+const GOAL_COLORS = ["#4B5D3C", "#C1622C", "#2563EB", "#7C3AED", "#059669", "#D97706"];
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -45,31 +48,65 @@ export default function Dashboard() {
   const [isTrendLoading, setIsTrendLoading] = useState(false);
   const [trendError, setTrendError] = useState(null);
 
-  // Default to first active goal or first available goal
-  const primaryGoalId = goals.some((g) => g.id === selectedGoalId)
+  const activeGoals = useMemo(
+    () => goals.filter((g) => g.status?.toLowerCase() === "active"),
+    [goals]
+  );
+
+  // Default to "all" if multiple active goals exist, or first available goal
+  const primaryGoalId = selectedGoalId === "all"
+    ? "all"
+    : goals.some((g) => g.id === selectedGoalId)
     ? selectedGoalId
     : (goals.find((g) => g.status?.toLowerCase() === "active")?.id || goals[0]?.id || null);
 
+  // Multi-series representation for all active goals
+  const multiSeries = useMemo(() => {
+    if (activeGoals.length === 0) return null;
+    return activeGoals.slice(0, 6).map((g, idx) => {
+      const prog = g.status === "Completed" ? 100 : (g.progress_value || 0);
+      const createdDate = g.created_at || g.createdAt || new Date().toISOString();
+      return {
+        id: g.id,
+        label: g.title,
+        color: GOAL_COLORS[idx % GOAL_COLORS.length],
+        currentProgress: prog,
+        points: [
+          { progress_value: 0, date: createdDate },
+          { progress_value: prog, date: new Date().toISOString() },
+        ],
+      };
+    });
+  }, [activeGoals]);
+
   useEffect(() => {
-    if (!primaryGoalId) {
-      setTrendData(null);
+    if (!primaryGoalId || primaryGoalId === "all") {
+      setTrendError(null);
+      setIsTrendLoading(false);
       return;
     }
 
     let isMounted = true;
-    setIsTrendLoading(true);
-    setTrendError(null);
+    if (trendCache.has(primaryGoalId)) {
+      setTrendData(trendCache.get(primaryGoalId));
+      setIsTrendLoading(false);
+      setTrendError(null);
+    } else {
+      setIsTrendLoading(true);
+      setTrendError(null);
+    }
 
     progressApi
       .getProgressTrend(primaryGoalId)
       .then((data) => {
+        if (data) trendCache.set(primaryGoalId, data);
         if (isMounted) {
           setTrendData(data);
           setTrendError(null);
         }
       })
       .catch((err) => {
-        if (isMounted) {
+        if (isMounted && !trendCache.has(primaryGoalId)) {
           setTrendError(err?.message || "Failed to load progress trend data");
         }
       })
@@ -99,7 +136,6 @@ export default function Dashboard() {
 
   const latestJournal = journals[0];
   const latestAnalysis = latestJournal?.ai_analysis;
-  const activeGoals = goals.filter((g) => g.status?.toLowerCase() === "active");
   const completedGoals = goals.filter((g) => g.status?.toLowerCase() === "completed");
 
   const recentBlockers = [];
@@ -360,7 +396,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between mb-3">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E2E9DF] px-3 py-0.5 text-xs font-extrabold text-[#4B5D3C] border border-[#4B5D3C]/20 shadow-2xs">
                       <Sparkles size={14} className="text-[#4B5D3C] animate-pulse" />
-                      AI ACCOUNTABILITY COACH
+                      AI COACH
                     </span>
                     <button
                       onClick={() => navigate("/coach")}
@@ -385,7 +421,7 @@ export default function Dashboard() {
                     <div className="text-center py-8 bg-white/80 rounded-xl border border-[#E2E9DF] my-2">
                       <Sparkles size={28} className="mx-auto text-[#4B5D3C] mb-2 animate-pulse" />
                       <p className="text-sm text-[#26261F] font-bold">No weekly summary generated yet</p>
-                      <p className="text-xs text-slate-500 mt-1 font-medium">Reflect daily to unlock weekly accountability coaching.</p>
+                      <p className="text-xs text-slate-500 mt-1 font-medium">Reflect daily to unlock weekly AI coaching summaries.</p>
                     </div>
                   )}
                 </div>
@@ -396,7 +432,7 @@ export default function Dashboard() {
                     className="primary-button w-full py-2.5 text-xs font-bold shadow-xs"
                   >
                     <Sparkles size={15} />
-                    Open Accountability Coach →
+                    Open AI Coach →
                   </button>
                 </div>
               </section>
@@ -603,11 +639,15 @@ export default function Dashboard() {
                   </span>
                 )}
               </div>
-              {selectedTrendGoal && (
+              {primaryGoalId === "all" ? (
+                <p className="mt-1 text-xs text-slate-500 font-medium">
+                  Tracking: <strong className="text-[#26261F]">All Active Goals ({activeGoals.length})</strong>
+                </p>
+              ) : selectedTrendGoal ? (
                 <p className="mt-1 text-xs text-slate-500 font-medium">
                   Tracking: <strong className="text-[#26261F]">{selectedTrendGoal.title}</strong>
                 </p>
-              )}
+              ) : null}
             </div>
 
             <div className="flex items-center gap-2.5">
@@ -619,6 +659,7 @@ export default function Dashboard() {
                     className="appearance-none rounded-xl border border-[#E2E9DF] bg-white pl-3 pr-8 py-1.5 text-xs font-semibold text-[#26261F] shadow-2xs transition focus:border-[#4B5D3C] focus:ring-1 focus:ring-[#4B5D3C]"
                     aria-label="Select goal for trend chart"
                   >
+                    <option value="all">All Active Goals</option>
                     {goals.map((g) => (
                       <option key={g.id} value={g.id}>
                         {g.title || "Untitled Goal"}
@@ -758,7 +799,11 @@ export default function Dashboard() {
                   <span className="text-xs font-bold text-[#26261F] uppercase tracking-wider">Progress Trajectory</span>
                   <span className="text-[11px] text-slate-400 font-medium">Timeline checkpoints (0 - 100%)</span>
                 </div>
-                <TrendChart data={trendData?.history || []} />
+                {primaryGoalId === "all" && multiSeries ? (
+                  <TrendChart multiSeries={multiSeries} />
+                ) : (
+                  <TrendChart data={trendData?.history || []} />
+                )}
               </div>
             </div>
           )}

@@ -7,6 +7,7 @@ import {
   Info,
   X,
   Trash2,
+  LogOut,
 } from 'lucide-react';
 
 const ModalContext = createContext(null);
@@ -146,12 +147,15 @@ export function ModalProvider({ children }) {
                       ? 'bg-amber-50 text-amber-600 border-amber-100'
                       : modalState.variant === 'success'
                       ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                      : modalState.variant === 'signout'
+                      ? 'bg-[#E2E9DF]/70 text-[#3A492E] border-[#E2E9DF]'
                       : 'bg-[#E2E9DF]/60 text-[#3A492E] border-[#E2E9DF]'
                   }`}
                 >
                   {modalState.variant === 'danger' && <Trash2 className="w-6 h-6" />}
                   {modalState.variant === 'warning' && <AlertTriangle className="w-6 h-6" />}
                   {modalState.variant === 'success' && <CheckCircle2 className="w-6 h-6" />}
+                  {modalState.variant === 'signout' && <LogOut className="w-6 h-6" />}
                   {modalState.variant === 'info' && <Info className="w-6 h-6" />}
                 </div>
 
