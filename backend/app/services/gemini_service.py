@@ -460,6 +460,7 @@ Return ONLY a valid JSON object strictly matching this schema:
                 completed_count = sum(1 for m in parsed.milestones if m.completed)
                 parsed.completed_count = completed_count
                 parsed.progress_percentage = int((completed_count / len(parsed.milestones)) * 100) if parsed.milestones else 0
+                parsed.created_at = datetime.now(timezone.utc).strftime("%Y-%m-%d")
                 return parsed
         except Exception as e:
             logger.warning("Gemini roadmap generation fallback triggered: %s", e)
