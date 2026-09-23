@@ -26,14 +26,14 @@ class Settings(BaseSettings):
 
     # Gemini AI Configuration
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-3.1-flash-lite"
-    GEMINI_MODEL_NAME: str = "gemini-3.1-flash-lite"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL_NAME: str = "gemini-2.5-flash"
     EXTRACTION_TEMPERATURE: float = 0.0
     MAX_REPAIR_ATTEMPTS: int = 1
 
     # Groq Conversational AI Coach
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "openai/gpt-oss-120b"
+    GROQ_MODEL: str = "qwen/qwen3.8-27b"
 
     # Cryptography & Security
     ENCRYPTION_KEY: str = "ai-goal-journal-default-secret-dev-key-change-in-prod"

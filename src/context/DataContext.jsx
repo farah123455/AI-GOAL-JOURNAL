@@ -31,7 +31,7 @@ function writeLocal(key, value) {
 }
 
 export function DataProvider({ children }) {
-  const { user } = useAuth();
+  const { user, checkingAuth } = useAuth();
 
   const [profile, setProfile] = useState(() => readLocal('profile', null));
   const [goals, setGoals] = useState(() => {
@@ -244,12 +244,29 @@ export function DataProvider({ children }) {
   // Load initial data when authenticated user arrives
   const userId = user?.uid;
   useEffect(() => {
+    // CRITICAL: Do NOT wipe cache while Firebase is initializing auth state!
+    if (checkingAuth) return;
+
     if (userId) {
       fetchAllData({ quiet: true });
     } else {
+      // User is confirmed logged out
       clearCache();
     }
-  }, [userId, fetchAllData, clearCache]);
+  }, [userId, checkingAuth, fetchAllData, clearCache]);
+
+  // Keep Render awake while any user is active in the web app (heartbeat every 4 minutes)
+  useEffect(() => {
+    const pingServer = () => {
+      fetch('https://ai-goal-journal-backend.onrender.com/api/v1/health', {
+        mode: 'cors',
+      }).catch(() => {});
+    };
+
+    // Ping every 4 minutes (Render idles after 15m)
+    const intervalId = setInterval(pingServer, 240000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   // --- Cache Mutation Helpers ---
   const addGoal = useCallback((newGoal) => {
@@ -262,7 +279,7 @@ export function DataProvider({ children }) {
 
   const updateGoalInCache = useCallback((updatedGoal) => {
     setGoals((prev) => {
-      const updated = prev.map((g) => (g.id === updatedGoal.id ? updatedGoal : g));
+      const updated = prev.map((g) => (String(g.id) === String(updatedGoal.id) ? updatedGoal : g));
       writeLocal('goals', updated);
       return updated;
     });
@@ -270,7 +287,7 @@ export function DataProvider({ children }) {
 
   const deleteGoalFromCache = useCallback((goalId) => {
     setGoals((prev) => {
-      const updated = prev.filter((g) => g.id !== goalId);
+      const updated = prev.filter((g) => String(g.id) !== String(goalId));
       writeLocal('goals', updated);
       return updated;
     });
@@ -286,7 +303,7 @@ export function DataProvider({ children }) {
 
   const updateJournalInCache = useCallback((updatedJournal) => {
     setJournals((prev) => {
-      const updated = prev.map((j) => (j.id === updatedJournal.id ? updatedJournal : j));
+      const updated = prev.map((j) => (String(j.id) === String(updatedJournal.id) ? updatedJournal : j));
       writeLocal('journals', updated);
       return updated;
     });
@@ -294,7 +311,7 @@ export function DataProvider({ children }) {
 
   const deleteJournalFromCache = useCallback((journalId) => {
     setJournals((prev) => {
-      const updated = prev.filter((j) => j.id !== journalId);
+      const updated = prev.filter((j) => String(j.id) !== String(journalId));
       writeLocal('journals', updated);
       return updated;
     });
@@ -321,7 +338,7 @@ export function DataProvider({ children }) {
 
   const updateHabitInCache = useCallback((updatedHabit) => {
     setHabits((prev) => {
-      const updated = prev.map((h) => (h.id === updatedHabit.id ? updatedHabit : h));
+      const updated = prev.map((h) => (String(h.id) === String(updatedHabit.id) ? updatedHabit : h));
       writeLocal('habits', updated);
       return updated;
     });
@@ -329,7 +346,7 @@ export function DataProvider({ children }) {
 
   const deleteHabitFromCache = useCallback((habitId) => {
     setHabits((prev) => {
-      const updated = prev.filter((h) => h.id !== habitId);
+      const updated = prev.filter((h) => String(h.id) !== String(habitId));
       writeLocal('habits', updated);
       return updated;
     });

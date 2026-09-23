@@ -22,6 +22,7 @@ import { journalApi, goalApi } from "../services/api";
 import { useData } from "../context/DataContext";
 import { useModal, useToast } from "../context/ModalContext";
 import { GridSkeleton, JournalLoadingState } from "../components/LoadingSkeleton";
+import GoalCelebration from "../components/GoalCelebration";
 
 export default function Journal() {
   const {
@@ -244,6 +245,12 @@ export default function Journal() {
 
   return (
     <div className="app-page min-h-screen bg-[#F4F1E8]">
+      {recentlyCompletedGoal && (
+        <GoalCelebration
+          goal={recentlyCompletedGoal}
+          onClose={clearCompletedGoalTrigger}
+        />
+      )}
       <main className="mx-auto max-w-7xl w-full px-5 py-6 md:px-8">
         {error && (
           <div className="mb-5 rounded-xl border border-[#C1622C]/30 bg-[#FBEBE3] px-4 py-3 text-xs text-[#C1622C] font-medium">
@@ -380,7 +387,9 @@ export default function Journal() {
                     </span>
                   </div>
                   <p className="text-xs font-medium text-slate-700 line-clamp-2 italic leading-relaxed">
-                    "{selectedJournal?.content || "Your journal entry was analyzed and goals/activities tracked."}"
+                    "{selectedJournal?.content && !selectedJournal.content.startsWith("enc:v1:")
+                      ? selectedJournal.content
+                      : (selectedJournal?.title || selectedJournal?.ai_analysis?.quick_summary || "Your journal entry was analyzed and goals/activities tracked.")}"
                   </p>
                 </div>
                 <button
@@ -634,7 +643,9 @@ export default function Journal() {
                           </div>
 
                           <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed font-medium mb-2.5">
-                            {j.content}
+                            {j.content && !j.content.startsWith("enc:v1:")
+                              ? j.content
+                              : (j.title || j.ai_analysis?.quick_summary || j.ai_analysis?.title || "Journal Reflection")}
                           </p>
 
                           <div className="flex items-center justify-between pt-2 border-t border-[#E2E9DF]">

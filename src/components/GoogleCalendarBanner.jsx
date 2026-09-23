@@ -12,9 +12,20 @@ import {
 import { calendarApi } from "../services/api";
 import GoogleCalendarSetupModal from "./GoogleCalendarSetupModal";
 
+const CALENDAR_CACHE_KEY = "ai_journal_cache_calendar_status";
+
+function getCachedCalendarStatus() {
+  try {
+    const raw = localStorage.getItem(CALENDAR_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function GoogleCalendarBanner({ onStatusChange, className = "" }) {
-  const [status, setStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState(() => getCachedCalendarStatus());
+  const [loading, setLoading] = useState(!getCachedCalendarStatus());
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSetupModal, setShowSetupModal] = useState(false);
@@ -25,15 +36,18 @@ export default function GoogleCalendarBanner({ onStatusChange, className = "" })
 
   async function fetchStatus() {
     try {
-      setLoading(true);
+      if (!status) setLoading(true);
       setError("");
       const res = await calendarApi.getStatus();
-      setStatus(res);
-      if (onStatusChange) onStatusChange(res);
+      if (res) {
+        setStatus(res);
+        try {
+          localStorage.setItem(CALENDAR_CACHE_KEY, JSON.stringify(res));
+        } catch {}
+        if (onStatusChange) onStatusChange(res);
+      }
     } catch (err) {
-      console.error("Error fetching Google Calendar status:", err);
-      const fallback = { connected: false, is_configured: false };
-      setStatus(fallback);
+      console.warn("Google Calendar status fetch note:", err?.message);
     } finally {
       setLoading(false);
     }
@@ -64,6 +78,9 @@ export default function GoogleCalendarBanner({ onStatusChange, className = "" })
       setActionLoading(true);
       setError("");
       await calendarApi.disconnect();
+      try {
+        localStorage.removeItem(CALENDAR_CACHE_KEY);
+      } catch {}
       await fetchStatus();
     } catch (err) {
       console.error("Failed to disconnect Google Calendar:", err);
