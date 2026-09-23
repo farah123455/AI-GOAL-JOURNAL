@@ -26,8 +26,8 @@ class Settings(BaseSettings):
 
     # Gemini AI Configuration
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-3.1-flash-lite"
-    GEMINI_MODEL_NAME: str = "gemini-3.1-flash-lite"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL_NAME: str = "gemini-2.5-flash"
     EXTRACTION_TEMPERATURE: float = 0.0
     MAX_REPAIR_ATTEMPTS: int = 1
 
