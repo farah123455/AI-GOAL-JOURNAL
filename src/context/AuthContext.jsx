@@ -5,6 +5,8 @@ import { isDevPreview, devPreviewUser } from '../config/devPreview'; // DEV PREV
 import {
   register as firebaseRegister,
   login as firebaseLogin,
+  loginWithGoogle as firebaseLoginWithGoogle,
+  loginWithMicrosoft as firebaseLoginWithMicrosoft,
   logout as firebaseLogout,
 } from '../services/authService';
 
@@ -61,6 +63,22 @@ export function AuthProvider({ children }) {
     return registeredUser;
   }
 
+  async function loginWithGoogle() {
+    const googleUser = await firebaseLoginWithGoogle();
+    if (googleUser) {
+      setUser(googleUser);
+    }
+    return googleUser;
+  }
+
+  async function loginWithMicrosoft() {
+    const msUser = await firebaseLoginWithMicrosoft();
+    if (msUser) {
+      setUser(msUser);
+    }
+    return msUser;
+  }
+
   async function logout() {
     await firebaseLogout();
     setUser(null);
@@ -73,6 +91,8 @@ export function AuthProvider({ children }) {
         checkingAuth,
         login,
         register,
+        loginWithGoogle,
+        loginWithMicrosoft,
         logout,
       }}
     >
