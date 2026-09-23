@@ -1,0 +1,53 @@
+# Services Subtree DOX Contract — backend/app/services/AGENTS.md
+
+> **Subtree Scope**: Business logic, AI extraction, and speech processing (`backend/app/services/`)  
+> **Parent Contract**: [`../AGENTS.md`](file:///../AGENTS.md)
+
+---
+
+## 1. Responsibilities
+
+- **`mood_service.py`**:
+  - Custom PyTorch 10-Class Attention BiLSTM neural network (`models/mood_analyzer/weights/emotion_model.pth`).
+  - Ultra-fast CPU inference (~3–5 ms latency, ~30 MB RAM) extracting primary emotional state, confidence score, and trigger keywords.
+- **`groq_service.py`**:
+  - High-speed conversational AI coach powered by Groq Cloud API (`openai/gpt-oss-120b`, fallback `qwen/qwen3.8-27b`, `openai/gpt-oss-20b`).
+  - Context grounding injecting user's active goals, habit streaks, recent journals, and detected emotional pulse.
+- **`roadmap_service.py`**:
+  - AI learning roadmap generator utilizing Gemini Flash-Lite to produce 4–8 sequential milestones with realistic durations.
+  - Bidirectional progress synchronization (checking off roadmap milestones updates goal progress up to 100%) and offline curriculum fallbacks.
+- **`whisper_service.py`**:
+  - Encapsulates `faster_whisper.WhisperModel` initialized strictly with `model_size_or_path="tiny"`, `device="cpu"`, `compute_type="int8"`.
+  - Lazy-loaded singleton; manages temporary file creation and immediate deletion in `finally` blocks.
+- **`gemini_service.py`**:
+  - Official `google-genai` SDK integration using `gemini-3.1-flash-lite`.
+  - Structured prompt engineering: extracting mood, activities (distinguishing completed vs planned vs ongoing), blockers (categorized), and goal associations.
+  - Weekly summary synthesis from in-memory records.
+- **`goal_service.py`**:
+  - Deterministic goal matching against user's active goals to prevent duplicate goals.
+  - Priority calculation (`High Priority`, `Medium Priority`, `Low Priority`) based on completion percentage, days remaining, and estimated days.
+  - Auto-synchronizes progress to 100% when goal is marked completed.
+- **`progress_service.py`**:
+  - Records incremental progress checkpoints with validated timestamps and ownership.
+  - Calculates chronological history, step deltas (`change_from_previous`), trend direction (`Improving`, `Stagnant`, `Declining`), and average progress gain.
+- **`productivity_service.py`**:
+  - Computes multi-factor deterministic productivity score (0–100) combining goal completion, habit consistency, weekly progress velocity, and active blocker penalties.
+- **`migration_service.py`**:
+  - Safe, idempotent batch migration service scanning plaintext entries and converting them to AES-256-GCM ciphertext (`enc:v1:`).
+  - Dry-run capability, error isolation, and detailed migration reporting.
+- **`journal_service.py`**:
+  - Orchestrates journal lifecycle: saving text $\rightarrow$ calling Gemini analysis $\rightarrow$ matching goals $\rightarrow$ persisting structured items.
+- **`summary_service.py`**:
+  - Gathers user's in-memory data for on-demand weekly coaching summary generation.
+
+---
+
+## 2. Invariants & Rules
+
+1. **4 GB RAM PC Safeguard**:
+   - `whisper_service.py` must never load any model larger than `tiny`.
+   - Never run simultaneous transcription jobs.
+2. **Deterministic Authority**:
+   - Gemini suggestions must be filtered through deterministic backend logic before mutating goal statuses or linking activities.
+3. **Data Loss Prevention**:
+   - If Gemini raises an exception or returns unparseable output, the journal entry must still be persisted with an `ai_analysis=None` or error placeholder. Never drop the user's reflection.
