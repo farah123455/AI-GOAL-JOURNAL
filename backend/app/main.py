@@ -13,12 +13,36 @@ from app.api.v1.calendar import router as calendar_router
 from app.api.v1.roadmap import router as roadmap_router
 from app.api.v1.coach import router as coach_router
 
+import asyncio
+import os
+import httpx
+
+async def _render_keep_alive():
+    """Background task to keep Render free tier alive by pinging public health endpoint every 9 minutes."""
+    await asyncio.sleep(60)
+    while True:
+        try:
+            backend_url = os.getenv("BACKEND_PUBLIC_URL", "https://ai-goal-journal-backend.onrender.com").rstrip("/")
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                await client.get(f"{backend_url}/api/v1/health")
+        except Exception:
+            pass
+        await asyncio.sleep(540)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import threading
-    from app.services.whisper_service import whisper_service
-    threading.Thread(target=whisper_service.preload, daemon=True).start()
-    yield
+    # Lightweight lifespan: models are lazy-loaded on demand to preserve 512MB RAM on cloud hosts
+    try:
+        from app.database.connection import init_db
+        init_db()
+    except Exception as e:
+        print(f"Lifespan DB init note: {e}")
+
+    keep_alive_fut = asyncio.create_task(_render_keep_alive())
+    try:
+        yield
+    finally:
+        keep_alive_fut.cancel()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -30,7 +54,7 @@ app = FastAPI(
 
 import os
 
-# CORS middleware for React Vite frontend (local and deployed on Vercel)
+# CORS middleware: allow all origins dynamically (local dev, Vercel, Netlify, custom hosts)
 cors_origins = list(settings.CORS_ORIGINS)
 if os.getenv("CORS_ORIGINS"):
     cors_origins.extend([o.strip() for o in os.getenv("CORS_ORIGINS").split(",") if o.strip()])
@@ -38,7 +62,7 @@ if os.getenv("CORS_ORIGINS"):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
-    allow_origin_regex=r"https://.*\.vercel\.app|http://localhost:\d+|http://127\.0\.0\.1:\d+",
+    allow_origin_regex=r".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,13 +78,19 @@ def root():
 
 @app.get("/api/v1/health")
 def health_check():
+    from app.database.connection import engine
+    db_dialect = engine.dialect.name
+    masked_target = "sqlite-local"
+    if hasattr(engine.url, "host") and engine.url.host:
+        masked_target = f"{engine.url.host}/{engine.url.database}"
     return {
         "status": "healthy",
         "service": "AI Goal Journal API",
         "whisper_model": settings.WHISPER_MODEL,
         "whisper_device": settings.WHISPER_DEVICE,
         "gemini_model": settings.GEMINI_MODEL,
-        "persistence": "in-memory",
+        "database_type": db_dialect,
+        "database_target": masked_target,
     }
 
 # Mount v1 routers

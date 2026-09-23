@@ -22,6 +22,7 @@ import { journalApi, goalApi } from "../services/api";
 import { useData } from "../context/DataContext";
 import { useModal, useToast } from "../context/ModalContext";
 import { GridSkeleton, JournalLoadingState } from "../components/LoadingSkeleton";
+import GoalCelebration from "../components/GoalCelebration";
 
 export default function Journal() {
   const {
@@ -98,49 +99,51 @@ export default function Journal() {
         source,
       });
 
+      // 1. Immediately display analysis, select journal, and unblock compose overlay
       addJournal(result);
-
-      // Fetch refreshed goals updated by AI analysis & progress increments
-      const updatedGoals = await goalApi.listGoals();
-      await fetchAllData({ quiet: true });
-
-      // Detect any goal that reached 100% or was newly marked Completed
-      const newlyCompletedGoal = updatedGoals.find((ug) => {
-        const is100 = ug.progress_value >= 100 || ug.status === "Completed";
-        const prevGoal = prevGoals.find((g) => g.id === ug.id);
-        const wasNot100 = !prevGoal || (prevGoal.progress_value < 100 && prevGoal.status !== "Completed");
-        return is100 && wasNot100;
-      });
-
-      if (newlyCompletedGoal) {
-        triggerGoalCompletion(newlyCompletedGoal);
-      } else {
-        // Fallback: Check if AI updates indicate completion or user text mentions completion
-        const aiUpdates = result.ai_analysis?.progress_updates || [];
-        const hasCompletionUpdate = aiUpdates.some(
-          (pu) => pu.effort_level === "completion" || (pu.quantified_completed && pu.quantified_total && pu.quantified_completed >= pu.quantified_total)
-        );
-        const hasCompletionText = /goal (was|is)?\s*completed|completed (my|the)?\s*goal/i.test(content);
-
-        if (hasCompletionUpdate || hasCompletionText) {
-          const completedGoal = updatedGoals.find((g) => g.status === "Completed" || g.progress_value >= 100) || {
-            title: result.ai_analysis?.title || "Goal Milestone Accomplished!",
-            status: "Completed",
-            progress_value: 100,
-          };
-          triggerGoalCompletion(completedGoal);
-        }
-      }
-
       setLatestAnalysis(result.ai_analysis);
       setSelectedJournal(result);
       setShowCompose(false);
+      setSubmitting(false);
       setCurrentPage(1);
       if (source === "text") {
         setEntryText("");
       }
+
+      // 2. Refresh goals and milestones in background without blocking the UI
+      goalApi.listGoals().then((updatedGoals) => {
+        if (!updatedGoals) return;
+        const newlyCompletedGoal = updatedGoals.find((ug) => {
+          const is100 = ug.progress_value >= 100 || ug.status === "Completed";
+          const prevGoal = prevGoals.find((g) => g.id === ug.id);
+          const wasNot100 = !prevGoal || (prevGoal.progress_value < 100 && prevGoal.status !== "Completed");
+          return is100 && wasNot100;
+        });
+
+        if (newlyCompletedGoal) {
+          triggerGoalCompletion(newlyCompletedGoal);
+        } else {
+          const aiUpdates = result.ai_analysis?.progress_updates || [];
+          const hasCompletionUpdate = aiUpdates.some(
+            (pu) => pu.effort_level === "completion" || (pu.quantified_completed && pu.quantified_total && pu.quantified_completed >= pu.quantified_total)
+          );
+          const hasCompletionText = /goal (was|is)?\s*completed|completed (my|the)?\s*goal/i.test(content);
+
+          if (hasCompletionUpdate || hasCompletionText) {
+            const completedGoal = updatedGoals.find((g) => g.status === "Completed" || g.progress_value >= 100) || {
+              title: result.ai_analysis?.title || "Goal Milestone Accomplished!",
+              status: "Completed",
+              progress_value: 100,
+            };
+            triggerGoalCompletion(completedGoal);
+          }
+        }
+      }).catch((e) => console.warn("Background goal refresh note:", e));
+
+      fetchAllData({ quiet: true }).catch((e) => console.warn("Background fetchAllData note:", e));
     } catch (err) {
       setError(err.message || "Failed to process journal entry.");
+      setSubmitting(false);
     } finally {
       setSubmitting(false);
     }
@@ -242,6 +245,12 @@ export default function Journal() {
 
   return (
     <div className="app-page min-h-screen bg-[#F4F1E8]">
+      {recentlyCompletedGoal && (
+        <GoalCelebration
+          goal={recentlyCompletedGoal}
+          onClose={clearCompletedGoalTrigger}
+        />
+      )}
       <main className="mx-auto max-w-7xl w-full px-5 py-6 md:px-8">
         {error && (
           <div className="mb-5 rounded-xl border border-[#C1622C]/30 bg-[#FBEBE3] px-4 py-3 text-xs text-[#C1622C] font-medium">
@@ -378,7 +387,9 @@ export default function Journal() {
                     </span>
                   </div>
                   <p className="text-xs font-medium text-slate-700 line-clamp-2 italic leading-relaxed">
-                    "{selectedJournal?.content || "Your journal entry was analyzed and goals/activities tracked."}"
+                    "{selectedJournal?.content && !selectedJournal.content.startsWith("enc:v1:")
+                      ? selectedJournal.content
+                      : (selectedJournal?.title || selectedJournal?.ai_analysis?.quick_summary || "Your journal entry was analyzed and goals/activities tracked.")}"
                   </p>
                 </div>
                 <button
@@ -388,6 +399,8 @@ export default function Journal() {
                     setLatestAnalysis(null);
                     setSelectedJournal(null);
                     setEntryText("");
+                    setSubmitting(false);
+                    setError("");
                   }}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-[#4B5D3C] hover:bg-[#3A492E] text-white px-3.5 py-2 text-xs font-bold transition shadow-2xs shrink-0 self-start sm:self-center"
                 >
@@ -596,6 +609,8 @@ export default function Journal() {
                             setSelectedJournal(j);
                             setLatestAnalysis(j.ai_analysis);
                             setShowCompose(false);
+                            setSubmitting(false);
+                            setError("");
                           }}
                           className={`group rounded-xl p-4 border transition-all duration-200 cursor-pointer ${
                             selectedJournal?.id === j.id
@@ -628,7 +643,9 @@ export default function Journal() {
                           </div>
 
                           <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed font-medium mb-2.5">
-                            {j.content}
+                            {j.content && !j.content.startsWith("enc:v1:")
+                              ? j.content
+                              : (j.title || j.ai_analysis?.quick_summary || j.ai_analysis?.title || "Journal Reflection")}
                           </p>
 
                           <div className="flex items-center justify-between pt-2 border-t border-[#E2E9DF]">

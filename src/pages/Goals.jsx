@@ -18,7 +18,7 @@ import { useModal, useToast } from "../context/ModalContext";
 import { goalApi } from "../services/api";
 import CircularProgress from "../components/CircularProgress";
 import { GridSkeleton, GoalLoadingState } from "../components/LoadingSkeleton";
-import GoalCelebration from "../components/GoalCompletionCelebration";
+import GoalCelebration from "../components/GoalCelebration";
 import Pagination from "../components/Pagination";
 import SyncGoogleCalendarModal from "../components/SyncGoogleCalendarModal";
 
@@ -56,14 +56,15 @@ export default function Goals() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
 
+  const safeGoals = Array.isArray(goals) ? goals : [];
   const filteredGoals = statusFilter
-    ? goals.filter((g) => {
+    ? safeGoals.filter((g) => {
         if (statusFilter === "High Priority") {
           return (g.priority || "").toLowerCase().includes("high");
         }
         return g.status?.toLowerCase() === statusFilter.toLowerCase();
       })
-    : goals;
+    : safeGoals;
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedGoals = filteredGoals.slice(startIndex, startIndex + itemsPerPage);
@@ -119,8 +120,7 @@ export default function Goals() {
       finalProgress = 100;
     }
 
-    const wasAlreadyCompleted = editingGoal && editingGoal.status === "Completed";
-    const isNewlyCompleted = finalStatus === "Completed" && !wasAlreadyCompleted;
+    const shouldCelebrate = finalStatus === "Completed" || finalProgress === 100;
 
     try {
       if (editingGoal) {
@@ -134,11 +134,26 @@ export default function Goals() {
           progress_value: finalProgress,
           latest_progress_note: progressNote.trim() || null,
         };
-        const updated = await goalApi.updateGoal(editingGoal.id, payload);
-        updateGoalInCache(updated);
-        if (isNewlyCompleted) {
-          triggerGoalCompletion(updated);
+        const optimisticGoal = {
+          ...editingGoal,
+          ...payload,
+        };
+        // 0ms instant UI update & celebration
+        updateGoalInCache(optimisticGoal);
+        if (shouldCelebrate) {
+          triggerGoalCompletion(optimisticGoal);
         }
+        resetForm();
+        setSaving(false);
+
+        // Background sync
+        goalApi.updateGoal(editingGoal.id, payload).then((updated) => {
+          updateGoalInCache(updated);
+        }).catch((err) => {
+          toast.error("Failed to sync goal: " + err.message);
+          fetchGoals(true);
+        });
+        return;
       } else {
         const payload = {
           title: title.trim(),
@@ -151,7 +166,7 @@ export default function Goals() {
         };
         const created = await goalApi.createGoal(payload);
         addGoal(created);
-        if (isNewlyCompleted) {
+        if (shouldCelebrate) {
           triggerGoalCompletion(created);
         }
       }
@@ -176,19 +191,32 @@ export default function Goals() {
     });
     if (!confirmed) return;
 
+    // 0ms instant UI update
+    deleteGoalFromCache(goalId);
+    toast.success("Goal deleted successfully.");
+
     try {
       await goalApi.deleteGoal(goalId);
-      deleteGoalFromCache(goalId);
-      toast.success("Goal deleted successfully.");
     } catch (err) {
       toast.error("Failed to delete goal: " + err.message);
+      fetchGoals(true); // Revert on failure
     }
   }
 
   async function handleQuickStatusChange(goalId, newStatus) {
-    const targetGoal = goals.find((g) => g.id === goalId);
-    const wasAlreadyCompleted = targetGoal && targetGoal.status === "Completed";
-    const isNewlyCompleted = newStatus === "Completed" && !wasAlreadyCompleted;
+    const existing = goals.find((g) => String(g.id) === String(goalId));
+    const optimisticGoal = {
+      ...(existing || {}),
+      id: goalId,
+      status: newStatus,
+      progress_value: newStatus === "Completed" ? 100 : (existing?.progress_value ?? 0),
+    };
+
+    // 0ms instant UI update and celebration
+    updateGoalInCache(optimisticGoal);
+    if (newStatus === "Completed") {
+      triggerGoalCompletion(optimisticGoal);
+    }
 
     const payload = {
       status: newStatus,
@@ -198,12 +226,12 @@ export default function Goals() {
     try {
       const updated = await goalApi.updateGoal(goalId, payload);
       updateGoalInCache(updated);
-
-      if (isNewlyCompleted) {
+      if (newStatus === "Completed") {
         triggerGoalCompletion(updated);
       }
     } catch (err) {
       toast.error("Failed to update status: " + err.message);
+      fetchGoals(true); // Revert on failure
     }
   }
 
@@ -426,7 +454,7 @@ export default function Goals() {
         )}
 
         {/* Goals Grid Cards Rendering */}
-        {loading || !hasLoadedGoals ? (
+        {(loading && goals.length === 0) || (!hasLoadedGoals && goals.length === 0) ? (
           <GoalLoadingState />
         ) : filteredGoals.length === 0 ? (
           <section className="panel px-6 py-16 text-center shadow-sm">
@@ -462,17 +490,36 @@ export default function Goals() {
                     <div>
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                              goal.status === "Completed"
-                                ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-                                : goal.status === "Stalled"
-                                ? "bg-red-50 text-red-600 border border-red-200"
-                                : "bg-[#E2E9DF] text-[#3A492E] border border-[#E2E9DF]"
-                            }`}
-                          >
-                            {goal.status === "Active" ? "On Track" : goal.status}
-                          </span>
+                          {goal.status === "Completed" ? (
+                            <button
+                              onClick={() => handleQuickStatusChange(goal.id, "Active")}
+                              className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition"
+                              title="Click to reopen goal"
+                            >
+                              <CheckCircle2 size={11} className="text-emerald-600" />
+                              Completed
+                            </button>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                                  goal.status === "Stalled"
+                                    ? "bg-red-50 text-red-600 border border-red-200"
+                                    : "bg-[#E2E9DF] text-[#3A492E] border border-[#E2E9DF]"
+                                }`}
+                              >
+                                {goal.status === "Active" ? "On Track" : goal.status}
+                              </span>
+                              <button
+                                onClick={() => handleQuickStatusChange(goal.id, "Completed")}
+                                className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200 hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition"
+                                title="Mark as Completed (100%)"
+                              >
+                                <CheckCircle2 size={11} className="text-slate-400 group-hover:text-emerald-600" />
+                                Complete
+                              </button>
+                            </div>
+                          )}
 
                           {/* Smart Priority Badge */}
                           {goal.priority && goal.status !== "Completed" && (

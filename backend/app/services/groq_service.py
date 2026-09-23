@@ -43,14 +43,12 @@ class GroqService:
 
         # 2. Habits Context
         try:
-            habits = habit_service.list_habits(user_id=user_id)
+            habits = habit_service.get_habits(user_id=user_id)
             if habits:
                 habit_lines = []
                 for h in habits[:6]:
-                    stats = habit_service.get_habit_stats(user_id=user_id, habit_id=h.id)
-                    streak = stats.get("current_streak", 0) if stats else 0
-                    comp = stats.get("completion_rate_30d", 0) if stats else 0
-                    habit_lines.append(f"- '{h.title}' (Freq: {h.frequency}, Streak: {streak} days, 30d consistency: {comp}%)")
+                    habit_name = getattr(h, 'name', None) or getattr(h, 'title', 'Habit')
+                    habit_lines.append(f"- '{habit_name}' (Frequency: {h.frequency})")
                 context_parts.append("### Habits & Consistency:\n" + "\n".join(habit_lines))
         except Exception as e:
             logger.debug("Error fetching habits context: %s", e)
@@ -126,39 +124,66 @@ Guidelines:
 
         messages.append({"role": "user", "content": message})
 
-        primary_model = settings.GROQ_MODEL or "openai/gpt-oss-120b"
-        candidate_models = [primary_model]
-        for fallback in ["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b"]:
-            if fallback not in candidate_models:
-                candidate_models.append(fallback)
+        models_to_try = []
+        if settings.GROQ_MODEL and settings.GROQ_MODEL.strip():
+            models_to_try.append(settings.GROQ_MODEL.strip())
+        for m in ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "llama-3.3-70b-versatile"]:
+            if m not in models_to_try:
+                models_to_try.append(m)
 
         last_error = None
-        for model in candidate_models:
-            try:
-                completion = client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    temperature=0.7,
-                    max_tokens=800,
-                )
-                reply_text = completion.choices[0].message.content or ""
-                return {
-                    "reply": reply_text.strip(),
-                    "model": model,
-                    "usage": {
-                        "prompt_tokens": getattr(completion.usage, "prompt_tokens", None),
-                        "completion_tokens": getattr(completion.usage, "completion_tokens", None),
-                    },
-                }
-            except Exception as e:
-                last_error = e
-                logger.warning("Groq model %s attempt failed: %s", model, e)
-                continue
+        if client:
+            for model in models_to_try:
+                try:
+                    completion = client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        temperature=0.7,
+                        max_tokens=800,
+                        timeout=10.0,
+                    )
+                    reply_text = completion.choices[0].message.content or ""
+                    if reply_text.strip():
+                        return {
+                            "reply": reply_text.strip(),
+                            "model": model,
+                            "usage": {
+                                "prompt_tokens": getattr(completion.usage, "prompt_tokens", None),
+                                "completion_tokens": getattr(completion.usage, "completion_tokens", None),
+                            },
+                        }
+                except Exception as e:
+                    last_error = e
+                    logger.warning("Groq model %s attempt failed: %s", model, e)
+                    continue
 
-        logger.error("All Groq models failed: %s", last_error)
+        # Resilient fallback to Gemini API
+        try:
+            gemini_key = settings.GEMINI_API_KEY or os.getenv("GEMINI_API_KEY", "")
+            if gemini_key:
+                from google import genai
+                gclient = genai.Client(api_key=gemini_key)
+                full_prompt = f"{system_prompt}\n\nUser Question:\n{message}"
+                for gemini_model in [settings.GEMINI_MODEL or "gemini-2.5-flash", "gemini-2.5-flash", "gemini-3-flash-preview", "gemini-3.1-flash-lite"]:
+                    try:
+                        g_resp = gclient.models.generate_content(
+                            model=gemini_model,
+                            contents=full_prompt,
+                        )
+                        if g_resp and g_resp.text and g_resp.text.strip():
+                            return {
+                                "reply": g_resp.text.strip(),
+                                "model": f"gemini/{gemini_model}",
+                            }
+                    except Exception as g_err:
+                        logger.warning("Gemini model %s failed: %s", gemini_model, g_err)
+                        continue
+        except Exception as gemini_err:
+            logger.error("Gemini coaching fallback also failed: %s", gemini_err)
+
         return {
-            "reply": f"I ran into an issue connecting to the coaching service ({str(last_error)[:120]}). Remember that taking one small step toward your goals today still counts!",
-            "model": primary_model,
+            "reply": "I am here with you. While I reconnect to the primary coaching servers, take one small, focused 10-minute action on your next milestone. How can I best support you right now?",
+            "model": "offline-resilient-coach",
             "error": str(last_error),
         }
 

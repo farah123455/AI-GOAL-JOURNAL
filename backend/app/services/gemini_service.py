@@ -312,16 +312,31 @@ class GeminiService:
 
     def _call_gemini(self, prompt: str) -> str:
         client = self._get_client()
-        response = client.models.generate_content(
-            model=settings.GEMINI_MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=EXTRACTION_SYSTEM_INSTRUCTION,
-                temperature=0.2,
-                response_mime_type="application/json",
-            ),
-        )
-        return response.text
+        candidate_models = [settings.GEMINI_MODEL, "gemini-2.5-flash", "gemini-3-flash-preview", "gemini-3.1-flash-lite", "gemini-flash-latest"]
+        unique_models = []
+        for m in candidate_models:
+            if m and m not in unique_models:
+                unique_models.append(m)
+
+        last_err = None
+        for model_name in unique_models:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=EXTRACTION_SYSTEM_INSTRUCTION,
+                        temperature=0.2,
+                        response_mime_type="application/json",
+                    ),
+                )
+                if response.text:
+                    return response.text
+            except Exception as e:
+                last_err = e
+                logger.warning("Gemini model %s failed: %s. Trying next...", model_name, e)
+                continue
+        raise last_err or Exception("All Gemini models failed")
 
     def _parse_and_validate(self, raw_text: str) -> ExtractionResult:
         parsed = json.loads(raw_text)
@@ -441,18 +456,30 @@ Return ONLY a valid JSON object strictly matching this schema:
 }}
 """
 
-        try:
-            client = self._get_client()
-            response = client.models.generate_content(
-                model=settings.GEMINI_MODEL,
-                contents=prompt,
-            )
-            cleaned = _clean_json_response(response.text)
-            parsed = json.loads(cleaned)
-            return self._normalize_analysis_result(parsed, content)
-        except Exception as e:
-            logger.error("Gemini analysis error: %s", e)
-            return self._rule_based_fallback(content, str(e))
+        candidate_models = [settings.GEMINI_MODEL, "gemini-2.5-flash", "gemini-3-flash-preview", "gemini-3.1-flash-lite", "gemini-flash-latest"]
+        unique_models = []
+        for m in candidate_models:
+            if m and m not in unique_models:
+                unique_models.append(m)
+
+        client = self._get_client()
+        last_e = None
+        for model_name in unique_models:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                )
+                cleaned = _clean_json_response(response.text)
+                parsed = json.loads(cleaned)
+                return self._normalize_analysis_result(parsed, content)
+            except Exception as e:
+                last_e = e
+                logger.warning("Gemini model %s analysis failed: %s. Trying fallback model...", model_name, e)
+                continue
+
+        logger.error("All Gemini analysis models failed: %s", last_e)
+        return self._rule_based_fallback(content, str(last_e))
 
     def _normalize_analysis_result(self, parsed: dict[str, Any], content: str) -> dict[str, Any]:
         """Normalize JSON response so that goals, goalsExtracted, completedTasks are always present."""
@@ -556,6 +583,15 @@ Return ONLY a valid JSON object strictly matching this schema:
                 Milestone(step_number=3, title="JavaScript Fundamentals & DOM", short_description="ES6+ syntax, functions, events, DOM manipulation, and fetch API", estimated_duration="2 weeks", key_action_item="Build an interactive web app with dynamic UI updates", completed=False),
                 Milestone(step_number=4, title="React Fundamentals", short_description="Components, props, state, hooks (useState, useEffect), and routing", estimated_duration="2 weeks", key_action_item="Convert JavaScript app into a component-driven React app", completed=False),
                 Milestone(step_number=5, title="State Management & Production Build", short_description="Context API, state optimization, Vite bundling, and deployment", estimated_duration="1-2 weeks", key_action_item="Deploy React application to Vercel/Netlify", completed=False),
+            ]
+        elif any(k in title_lower for k in ["aws", "cloud", "solutions architect", "devops", "azure", "gcp", "certif"]):
+            milestones = [
+                Milestone(step_number=1, title="Cloud Fundamentals & IAM Security", short_description="Global infrastructure, IAM users, roles, policies, and least-privilege access", estimated_duration="1-2 weeks", key_action_item="Configure multi-factor IAM root and least-privilege admin roles with CLI", completed=False),
+                Milestone(step_number=2, title="Compute & Resilient Networking (VPC & EC2)", short_description="Custom VPCs, public/private subnets, NAT gateways, route tables, and Auto Scaling EC2", estimated_duration="2 weeks", key_action_item="Deploy high-availability EC2 instances across 2 AZs behind an ALB", completed=False),
+                Milestone(step_number=3, title="Storage & Managed Databases (S3 & RDS)", short_description="S3 lifecycle policies, storage classes, RDS Multi-AZ failover, and DynamoDB", estimated_duration="2 weeks", key_action_item="Build static site on S3 with CloudFront CDN and connect to RDS PostgreSQL", completed=False),
+                Milestone(step_number=4, title="Serverless & Event-Driven Architecture", short_description="AWS Lambda, API Gateway, SQS queues, SNS topics, and EventBridge decoupling", estimated_duration="2 weeks", key_action_item="Build asynchronous image-processing microservice using S3, SQS, and Lambda", completed=False),
+                Milestone(step_number=5, title="Security Auditing, CloudWatch & Cost Optimization", short_description="CloudWatch alarms, CloudTrail auditing, AWS Budgets, and Trusted Advisor", estimated_duration="1-2 weeks", key_action_item="Configure budget threshold alerts and automated metric alarms", completed=False),
+                Milestone(step_number=6, title="Practice Exams & Certification Readiness", short_description="Full-length timed practice exams, reviewing question domains and whitepapers", estimated_duration="1-2 weeks", key_action_item="Score 85%+ on two consecutive full-length practice exams", completed=False),
             ]
         else:
             milestones = [

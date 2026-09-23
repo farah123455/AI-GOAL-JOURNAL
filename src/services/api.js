@@ -30,11 +30,16 @@ function resolveApiBase() {
 
   if (typeof window !== 'undefined' && window.location && window.location.hostname) {
     const { protocol, hostname, port } = window.location;
-    const portSuffix = port === String(DEFAULT_BACKEND_PORT) ? '' : `:${DEFAULT_BACKEND_PORT}`;
-    return `${protocol}//${hostname}${portSuffix}/api/v1`;
+    // When running locally on developer machines
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      const portSuffix = port === String(DEFAULT_BACKEND_PORT) ? '' : `:${DEFAULT_BACKEND_PORT}`;
+      return `${protocol}//${hostname}${portSuffix}/api/v1`;
+    }
+    // Production deployed URL fallback (e.g. Vercel deployment)
+    return 'https://ai-goal-journal-backend.onrender.com/api/v1';
   }
 
-  return '/api/v1';
+  return 'https://ai-goal-journal-backend.onrender.com/api/v1';
 }
 
 const API_BASE = resolveApiBase();
@@ -75,28 +80,56 @@ export async function fetchWithAuth(url, options = {}) {
     ...options.headers,
   };
 
-  const response = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    headers,
-  });
+  // Generous timeout guard (300s / 5 minutes) to ensure Render cold starts or AI inference never abort
+  const timeoutMs = options.timeout || 300000;
 
-  if (!response.ok) {
-    let errorDetail = 'API request failed';
+  const maxRetries = options.retries ?? 1;
+  let attempt = 0;
+
+  while (attempt <= maxRetries) {
+    attempt++;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
-      const errJson = await response.json();
-      errorDetail = errJson.detail || errJson.message || JSON.stringify(errJson);
-    } catch {
-      errorDetail = `${response.status} ${response.statusText}`;
+      const response = await fetch(`${API_BASE}${url}`, {
+        ...options,
+        headers,
+        signal: options.signal || controller.signal,
+      });
+
+      if (!response.ok) {
+        let errorDetail = 'API request failed';
+        try {
+          const errJson = await response.json();
+          errorDetail = errJson.detail || errJson.message || JSON.stringify(errJson);
+        } catch {
+          errorDetail = `${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorDetail);
+      }
+
+      // If No Content (204)
+      if (response.status === 204) {
+        return null;
+      }
+
+      return await response.json();
+    } catch (err) {
+      const isNetworkError = err.message === 'Failed to fetch' || err.name === 'TypeError';
+      if (isNetworkError && attempt <= maxRetries) {
+        console.warn(`Transient fetch error on ${url}, retrying in 1s... (attempt ${attempt}/${maxRetries})`);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        continue;
+      }
+      if (err.name === 'AbortError') {
+        throw new Error(`Server is taking longer to respond (cold start). Please retry in a few seconds.`);
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
     }
-    throw new Error(errorDetail);
   }
-
-  // If No Content (204)
-  if (response.status === 204) {
-    return null;
-  }
-
-  return response.json();
 }
 
 /**
@@ -241,6 +274,10 @@ export const journalApi = {
 export const summaryApi = {
   getWeeklySummary: () => fetchWithAuth('/summaries/weekly'),
   generateWeeklySummary: () =>
+    fetchWithAuth('/summaries/weekly', {
+      method: 'POST',
+    }),
+  generateSummary: () =>
     fetchWithAuth('/summaries/weekly', {
       method: 'POST',
     }),

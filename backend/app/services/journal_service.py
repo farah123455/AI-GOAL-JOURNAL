@@ -18,10 +18,15 @@ class JournalService:
     def _decrypt_entry(self, entry: Optional[JournalEntry]) -> Optional[JournalEntry]:
         if not entry:
             return None
+        try:
+            content = crypto_service.decrypt(entry.content) or ""
+        except Exception as e:
+            logger.warning("Decryption fallback for journal entry %s: %s", entry.id, e)
+            content = entry.content or ""
         return JournalEntry(
             id=entry.id,
             user_id=entry.user_id,
-            content=crypto_service.decrypt(entry.content) or "",
+            content=content,
             source=entry.source,
             title=entry.title,
             ai_analysis=entry.ai_analysis,
@@ -62,6 +67,27 @@ class JournalService:
             extracted_goals=extracted_candidate_goals,
             existing_goals=existing_goals,
         )
+
+        # Auto-sync newly extracted goals to Google Calendar if connected
+        try:
+            from app.services.google_calendar_service import google_calendar_service
+            status_info = google_calendar_service.get_connection_status(user_id=user_id)
+            if status_info.get("connected"):
+                import asyncio
+                for auto_g in auto_created_goals:
+                    try:
+                        asyncio.create_task(
+                            google_calendar_service.sync_goal_to_calendar(
+                                user_id=user_id,
+                                goal_id=auto_g.id,
+                                target_date=auto_g.target_date,
+                            )
+                        )
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
 
         # 5. Perform deterministic matching on extracted activities & record progress
         activities = ai_raw.get("activities", [])

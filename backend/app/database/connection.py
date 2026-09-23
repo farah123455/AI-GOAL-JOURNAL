@@ -20,18 +20,14 @@ DATABASE_URL = os.getenv("DATABASE_URL") or "sqlite:///./app.db"
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# If PostgreSQL is requested, verify server is actually reachable; otherwise fallback to SQLite
+# If PostgreSQL is requested, ensure sslmode=require for NeonDB / cloud providers
 if DATABASE_URL.startswith("postgresql"):
-    try:
-        import psycopg2
-        # Use 15 second timeout to allow serverless databases (NeonDB) to spin up from cold sleep
-        test_conn = psycopg2.connect(DATABASE_URL, connect_timeout=15)
-        test_conn.close()
-        connect_args = {}
-    except Exception as exc:
-        print(f"[DB] PostgreSQL unreachable ({exc}). Falling back to local SQLite database.")
-        DATABASE_URL = "sqlite:///./app.db"
-        connect_args = {"check_same_thread": False}
+    if "neon.tech" in DATABASE_URL and "sslmode" not in DATABASE_URL:
+        sep = "&" if "?" in DATABASE_URL else "?"
+        DATABASE_URL = f"{DATABASE_URL}{sep}sslmode=require"
+    connect_args = {
+        "connect_timeout": 30,
+    }
 else:
     connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
 
@@ -42,7 +38,13 @@ try:
         pool_recycle=300 if DATABASE_URL.startswith("postgresql") else -1,
         connect_args=connect_args,
     )
-except Exception:
+    if DATABASE_URL.startswith("postgresql"):
+        # Verify server is actually reachable (handles stopped local Docker containers)
+        with engine.connect() as probe_conn:
+            pass
+except Exception as e:
+    logger.warning("Configured database is unreachable (%s). Falling back to SQLite './app.db'", e)
+    DATABASE_URL = "sqlite:///./app.db"
     engine = create_engine(
         "sqlite:///./app.db",
         pool_pre_ping=True,
@@ -75,9 +77,7 @@ def init_db():
                     conn.execute(text(f"ALTER TABLE journals ADD COLUMN trigger_keywords {col_type}"))
     except Exception as e:
         print(f"Database init note: {e}")
-
-init_db()
-
+# init_db is invoked during application lifespan startup to avoid blocking imports
 def get_db():
     db = SessionLocal()
     try:
