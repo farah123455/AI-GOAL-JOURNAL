@@ -38,8 +38,11 @@ try:
         pool_recycle=300 if DATABASE_URL.startswith("postgresql") else -1,
         connect_args=connect_args,
     )
+    # Test connection immediately so we fall back to SQLite if Postgres credentials/port fail
+    with engine.connect() as conn:
+        pass
 except Exception as e:
-    logger.warning("Failed to create engine with DATABASE_URL, falling back to SQLite: %s", e)
+    logger.warning("Failed to connect with DATABASE_URL, falling back to local SQLite: %s", e)
     engine = create_engine(
         "sqlite:///./app.db",
         pool_pre_ping=True,
