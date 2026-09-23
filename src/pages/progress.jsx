@@ -9,7 +9,7 @@ import {
   Minus,
   ChevronDown,
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useData } from "../context/DataContext";
 import { progressApi } from "../services/api";
 import CircularProgress from "../components/CircularProgress";
@@ -180,26 +180,22 @@ export default function Progress() {
           return next;
         });
       })
-      .catch(() => {
-        return progressApi.getProgressHistory(activeGoalId).then((history) => {
-          if (!isMounted) return;
-          const sorted = (history || [])
-            .slice()
-            .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-          setHistoryByGoal((m) => ({ ...m, [activeGoalId]: sorted }));
-          setHistError((m) => {
-            const next = { ...m };
-            delete next[activeGoalId];
-            return next;
-          });
-        });
-      })
       .catch((err) => {
-        if (!isMounted) return;
-        setHistError((m) => ({
-          ...m,
-          [activeGoalId]: err?.message || "Failed to load progress history.",
-        }));
+        // Fallback to basic history if trend endpoint failed
+        return progressApi
+          .getProgressHistory(activeGoalId)
+          .then((history) => {
+            if (!isMounted) return;
+            const sorted = (history || [])
+              .slice()
+              .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            progressTrendCache.set(cacheKey, { history: sorted, trendData: null });
+            setHistoryByGoal((m) => ({ ...m, [activeGoalId]: sorted }));
+          })
+          .catch((fetchErr) => {
+            if (!isMounted) return;
+            console.warn("Progress trend fetch notice:", fetchErr?.message || err?.message);
+          });
       })
       .finally(() => {
         if (isMounted) {
@@ -213,7 +209,34 @@ export default function Progress() {
   }, [activeGoalId, periodDays]);
 
   const selectedGoal = goals.find((g) => g.id === activeGoalId) || null;
-  const progressHistory = selectedGoal ? historyByGoal[selectedGoal.id] || [] : [];
+  const rawHistory = selectedGoal ? historyByGoal[selectedGoal.id] : null;
+
+  // Instant baseline fallback from selectedGoal so chart & cards render with 0ms latency
+  const progressHistory = useMemo(() => {
+    if (rawHistory && rawHistory.length > 0) return rawHistory;
+    if (!selectedGoal) return [];
+    const prog = selectedGoal.status === "Completed" ? 100 : (selectedGoal.progress_value || 0);
+    const createdDate = selectedGoal.created_at || selectedGoal.createdAt || new Date().toISOString();
+    return [
+      {
+        id: `init-${selectedGoal.id}`,
+        goal_id: selectedGoal.id,
+        progress_value: 0,
+        note: "Goal created",
+        created_at: createdDate,
+        change_from_previous: 0,
+      },
+      {
+        id: `cur-${selectedGoal.id}`,
+        goal_id: selectedGoal.id,
+        progress_value: prog,
+        note: selectedGoal.latest_progress_note || (prog >= 100 ? "Goal completed" : "Current progress"),
+        created_at: new Date().toISOString(),
+        change_from_previous: prog,
+      },
+    ];
+  }, [rawHistory, selectedGoal]);
+
   const isHistoryLoading = selectedGoal ? !!histLoading[selectedGoal.id] : false;
   const historyError = selectedGoal ? histError[selectedGoal.id] || "" : "";
   const latest = progressHistory[progressHistory.length - 1] || null;
@@ -497,7 +520,7 @@ export default function Progress() {
                 <div className="py-10 text-center">
                   <p className="text-xs font-medium text-slate-500">Loading progress history…</p>
                 </div>
-              ) : historyError ? (
+              ) : historyError && progressHistory.length === 0 ? (
                 <div className="rounded-xl border border-[#C1622C]/30 bg-[#FBEBE3] p-4 text-center">
                   <p className="text-xs font-semibold text-[#C1622C] mb-2">{historyError}</p>
                 </div>

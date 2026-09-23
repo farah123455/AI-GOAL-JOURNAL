@@ -7,7 +7,7 @@ import { useData } from "../context/DataContext";
 
 export default function Profile() {
   const { user } = useAuth();
-  const { profile, hasLoadedProfile, fetchProfile, updateProfileInCache } = useData();
+  const { profile, hasLoadedProfile, fetchProfile, updateProfileInCache, goals = [], journals = [] } = useData();
 
   const [displayName, setDisplayName] = useState(profile?.display_name || user?.displayName || "");
   const [profession, setProfession] = useState(profile?.profession || "");
@@ -16,6 +16,15 @@ export default function Profile() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const loading = !hasLoadedProfile && !profile && !user;
+
+  // Live tracked metrics computed from goals & journals with profile.stats fallback
+  const totalJournalsCount = journals.length > 0 ? journals.length : (profile?.stats?.total_journals ?? 0);
+  const activeGoalsCount = goals.length > 0
+    ? goals.filter((g) => (g.status || "").toLowerCase() === "active").length
+    : (profile?.stats?.active_goals ?? 0);
+  const completedGoalsCount = goals.length > 0
+    ? goals.filter((g) => (g.status || "").toLowerCase() === "completed").length
+    : (profile?.stats?.completed_goals ?? 0);
 
   useEffect(() => {
     fetchProfile({ quiet: true });
@@ -99,15 +108,15 @@ export default function Profile() {
               {/* Quick Metrics Bar */}
               <div className="mt-5 pt-4 border-t border-[#E2E9DF] grid grid-cols-3 gap-3 text-center">
                 <div className="bg-[#F4F1E8]/70 p-3 rounded-xl border border-[#E2E9DF]">
-                  <div className="text-xl font-bold text-[#26261F]">{profile?.stats?.total_journals ?? 0}</div>
+                  <div className="text-xl font-bold text-[#26261F]">{totalJournalsCount}</div>
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mt-0.5">Journals</div>
                 </div>
                 <div className="bg-[#F4F1E8]/70 p-3 rounded-xl border border-[#E2E9DF]">
-                  <div className="text-xl font-bold text-[#26261F]">{profile?.stats?.active_goals ?? 0}</div>
+                  <div className="text-xl font-bold text-[#26261F]">{activeGoalsCount}</div>
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mt-0.5">Active Goals</div>
                 </div>
                 <div className="bg-[#F4F1E8]/70 p-3 rounded-xl border border-[#E2E9DF]">
-                  <div className="text-xl font-bold text-[#4B5D3C]">{profile?.stats?.completed_goals ?? 0}</div>
+                  <div className="text-xl font-bold text-[#4B5D3C]">{completedGoalsCount}</div>
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mt-0.5">Completed</div>
                 </div>
               </div>
