@@ -61,7 +61,7 @@ The `backend/` directory houses the complete FastAPI application providing REST 
   - `habits.py` — Single-request enriched habit tracking and daily check-offs
   - `summaries.py` — Weekly AI accountability summaries
   - `productivity.py` — Productivity score (0–100) endpoint
-  - `roadmaps.py` — AI-powered Goal Roadmap generation, milestone tracking, and step completion
+  - `roadmap.py` — AI-powered Goal Roadmap generation, milestone tracking, and step completion
 - `app/core/` — Infrastructure and security utilities:
   - `config.py` — Environment configuration (`Settings`) including `GROQ_API_KEY` and `GROQ_MODEL`
   - `auth.py` — Firebase ID token verification dependency

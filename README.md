@@ -1,7 +1,11 @@
-# AI Goal Journal & Accountability Coach
+# AI Goal Journal: Growth Workspace
 
 <p align="center">
-  <strong>Transform natural voice and text reflections into structured milestones, 10-class emotional state detection, interactive conversational coaching, actionable habits, and AI-generated learning roadmaps.</strong>
+  <img src="public/logo.png" alt="AI Goal Journal Logo" width="100" height="100" />
+</p>
+
+<p align="center">
+  <strong>An intelligent personal reflection, habit consistency, and goal-tracking workspace powered by on-device Speech-to-Text, custom PyTorch Emotion AI, Groq Conversational Coaching, and Google Gemini Reasoning.</strong>
 </p>
 
 <p align="center">
@@ -24,12 +28,15 @@
 
 Traditional productivity applications require tedious manual bookkeeping: checking boxes, adjusting sliders, and categorizing tasks into rigid spreadsheets.
 
-**AI Goal Journal & Accountability Coach** eliminates tracking friction. Users reflect naturally—either by speaking through their microphone or typing conversationally. The platform combines:
+**AI Goal Journal: Growth Workspace** eliminates tracking friction. Users reflect naturally—either by speaking through their microphone or typing conversationally. The platform combines:
 - **On-Device Speech Recognition (`faster-whisper` CPU INT8)**: Local, private, zero-cloud transcription.
-- **Custom PyTorch Emotion AI (4-Head Attention BiLSTM)**: Rapid, on-device detection across 10 emotional states with trigger keyword extraction in ~3–5 ms.
+- **Custom PyTorch Emotion AI (4-Head Attention BiLSTM)**: Rapid on-device detection across 10 emotional states with trigger keyword extraction in ~3–5 ms.
 - **Interactive Two-Way AI Coach (Groq Cloud API)**: Lightning-fast conversational coaching grounded with active goals, habit streaks, recent reflections, and emotional pulse.
+- **Weekly Growth Insights & Summaries**: Dedicated holistic reflections synthesizing weekly momentum, habit consistency, and active blockers.
 - **Reasoning AI Engine (Google Gemini Flash-Lite)**: Structured extraction of completed activities, future plans, active blockers, and step-by-step goal roadmaps.
-- **High-Performance Habit Tracker**: Enriched single-request backend endpoint with 0 ms instant UI rendering.
+- **Multi-Goal Progress Trajectory**: Interactive vector trend visualization displaying all goals simultaneously with Calm Moss color mapping and portfolio metrics.
+- **High-Performance Habit Tracker**: 0 ms instant UI caching, optimistic updates, Monday–Sunday sequence, and one-way daily lock.
+- **Social & Email Authentication**: Firebase Authentication with seamless Google and Microsoft OAuth 2.0 single sign-on alongside secure email/password auth.
 - **Enterprise-Grade Security**: AES-256-GCM envelope encryption at rest with automated key rotation.
 - **Dual-Persistence Architecture**: Dedicated PostgreSQL container with automatic, transparent SQLite fallback.
 
@@ -52,39 +59,35 @@ Traditional productivity applications require tedious manual bookkeeping: checki
 - **Groq Cloud Speed**: Powered by `openai/gpt-oss-120b` (with automatic fallback to `qwen/qwen3.8-27b` and `openai/gpt-oss-20b`) for ultra-low latency conversational interaction.
 - **Full Context Grounding**: The AI Coach inspects active goals, habit streaks, recent journal reflections, and the user's emotional rhythm to provide personalized, non-generic advice.
 - **Quick-Prompt Suggestions**: One-click prompt pills for instant accountability check-ins (*"How am I doing on my goals this week?"*, *"I'm feeling stuck on a blocker"*, *"Review my habit consistency"*).
-- **On-Demand Weekly Synthesis**: Deep-dive weekly progress reports generated on demand.
+- **Formatted Coaching Output**: Rich visual messages formatted with custom headers, bullet lists, highlight callouts, and action steps (`FormattedChatMessage.jsx`).
 
-### 4. 🗺️ AI-Powered Goal Roadmaps & Structured Milestones
+### 4. 📊 Dedicated Growth Insights & Weekly AI Summaries
+- **Separate Insights Hub**: Located at `/insights`, dedicated specifically to weekly AI summaries, habit consistency trends, blocker retrospectives, and strategic advice.
+- **On-Demand Generation**: AI summaries are generated on demand via Gemini Flash-Lite to conserve API tokens while providing deep, structured reflections.
+
+### 5. 📈 Multi-Goal Progress Trajectory & Analytics
+- **Portfolio-Wide Trajectory**: Dashboard defaults to "All Goals", plotting each goal on a unified vector chart using distinct Calm Moss theme colors (`#4B5D3C`, `#2D5A43`, `#5B6B3E`, `#736B48`, `#3D5A58`, `#5A4A3D`).
+- **Milestone Start & Current Badges**: Visual indicator tags for start (0%) and current progress on the trajectory curves.
+- **Aggregate Portfolio Statistics**: Instant metrics for Total Goals, Overall Portfolio Progress %, Milestones Completed, and Stalled Goals.
+- **Individual Goal Focus**: Interactive selector to zoom in on any individual goal's historical trajectory curve and deltas.
+- **Instant 0 ms Progress Page Navigation**: Client-side in-memory caching (`progressTrendCache`) eliminates loading screens and spinners when switching tabs.
+
+### 6. 🎯 Smart Goal Management & Roadmap Generation
+- **Goals Tracking**: Renamed to Goals with clear priority indicators (**High**, **Medium**, **Low**).
 - **Sequential Learning Roadmaps**: Gemini transforms any accepted goal into 4–8 sequential milestones with clear task titles, descriptions, logical sequences, and realistic durations.
-- **Milestone Persistence**: Milestone completions are stored at the database level and persist seamlessly across page refreshes.
 - **Bidirectional Progress Sync**: Completing roadmap milestones automatically synchronizes the parent goal's progress value (up to 100% upon completion).
 - **Offline Rule Fallback**: Built-in intelligent fallback for offline or zero-key environments (Python, Frontend, and General curricula).
 
-### 5. ⚡ High-Performance Habit Tracker & Streaks
+### 7. ⚡ High-Performance Habit Tracker & Daily Lock
 - **Zero Latency (0 ms) Render**: Enriched `GET /api/v1/habits` calculates `completed_today`, `current_streak`, and `recent_logs` in a single SQL query, completely eliminating $N+1$ request waterfalls.
+- **One-Way Daily Completion Lock**: Prevents accidental toggling once a habit is marked complete for the day, preserving streak integrity.
 - **Optimistic Caching**: React `DataContext` caches habit states for instantaneous page navigation and responsive check-offs.
 - **Monday–Sunday Grid Sequence**: Track daily routines with formatted ordinal dates (e.g. `21st`) and week navigation (`<`, `>`).
 
-### 6. 🌟 Positive Reinforcement & Celebrations
-- **Grounding in Behavioral Science**: Built on the Progress Principle (Amabile & Kramer) and Self-Determination Theory to foster genuine intrinsic motivation.
-- **Four-Tier Reinforcement Hierarchy**:
-  - **Tier 1 (Micro-Momentum)**: Instant affirmative acknowledgment on task check-off.
-  - **Tier 2 (Progress Velocity)**: Velocity milestone alerts at 25%, 50%, and 75% thresholds.
-  - **Tier 3 (Milestone Mastery)**: Accomplishment cards for completed milestone sections.
-  - **Tier 4 (Epic Completion)**: Dual-cannon Canvas Confetti celebration and trophy badges upon reaching 100%.
-
-### 7. 📈 Configurable Progress Analytics & Trend Visualization
-- **User-Selectable Periods**: Analyze progress velocity across **Last 7 days**, **Last 30 days**, **Last 90 days**, or **All time**.
-- **Accurate Metric Calculations**:
-  - **Average Progress Change**: True average of progress deltas between consecutive updates.
-  - **Stagnant Updates**: Exact tally of updates where no progress change occurred.
-  - **Period Progress Gain**: Net progress delta within the chosen time window.
-- **Responsive SVG Trend Chart**: Smooth SVG line chart displaying historical progress curves.
-
-### 8. 🎯 Smart Goal Management & "Focus Next" Intelligence
-- **Deterministic Alignment**: Extracted activities are token-matched against active goals to prevent duplicate milestones.
-- **Dynamic Prioritization**: Automated classification into **High**, **Medium**, or **Low** priority based on deadline proximity and progress velocity.
-- **"Focus Next" Recommendations**: Identifies the highest-leverage goal to tackle next with contextual rationale.
+### 8. 🔐 Flexible Social & Email Authentication
+- **Firebase Authentication**: Robust user identity management.
+- **Google & Microsoft OAuth 2.0**: Direct one-click login and registration via Google and Microsoft accounts with official branded buttons.
+- **Traditional Email/Password**: Secure credential registration and login with input validation and password toggles.
 
 ### 9. 🛡️ Enterprise-Grade Security & Field-Level Encryption
 - **AES-256-GCM Envelope Encryption**: Sensitive journal content and coaching suggestions are stored as authenticated envelopes (`enc:v1:...`).
@@ -92,9 +95,10 @@ Traditional productivity applications require tedious manual bookkeeping: checki
 - **Automated Data Migration**: CLI (`migrate_existing_data.py`) supporting dry-run inspection and live migration.
 - **Zero-Downtime Key Rotation**: Dedicated `KeyRotationManager` enabling key rotation with multi-key backward compatibility.
 
-### 10. 🐳 Dual-Persistence Architecture
+### 10. 🐳 Dual-Persistence Architecture & Port Management
 - **PostgreSQL Primary**: Dedicated container `ai_goal_journal_db` mapped to port `5433:5432` to avoid collisions with other local containers.
 - **Automatic SQLite Fallback**: Seamless, transparent fallback to local SQLite (`sqlite:///./app.db`) whenever Docker is closed or unreachable.
+- **Port Release Utility (`cleanup_ports.bat`)**: Windows batch script to immediately kill any orphaned or background processes holding ports 5433, 8000, or 5173.
 
 ---
 
@@ -109,7 +113,7 @@ Traditional productivity applications require tedious manual bookkeeping: checki
 | **Backend** | FastAPI | `0.110+` | High-performance asynchronous Python REST API |
 | **Server** | Uvicorn | `0.28+` | Production ASGI web server |
 | **Validation** | Pydantic | `v2` | Strict request/response schemas and serialization |
-| **Auth** | Firebase Authentication | Client SDK v10 + Server JWT | Secure user identity and token verification |
+| **Auth** | Firebase Authentication | Google & Microsoft OAuth + Email/Password | Secure user identity and token verification |
 | **Speech-to-Text** | `faster-whisper` | Tiny, INT8, CPU | On-device speech-to-text with zero cloud cost |
 | **Custom Emotion AI** | PyTorch BiLSTM + Attention | CPU Inference (~30 MB RAM) | 10-Class mood analysis and trigger keyword extraction |
 | **Conversational Coach** | Groq Cloud API | `openai/gpt-oss-120b` | Low-latency context-grounded accountability coaching |
@@ -124,7 +128,7 @@ Traditional productivity applications require tedious manual bookkeeping: checki
 
 ```text
 AI-GOAL-JOURNAL/
-├── public/                       # Static public assets, logos, and icons
+├── public/                       # Static public assets, logo.png, favicon
 ├── docs/                         # Architecture and research documentation
 │   ├── POSITIVE_REINFORCEMENT_SPEC.md # Positive reinforcement & validation spec
 │   ├── COST_ANALYSIS.md          # Token economics & local compute efficiency
@@ -141,23 +145,28 @@ AI-GOAL-JOURNAL/
 ├── src/                          # React Single Page Application (SPA)
 │   ├── components/               # Reusable UI components:
 │   │   ├── MoodBadge.jsx         # 10-Class Calm Moss emotion badge
+│   │   ├── FormattedChatMessage.jsx # Formatted AI coaching messages
+│   │   ├── TrendChart.jsx        # Responsive multi-goal SVG progress trend chart
 │   │   ├── Roadmap.jsx           # Interactive visual roadmap component
 │   │   ├── RoadmapCelebration.jsx# 4-tier positive reinforcement card
-│   │   ├── TrendChart.jsx        # Responsive SVG progress trend chart
 │   │   ├── GoalCalendar.jsx      # Interactive deadline & activity calendar
-│   │   ├── GoalCelebration.jsx   # High-density Canvas Confetti celebration
+│   │   ├── GoalCelebration.jsx   # Canvas Confetti celebration
 │   │   ├── Sidebar.jsx           # Collapsible navigation rail
 │   │   └── VoiceRecorder.jsx     # On-device audio recorder widget
 │   ├── context/                  # AuthContext, DataContext (with habits caching), ModalContext
 │   ├── pages/                    # Views:
-│   │   ├── Dashboard.jsx         # Momentum metrics, Mood Rhythm card, Progress Trend
+│   │   ├── Dashboard.jsx         # Multi-goal trajectory, portfolio metrics, Mood Rhythm
 │   │   ├── Journal.jsx           # Dual text/voice journaling & in-place emotion analysis
-│   │   ├── AiCoach.jsx           # Interactive 2-way Groq chat & weekly synthesis
-│   │   ├── Goals.jsx             # Smart goal management & priority filters
-│   │   ├── Roadmap.jsx           # Dedicated Goal AI Roadmap page
-│   │   ├── Habits.jsx            # 0 ms instant habit consistency tracker & streaks
-│   │   └── progress.jsx          # Configurable period progress analytics
-│   ├── services/                 # API client (api.js, coachApi, roadmapApi.js) & auth wrappers
+│   │   ├── AiCoach.jsx           # Interactive 2-way Groq conversational chat & prompt pills
+│   │   ├── Insights.jsx          # Dedicated weekly AI summaries & growth insights
+│   │   ├── Goals.jsx             # Goal management, priority filters, and roadmaps
+│   │   ├── Habits.jsx            # 0 ms instant habit tracker & one-way daily lock
+│   │   ├── progress.jsx          # Progress Center with 0 ms in-memory caching
+│   │   ├── Calendar.jsx          # Monthly calendar matrix & deadline inspector
+│   │   ├── Profile.jsx           # User settings & statistics
+│   │   ├── Auth.jsx              # Unified login/register with Google & Microsoft OAuth
+│   │   └── Landing.jsx           # Public product showcase
+│   ├── services/                 # API client (api.js, coachApi.js, roadmapApi.js) & auth wrappers
 │   ├── App.jsx                   # React Router route declarations
 │   └── index.css                 # Calm Moss theme tokens & animations
 ├── backend/                      # FastAPI Python Application
@@ -165,7 +174,7 @@ AI-GOAL-JOURNAL/
 │   ├── app/
 │   │   ├── api/v1/               # API Endpoints:
 │   │   │   ├── journals.py       # Journal CRUD, STT & mood metadata
-│   │   │   ├── coach.py          # Two-way conversational AI coach chat
+│   │   │   ├── coach.py          # Two-way conversational AI coach endpoint
 │   │   │   ├── goals.py          # Goal management & roadmap retrieval
 │   │   │   ├── roadmap.py        # Dedicated roadmap generation & sample APIs
 │   │   │   ├── progress.py       # Historical progress & trend analytics
@@ -175,18 +184,14 @@ AI-GOAL-JOURNAL/
 │   │   ├── core/                 # Auth verification, AES-256 crypto, settings
 │   │   ├── database/             # SQLAlchemy ORM models, dual connection, and auto-migrations
 │   │   ├── models/               # Domain models
-│   │   ├── repositories/         # In-memory and dual PostgreSQL/SQLite repositories
-│   │   ├── schemas/              # Pydantic validation schemas (journal, coach, habit, goal)
+│   │   ├── repositories/         # Dual PostgreSQL/SQLite repositories
+│   │   ├── schemas/              # Pydantic validation schemas
 │   │   ├── services/             # mood_service, groq_service, gemini_service, whisper_service
 │   │   └── main.py               # FastAPI application factory & routes
-│   └── tests/                    # Automated pytest test suites:
-│       ├── test_mood_and_coach.py# Mood inference & Groq coach tests
-│       ├── test_roadmap_api.py   # Roadmap endpoints & milestone completion
-│       ├── test_progress_trends.py # Period metrics & delta analytics
-│       ├── test_migration.py     # Encryption migration idempotency
-│       └── test_unit.py          # Isolation & unit test suite
+│   └── tests/                    # Automated pytest test suites
 ├── docker-compose.yml            # Dedicated PostgreSQL container on port 5433
 ├── run.bat                       # One-click Windows development launcher
+├── cleanup_ports.bat             # Utility to release occupied ports (5433, 8000, 5173)
 ├── AGENTS.md                     # Universal agent contract & DOX guidelines
 ├── README.md                     # Project documentation
 └── package.json                  # Frontend dependencies and scripts
@@ -202,7 +207,7 @@ AI-GOAL-JOURNAL/
 - **Docker Desktop** (Optional, recommended for PostgreSQL; transparent SQLite fallback active if omitted)
 - **Google Gemini API Key**: [Obtain from Google AI Studio](https://aistudio.google.com/)
 - **Groq API Key**: [Obtain from Groq Console](https://console.groq.com/)
-- **Firebase Project**: [Firebase Console](https://console.firebase.google.com/) with Email/Password Auth enabled
+- **Firebase Project**: [Firebase Console](https://console.firebase.google.com/) with Email/Password and optional Google/Microsoft Sign-in enabled
 
 ---
 
@@ -256,6 +261,8 @@ The launcher will automatically:
 5. Launch the React Vite frontend on [http://localhost:5173](http://localhost:5173).
 6. Open your default web browser automatically.
 
+> **Port Release Tip**: If you ever experience a port collision or closed terminal sessions unexpectedly, run `cleanup_ports.bat` to instantly release ports 5433, 8000, and 5173.
+
 ---
 
 ### Step 3: Manual Launch (Alternative)
@@ -279,10 +286,10 @@ npm run dev
 
 ## Automated Test Suites
 
-The backend includes a comprehensive 66-test suite covering machine learning inference, conversational coaching, cryptography, roadmap generation, and performance:
+The backend includes a comprehensive test suite covering machine learning inference, conversational coaching, cryptography, roadmap generation, and performance:
 
 ```bash
-# Run full test suite (66 tests passed)
+# Run full test suite
 python -m pytest backend/tests/ -v
 
 # Run Mood Analyzer & Groq AI Coach tests

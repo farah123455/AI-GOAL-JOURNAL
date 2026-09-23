@@ -1,14 +1,14 @@
-# AI Goal Journal & Accountability Coach — AGENTS.md
+# AI Goal Journal: Growth Workspace — AGENTS.md
 
 > **Root Agent Contract & DOX Directory**  
 > *Methodology*: DOX (Documentation-as-Context) Hierarchy  
-> *Target Environment*: Local MVP (React + Vite + Firebase Auth + FastAPI + faster-whisper Tiny + PyTorch 10-Class Attention BiLSTM Mood Analyzer + Groq Cloud API + Google Gemini Flash-Lite + Dual PostgreSQL/SQLite Persistence + AES-256-GCM Encryption)
+> *Target Environment*: Local MVP (React + Vite + Firebase Auth (Email/Pass + Google & Microsoft OAuth) + FastAPI + faster-whisper Tiny + PyTorch 10-Class Attention BiLSTM Mood Analyzer + Groq Cloud API + Google Gemini Flash-Lite + Dual PostgreSQL/SQLite Persistence + AES-256-GCM Encryption)
 
 ---
 
 ## 1. Project Overview & Mission
 
-**AI Goal Journal & Accountability Coach** is an intelligent personal reflection, habit consistency, and goal-tracking platform tailored for students, working professionals, freelancers, and entrepreneurs. The application eliminates the friction of manual productivity tracking by using AI to transform conversational text or voice journals into structured activities (completed vs. planned), active blockers, goal progress markers, smart goal prioritization, 10-class emotional state detection, interactive two-way accountability coaching, and weekly AI reflections.
+**AI Goal Journal: Growth Workspace** is an intelligent personal reflection, habit consistency, and goal-tracking platform tailored for students, working professionals, freelancers, and entrepreneurs. The application eliminates the friction of manual productivity tracking by using AI to transform conversational text or voice journals into structured activities (completed vs. planned), active blockers, goal progress markers, smart goal prioritization, 10-class emotional state detection, interactive two-way accountability coaching, weekly AI reflections, and multi-goal progress trajectory visualization.
 
 ---
 
@@ -16,14 +16,16 @@
 
 - **Frontend**: React 18, Vite 5, Tailwind CSS 3 (Custom Calm Moss design system), React Router DOM 6, Anime.js, Canvas Confetti.
 - **Backend**: FastAPI, Python 3.10+, Uvicorn, Pydantic v2.
-- **Authentication**: Firebase Authentication (Client-side modular SDK + Backend Firebase Admin / Google public cert token verification).
+- **Authentication**: Firebase Authentication (Client-side modular SDK supporting Email/Password, Google OAuth 2.0, and Microsoft OAuth 2.0 + Backend Firebase Admin / Google public cert token verification).
 - **Speech-to-Text**: `faster-whisper` (Model: `tiny`, Device: `cpu`, Compute: `int8`, lazy singleton).
 - **Custom Emotion AI**: PyTorch 10-Class 4-Head Attention BiLSTM (`models/mood_analyzer/weights/emotion_model.pth`, CPU inference, ~30 MB RAM, ~3–5 ms latency).
-- **Conversational AI Coach**: Groq Cloud API (`openai/gpt-oss-120b`, fallback `qwen/qwen3.8-27b`, `openai/gpt-oss-20b`) for ultra-low latency context-grounded coaching.
+- **Conversational AI Coach**: Groq Cloud API (`openai/gpt-oss-120b`, fallback `qwen/qwen3.8-27b`, `openai/gpt-oss-20b`) for ultra-low latency context-grounded coaching with structured visual formatting (`FormattedChatMessage.jsx`).
+- **Growth Insights**: Dedicated weekly reflection & holistic summary engine (`/insights`) powered by Gemini Flash-Lite.
 - **Reasoning AI Engine**: Google Gemini API (`gemini-3.1-flash-lite` via `google-genai` SDK) for structured activity, goal, and roadmap generation.
 - **Security & Cryptography**: AES-256-GCM field encryption (`cryptography`), plaintext backward compatibility, zero-downtime key rotation.
 - **Persistence (Primary)**: PostgreSQL (via dedicated Docker container `ai_goal_journal_db` on port 5433) with SQLAlchemy ORM and Alembic migrations.
 - **Persistence (Fallback)**: Automatic, transparent local SQLite fallback (`sqlite:///./app.db`) whenever Docker/PostgreSQL is stopped or unreachable.
+- **Port Management**: Local Windows utility (`cleanup_ports.bat`) for releasing busy network ports (5433, 8000, 5173).
 
 ---
 
@@ -61,22 +63,23 @@
 
 | Component | Status | Details |
 | :--- | :--- | :--- |
-| **Firebase Auth (Client)** | **Complete** | Registration, Login, Logout (redirects to `/`), Session persistence, Protected Routes. |
+| **Firebase Auth (Client)** | **Complete** | Email/Password, Google OAuth 2.0, Microsoft OAuth 2.0, Session persistence, Protected Routes. |
 | **Firebase Token Verification (Server)** | **Complete** | FastAPI dependency `get_current_user` in `backend/app/core/auth.py`. |
 | **Persistence (Dual)** | **Complete** | Dedicated Docker PostgreSQL container (`ai_goal_journal_db` on port 5433) with automatic seamless SQLite fallback (`sqlite:///./app.db`). |
 | **Speech-to-Text (faster-whisper)** | **Complete** | Tiny model CPU INT8 lazy singleton; ephemeral audio cleanup; `/voice/transcribe`. |
 | **10-Class PyTorch Mood Analyzer** | **Complete** | 4-Head Attention BiLSTM (`models/mood_analyzer/`), CPU inference (~30 MB RAM, ~3–5 ms latency), automatic keyword extraction & confidence scoring. |
-| **Two-Way Conversational AI Coach** | **Complete** | Groq Cloud API (`openai/gpt-oss-120b`), rich context grounding (goals, habits, recent journals, emotional pulse), prompt pills, interactive chat. |
-| **Habits Tracker & Instant Caching** | **Complete** | Single-request enriched endpoint (`completed_today`, `current_streak`, `recent_logs`), `DataContext` 0 ms cache, optimistic toggles, Monday–Sunday sequence. |
+| **Two-Way Conversational AI Coach** | **Complete** | Groq Cloud API (`openai/gpt-oss-120b`), rich context grounding (goals, habits, recent journals, emotional pulse), prompt pills, interactive chat, `FormattedChatMessage`. |
+| **Dedicated Growth Insights Hub** | **Complete** | Separate page (`/insights`) dedicated to weekly AI synthesis, habit consistency analysis, and blocker reviews. |
+| **Habits Tracker & Instant Caching** | **Complete** | Single-request enriched endpoint, `DataContext` 0 ms cache, optimistic toggles, Monday–Sunday sequence, one-way daily lock. |
 | **AI Journal & In-Place Analysis** | **Complete** | `gemini-3.1-flash-lite` extraction + PyTorch mood detection; in-place emotional pulse card, Calm Moss mood badges, and keyword tags. |
-| **Goals Management & Prioritization** | **Complete** | CRUD endpoints, deterministic goal matching, smart priority, auto-sync 100% progress on completion. |
-| **Historical Progress & Trend API** | **Complete** | Chronological ordering, deltas (`change_from_previous`), trend direction (`improving`), completed badges. |
-| **Progress Analytics Dashboard** | **Complete** | Real-time SVG TrendChart component (`components/TrendChart.jsx`), progress gained, streak analytics, and Mood Rhythm card. |
+| **Goals Management & Prioritization** | **Complete** | CRUD endpoints, deterministic goal matching, priority tags (`High`, `Medium`, `Low`), auto-sync 100% progress on completion. |
+| **Multi-Goal Trajectory Dashboard** | **Complete** | Default "All Goals" vector chart with Calm Moss colors, milestone start/current badges, aggregate portfolio stats, and single goal zoom. |
+| **Historical Progress & Trend API** | **Complete** | Chronological ordering, deltas (`change_from_previous`), trend direction (`improving`), completed badges, 0 ms `progressTrendCache`. |
 | **Data Migration Service** | **Complete** | Safe batch migration from legacy plaintext to AES-256-GCM (`app/services/migration_service.py`, `scripts/migrate_existing_data.py`). |
 | **Field Encryption & Key Rotation** | **Complete** | AES-256-GCM envelope encryption, backward compatibility, `KeyRotationManager`. |
 | **Productivity Score API (0–100)** | **Complete** | Multi-factor deterministic formula mounted at `/api/v1/productivity-score`. |
-| **Cost & Deployment Documentation** | **Complete** | Dedicated API token model (`docs/COST_ANALYSIS.md`) and deployment/hosting architecture (`docs/deployment_costs.md`). |
-| **Brand Identity & Navigation** | **Complete** | Custom quill & AI chip logo (`public/logo.png`), responsive sidebar spacing, calendar padding. |
+| **Port Management Utility** | **Complete** | Windows one-click script (`cleanup_ports.bat`) to free occupied ports (5433, 8000, 5173). |
+| **Brand Identity & Navigation** | **Complete** | Custom quill & sprout emblem logo (`public/logo.png`), responsive sidebar spacing, scroll-to-top on route change. |
 
 ---
 

@@ -11,21 +11,22 @@
 The `src/` directory contains the complete Single Page Application (SPA) built with React 18 and Vite:
 - **Client-Side Routing**: React Router DOM v6 managing public routes, guest landing page, and authenticated protected routes.
 - **Application Views**:
-  - `LandingPage.jsx` (`/`): Public showcase featuring hero, interactive preview, feature pillars, and call-to-actions.
-  - `Dashboard.jsx` (`/dashboard`): Momentum overview, active goals with priority badges, deterministic Productivity Score modal, embedded real-time Progress Trend chart, and "Mood Rhythm & Well-being" emotional state card.
+  - `Landing.jsx` (`/`): Public showcase featuring hero, interactive preview, feature pillars, and call-to-actions.
+  - `Dashboard.jsx` (`/dashboard`): Momentum overview, multi-goal progress trajectory with Calm Moss color mapping, portfolio summary metrics, active goals with priority badges, Productivity Score modal, and "Mood Rhythm & Well-being" card.
   - `Journal.jsx` (`/journal`): AI Journal dual text and voice reflection recording with local Whisper STT, Gemini semantic analysis, in-place Emotional State Pulse banner (mood, confidence, trigger keywords), and past entries with Calm Moss mood badges.
-  - `Goals.jsx` (`/goals`): Goal management, Smart Priority badges (`High`, `Medium`, `Low`), estimated completion days, filter pills, and Canvas Confetti celebration.
+  - `Goals.jsx` (`/goals`): Goal management, priority tags (`High`, `Medium`, `Low`), estimated completion days, filter pills, and Canvas Confetti celebration.
   - `Calendar.jsx` (`/calendar`): Interactive monthly calendar matrix, date inspector, and deadline timeline with spacious layout padding.
-  - `Habits.jsx` (`/habits`): Habit tracker with 0 ms instant render from cached data, Monday–Sunday weekly grid, ordinal date numbers (`21st`), week navigation (`<`, `>`), optimistic check-offs, streaks, and Anime.js feedback.
-  - `progress.jsx` (`/progress`): Pure-SVG progress trend chart, goal selector, latest/previous/change metric cards, completed goal milestone banner & badge, and chronological history timeline.
-  - `AiCoach.jsx` (`/coach`): Two-way interactive conversational AI coach powered by Groq Cloud API (`openai/gpt-oss-120b`), emotional pulse awareness card, quick-prompt pills, typing indicator, and on-demand weekly accountability synthesis.
+  - `Habits.jsx` (`/habits`): Habit tracker with 0 ms instant render from cached data, Monday–Sunday weekly grid, ordinal date numbers (`21st`), week navigation (`<`, `>`), optimistic check-offs, streaks, one-way daily lock, and Anime.js feedback.
+  - `progress.jsx` (`/progress`): Pure-SVG progress trend chart, goal selector, latest/previous/change metric cards, completed goal milestone banner & badge, 0 ms `progressTrendCache`, and chronological history timeline.
+  - `AiCoach.jsx` (`/coach`): Dedicated two-way interactive conversational AI coach powered by Groq Cloud API (`openai/gpt-oss-120b`), rich formatted messages (`FormattedChatMessage.jsx`), context grounding, prompt pills, and real-time chat.
+  - `Insights.jsx` (`/insights`): Dedicated weekly AI accountability summaries, habit consistency insights, and blocker analysis.
   - `Profile.jsx` (`/profile`): User identity, occupation/profession settings, and activity statistics.
-  - `Login.jsx` / `Register.jsx`: Firebase Authentication views.
+  - `Auth.jsx`: Unified Firebase Authentication view supporting Email/Password, Google OAuth 2.0, and Microsoft OAuth 2.0.
 - **Micro-Animations & Visual Celebrations**:
-  - Pure Canvas Confetti celebration (`components/GoalCompletionCelebration.jsx`).
+  - Pure Canvas Confetti celebration (`components/GoalCelebration.jsx`).
   - Anime.js motion helpers (`animations/motion.js`) with reduced-motion respect.
 - **State Management**:
-  - `AuthContext.jsx`: Firebase authentication session listener, token management, and logout redirecting to `/`.
+  - `AuthContext.jsx`: Firebase authentication session listener, Google and Microsoft OAuth helpers (`loginWithGoogle`, `loginWithMicrosoft`), token management, and logout redirecting to `/`.
   - `DataContext.jsx`: Shared caching for goals, journals, habits, and weekly summaries with optimistic updates.
   - `ModalContext.jsx`: Global modal and toast notification system.
 - **API Client**: Strongly typed Axios/Fetch client (`services/api.js`) attaching Firebase bearer tokens to all backend calls, including `coachApi.chat` and enriched habit endpoints.
@@ -57,10 +58,12 @@ The `src/` directory contains the complete Single Page Application (SPA) built w
 ## 3. Subtree Directory Structure
 
 - `animations/` — Anime.js motion helpers (`motion.js`).
+- `animations/` — Anime.js motion helpers (`motion.js`).
 - `assets/` — Static application branding (`logo.png`).
 - `components/` — Reusable UI components:
   - `MoodBadge.jsx` — Calm Moss styled emotion badges for all 10 classes (`accomplishment`, `motivation`, `focus`, `gratitude`, `breakthrough`, `burnout`, `overwhelmed`, `frustration`, `guilt`, `neutral`).
-  - `TrendChart.jsx` — Reusable pure SVG vector trend chart rendering chronological progression, gradient area fills, tooltips, and empty states.
+  - `FormattedChatMessage.jsx` — Rich typography and formatted callout rendering for AI coaching responses.
+  - `TrendChart.jsx` — Reusable vector SVG trend chart rendering multi-goal progression with Calm Moss palettes, milestone badges, tooltips, and empty states.
   - `Sidebar.jsx` — Desktop and mobile navigation shell with brand logo.
   - `Navbar.jsx` — Application top bar with user menu and clean logout redirect.
   - `PublicNavbar.jsx` / `PublicFooter.jsx` — Public landing page headers and footers with brand logo.
@@ -70,7 +73,7 @@ The `src/` directory contains the complete Single Page Application (SPA) built w
   - `LoadingSkeleton.jsx` — Pulse skeleton loaders.
   - `Pagination.jsx` — Pagination controls.
 - `context/` — React Context providers (`AuthContext.jsx`, `DataContext.jsx`, `ModalContext.jsx`).
-- `pages/` — Top-level views (Dashboard, Journal, Goals, Calendar, Habits, Progress, AiCoach, Profile, Login, Register, LandingPage).
+- `pages/` — Top-level views (Dashboard, Journal, Goals, Calendar, Habits, progress, AiCoach, Insights, Profile, Auth, Landing).
 - `services/` — Frontend API client (`api.js`, `coachApi`, `roadmapApi.js`) and Firebase auth service wrappers (`authService.js`).
 - `utils/` — Utility modules (`habitStorage.js`).
 - `firebase.js` — Firebase modular SDK configuration.
