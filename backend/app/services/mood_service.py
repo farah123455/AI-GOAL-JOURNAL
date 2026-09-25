@@ -8,6 +8,11 @@ import torch.nn.functional as F
 # Add models/mood_analyzer to sys.path dynamically if needed
 BASE_DIR = Path(__file__).resolve().parents[3]
 MODEL_DIR = BASE_DIR / "models" / "mood_analyzer"
+if not MODEL_DIR.exists():
+    ALT_DIR = Path(__file__).resolve().parents[2] / "models" / "mood_analyzer"
+    if ALT_DIR.exists():
+        MODEL_DIR = ALT_DIR
+
 if str(MODEL_DIR) not in sys.path:
     sys.path.insert(0, str(MODEL_DIR))
 
