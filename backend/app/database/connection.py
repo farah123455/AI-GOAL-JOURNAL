@@ -16,9 +16,11 @@ load_dotenv(ENV_FILE)
 
 DATABASE_URL = os.getenv("DATABASE_URL") or "sqlite:///./app.db"
 
-# Normalize postgres:// to postgresql:// for SQLAlchemy compatibility (Neon / Render)
+# Normalize to postgresql+psycopg2:// for SQLAlchemy compatibility with psycopg2-binary (Neon / Render)
 if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 # If PostgreSQL is requested, ensure sslmode=require for NeonDB / cloud providers
 if DATABASE_URL.startswith("postgresql"):
