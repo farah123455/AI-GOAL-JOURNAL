@@ -172,6 +172,7 @@ class GoalService:
         # Completed goal
         if val >= 100:
             goal.status = "Completed"
+            goal.progress_value = 100
             goal.estimated_days_remaining = 0
 
             if not goal.priority:
@@ -180,6 +181,7 @@ class GoalService:
             return goal
 
         if goal.status == "Completed":
+            goal.progress_value = 100
             goal.estimated_days_remaining = 0
 
             if not goal.priority:
@@ -427,11 +429,37 @@ class GoalService:
                         created_at=datetime.utcnow(),
                     )
                 )
-
             except Exception as e:
                 logger.warning(
-                    "Could not auto-create completed "
-                    "progress entry: %s",
+                    "Could not auto-create completed progress entry: %s",
+                    e,
+                )
+
+        # ---------------------------------------------------------
+        # Progress updated but goal is not completed
+        # ---------------------------------------------------------
+        elif data.progress_value is not None:
+
+            note = (
+                data.latest_progress_note
+                or f"Progress updated to {data.progress_value}%"
+            )
+
+            updates["latest_progress_note"] = note
+
+            try:
+                progress_repo.create(
+                    Progress(
+                        id=str(uuid.uuid4()),
+                        goal_id=goal_id,
+                        progress_value=data.progress_value,
+                        note=note,
+                        created_at=datetime.utcnow(),
+                    )
+                )
+            except Exception as e:
+                logger.warning(
+                    "Could not auto-create progress entry: %s",
                     e,
                 )
 
