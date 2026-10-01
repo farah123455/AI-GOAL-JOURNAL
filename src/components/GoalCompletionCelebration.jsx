@@ -21,6 +21,10 @@ function useConfetti(canvasRef) {
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let rafId;
+    let stopTimerId;
+    let spawningAllowed = true;
+    const startTime = Date.now();
+
     const dims = () => ({ w: window.innerWidth, h: window.innerHeight });
     const layout = () => {
       const { w, h } = dims();
@@ -30,6 +34,10 @@ function useConfetti(canvasRef) {
       canvas.height = h * dpr;
     };
     layout();
+
+    stopTimerId = setTimeout(() => {
+      spawningAllowed = false;
+    }, 3000);
 
     const count = window.innerWidth < 640 ? 180 : 380;
     const particles = [];
@@ -90,22 +98,40 @@ function useConfetti(canvasRef) {
 
     const animate = () => {
       const { w, h } = dims();
+      const elapsed = Date.now() - startTime;
       ctx.save();
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, w, h);
 
+      let activeCount = 0;
+
       for (const p of particles) {
+        if (p.life <= 0) continue;
+
         p.vx += p.drift * 0.02;
         p.vy += p.grav;
         p.x += p.vx;
         p.y += p.vy;
         p.rot += p.rotSpeed;
-        p.life -= p.decay;
-        if (p.life < 0) p.life = 0;
-        if (p.y > h + 40 || p.x < -40 || p.x > w + 40 || p.life <= 0) {
-          const rp = resetParticle();
-          p.x = rp.x; p.y = rp.y; p.vx = rp.vx; p.vy = rp.vy; p.life = rp.life; p.rot = rp.rot;
+
+        if (elapsed > 2400) {
+          p.life -= 0.035;
+          if (p.life < 0) p.life = 0;
+        } else {
+          p.life -= p.decay;
+          if (p.life < 0) p.life = 0;
         }
+
+        if (p.y > h + 40 || p.x < -40 || p.x > w + 40 || p.life <= 0) {
+          if (spawningAllowed && elapsed < 2400) {
+            const rp = resetParticle();
+            p.x = rp.x; p.y = rp.y; p.vx = rp.vx; p.vy = rp.vy; p.life = rp.life; p.rot = rp.rot;
+          } else {
+            p.life = 0;
+          }
+        }
+
+        if (p.life > 0) activeCount++;
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot);
@@ -116,7 +142,12 @@ function useConfetti(canvasRef) {
       }
 
       ctx.restore();
-      rafId = requestAnimationFrame(animate);
+
+      if (activeCount > 0 || elapsed < 3000) {
+        rafId = requestAnimationFrame(animate);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
     };
     animate();
 
@@ -124,6 +155,7 @@ function useConfetti(canvasRef) {
     window.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("resize", onResize);
+      if (stopTimerId) clearTimeout(stopTimerId);
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, [canvasRef]);

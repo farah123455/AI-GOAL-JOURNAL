@@ -32,6 +32,9 @@ function useEpicConfetti(canvasRef, visible) {
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let animationId;
+    let stopTimerId;
+    let spawningAllowed = true;
+
     const dims = () => ({ w: window.innerWidth, h: window.innerHeight });
 
     const resize = () => {
@@ -47,6 +50,11 @@ function useEpicConfetti(canvasRef, visible) {
     const { w, h } = dims();
     const particleCount = w < 640 ? 180 : 380;
     const particles = [];
+
+    // Stop spawning new confetti after 3 seconds
+    stopTimerId = setTimeout(() => {
+      spawningAllowed = false;
+    }, 3000);
 
     // 1. Dual Cannon Explosions (Bottom-Left and Bottom-Right bursts)
     for (let i = 0; i < particleCount; i++) {
@@ -74,6 +82,7 @@ function useEpicConfetti(canvasRef, visible) {
     }
 
     const drawParticle = (p) => {
+      if (p.opacity <= 0) return;
       const s = p.size;
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.opacity;
@@ -109,40 +118,64 @@ function useEpicConfetti(canvasRef, visible) {
       ctx.restore();
     };
 
+    const startTime = Date.now();
+
     const render = () => {
       const { w, h } = dims();
+      const elapsed = Date.now() - startTime;
       ctx.save();
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, w, h);
 
+      let activeCount = 0;
+
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
+        if (p.opacity <= 0) continue;
+
         p.vx += p.drift * 0.05;
         p.vy += p.grav;
         p.x += p.vx;
         p.y += p.vy;
         p.rot += p.rotSpeed;
 
-        // Recycle off-screen falling particles to maintain continuous shower
-        if (p.y > h + 50) {
-          p.x = Math.random() * w;
-          p.y = -20;
-          p.vx = (Math.random() - 0.5) * 2;
-          p.vy = Math.random() * 4 + 2;
-          p.opacity = 1;
+        // Smoothly fade out remaining particles between 2.4s and 3.0s
+        if (elapsed > 2400) {
+          p.opacity -= 0.035;
+          if (p.opacity < 0) p.opacity = 0;
         }
 
+        // Recycle off-screen falling particles only if within initial 2.4s window
+        if (p.y > h + 50) {
+          if (spawningAllowed && elapsed < 2400) {
+            p.x = Math.random() * w;
+            p.y = -20;
+            p.vx = (Math.random() - 0.5) * 2;
+            p.vy = Math.random() * 4 + 2;
+            p.opacity = 1;
+          } else {
+            p.opacity = 0;
+          }
+        }
+
+        if (p.opacity > 0) activeCount++;
         drawParticle(p);
       }
 
       ctx.restore();
-      animationId = requestAnimationFrame(render);
+
+      if (activeCount > 0 || elapsed < 3000) {
+        animationId = requestAnimationFrame(render);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
     };
 
     render();
 
     return () => {
       window.removeEventListener("resize", resize);
+      if (stopTimerId) clearTimeout(stopTimerId);
       if (animationId) cancelAnimationFrame(animationId);
     };
   }, [visible]);
